@@ -5,7 +5,9 @@ RewriteCond %{REQUEST_FILENAME} !-d
 RewriteRule ^(.*)$ index.php/$1 [L,QSA]
 
 RewriteCond %{HTTP_REFERER} !^$
-# RewriteCond %{HTTP_REFERER} !^https?://(www\.)?testeregulasi.katingankab.go.id/.*$ [NC]
+RewriteCond %{HTTP_REFERER} !^https?://(www\.)?testeregulasi.katingankab.go.id/.*$ [NC]
+RewriteCond %{HTTP_REFERER} !^https?://localhost(:[0-9]+)?/.*$ [NC]
+RewriteCond %{HTTP_REFERER} !^https?://127\.0\.0\.1(:[0-9]+)?/.*$ [NC]
 RewriteRule \.(gif|jpg|jpeg|bmp|zip|rar|mp3|flv|swf|xml|php|png|css|pdf)$ - [F]
 
 RewriteCond %{QUERY_STRING} (?:^|&)(?:(?:[^=]+)=(?:[^&]*('|")[^&]*\1)+)

@@ -74,12 +74,13 @@ $active_group = 'default';
 $query_builder = TRUE;
 
 $db['default'] = array(
-	'dsn'	=> '',
-	'hostname' => 'localhost',
-	'username' => 'root',
-	'password' => 'KominfoKobar@2023',
-	'database' => 'doc_leg',
-	'dbdriver' => 'mysqli',
+	'dsn'	=> 'mysql:host=124.158.161.188;port=33127;dbname=eregulasi_dev;charset=utf8',
+	'hostname' => '124.158.161.188',
+	'port'     => '33127',
+	'username' => 'eregulasi',
+	'password' => 'Db3regulasi@2025!',
+	'database' => 'eregulasi_dev',
+	'dbdriver' => 'pdo',  // Ganti dari 'mysqli' ke 'pdo'
 	'dbprefix' => '',
 	'pconnect' => FALSE,
 	'db_debug' => TRUE,

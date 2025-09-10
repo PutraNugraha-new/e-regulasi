@@ -26,7 +26,12 @@ defined('BASEPATH') or exit('No direct script access allowed');
 //$config['base_url']  =  "https://" . $_SERVER['HTTP_HOST'];
 //$config['base_url'] .= preg_replace('@/+$@', '', dirname($_SERVER['SCRIPT_NAME'])) . '/';
 // $config['base_url'] = 'https://testeregulasi.katingankab.go.id/'; 
-$config['base_url'] = 'http://localhost/';
+$config['base_url'] = (isset($_SERVER['HTTPS']) ? "https://" : "http://") . $_SERVER['HTTP_HOST'] .
+    str_replace(
+        basename($_SERVER['SCRIPT_NAME']),
+        "",
+        $_SERVER['SCRIPT_NAME']
+    ); //change link
 /*
 |--------------------------------------------------------------------------
 | Index File
