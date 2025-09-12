@@ -28,7 +28,7 @@ class Request extends MY_Controller
             )
         );
 
-                $templist = array();
+        $templist = array();
         foreach ($data_usulan as $key => $row) {
             foreach ($row as $keys => $rows) {
                 $templist[$key][$keys] = $rows;
@@ -63,10 +63,11 @@ class Request extends MY_Controller
                 $file = "";
                 if ($data_terakhir->file_catatan_perbaikan) {
                     $file_extension = explode(".", $data_terakhir->file_catatan_perbaikan);
+                    $extension = (count($file_extension) > 1) ? $file_extension[1] : 'pdf';
                     $perbaikan = base_url() . $this->config->item("file_usulan") . "/" . $data_terakhir->file_catatan_perbaikan;
-                    $file = "<button type='button' class='btn btn-primary' onclick=\"view_detail('" . $perbaikan . "','" . $file_extension[1] . "')\">View</button>";
+                    $file = "<button type='button' class='btn btn-primary' onclick=\"view_detail('" . $perbaikan . "','" . $extension . "')\">View</button>";
                 }
-        
+
                 $templist[$key]['status_terakhir'] = "<div class='badge badge-danger mb-3'>Usulan Tidak Disetujui " . $data_terakhir->nama_lengkap . "</div>" . ($data_terakhir->catatan_ditolak ? "<div>Catatan :</div>" . nl2br($data_terakhir->catatan_ditolak) : "") . ($data_terakhir->file_catatan_perbaikan ? "<br /><br />File Catatan Perbaikan : " . $file : "");
             } else if ($data_terakhir->status_tracking == "3" && $data_terakhir->kasubbag_agree_disagree == '1' && $data_terakhir->kabag_agree_disagree == '1' && $data_terakhir->asisten_agree_disagree == '1' && $data_terakhir->sekda_agree_disagree == '1' && $data_terakhir->wabup_agree_disagree == '1') {
                 //disetujui wabup
@@ -76,8 +77,9 @@ class Request extends MY_Controller
                 $file = "";
                 if ($data_terakhir->file_catatan_perbaikan) {
                     $file_extension = explode(".", $data_terakhir->file_catatan_perbaikan);
+                    $extension = (count($file_extension) > 1) ? $file_extension[1] : 'pdf';
                     $perbaikan = base_url() . $this->config->item("file_usulan") . "/" . $data_terakhir->file_catatan_perbaikan;
-                    $file = "<button type='button' class='btn btn-primary' onclick=\"view_detail('" . $perbaikan . "','" . $file_extension[1] . "')\">View</butto>";
+                    $file = "<button type='button' class='btn btn-primary' onclick=\"view_detail('" . $perbaikan . "','" . $extension . "')\">View</button>";
                 }
 
                 $templist[$key]['status_terakhir'] = "<div class='badge badge-danger mb-3'>Usulan Tidak Disetujui " . $data_terakhir->nama_lengkap . "</div>" . ($data_terakhir->catatan_ditolak ? "<div>Catatan :</div>" . nl2br($data_terakhir->catatan_ditolak) : "") . ($data_terakhir->file_catatan_perbaikan ? "<br /><br />File Catatan Perbaikan : " . $file : "");
@@ -89,8 +91,9 @@ class Request extends MY_Controller
                 $file = "";
                 if ($data_terakhir->file_catatan_perbaikan) {
                     $file_extension = explode(".", $data_terakhir->file_catatan_perbaikan);
+                    $extension = (count($file_extension) > 1) ? $file_extension[1] : 'pdf';
                     $perbaikan = base_url() . $this->config->item("file_usulan") . "/" . $data_terakhir->file_catatan_perbaikan;
-                    $file = "<button type='button' class='btn btn-primary' onclick=\"view_detail('" . $perbaikan . "','" . $file_extension[1] . "')\">View</butto>";
+                    $file = "<button type='button' class='btn btn-primary' onclick=\"view_detail('" . $perbaikan . "','" . $extension . "')\">View</button>";
                 }
 
                 $templist[$key]['status_terakhir'] = "<div class='badge badge-danger mb-3'>Usulan Tidak Disetujui " . $data_terakhir->nama_lengkap . "</div>" . ($data_terakhir->catatan_ditolak ? "<div>Catatan :</div>" . nl2br($data_terakhir->catatan_ditolak) : "") . ($data_terakhir->file_catatan_perbaikan ? "<br /><br />File Catatan Perbaikan : " . $file : "");
@@ -102,8 +105,9 @@ class Request extends MY_Controller
                 $file = "";
                 if ($data_terakhir->file_catatan_perbaikan) {
                     $file_extension = explode(".", $data_terakhir->file_catatan_perbaikan);
+                    $extension = (count($file_extension) > 1) ? $file_extension[1] : 'pdf';
                     $perbaikan = base_url() . $this->config->item("file_usulan") . "/" . $data_terakhir->file_catatan_perbaikan;
-                    $file = "<button type='button' class='btn btn-primary' onclick=\"view_detail('" . $perbaikan . "','" . $file_extension[1] . "')\">View</butto>";
+                    $file = "<button type='button' class='btn btn-primary' onclick=\"view_detail('" . $perbaikan . "','" . $extension . "')\">View</button>";
                 }
 
                 $templist[$key]['status_terakhir'] = "<div class='badge badge-danger mb-3'>Usulan Tidak Disetujui " . $data_terakhir->nama_lengkap . "</div>" . ($data_terakhir->catatan_ditolak ? "<div>Catatan :</div>" . nl2br($data_terakhir->catatan_ditolak) : "") . ($data_terakhir->file_catatan_perbaikan ? "<br /><br />File Catatan Perbaikan : " . $file : "");
@@ -115,8 +119,9 @@ class Request extends MY_Controller
                     $file = "";
                     if ($data_terakhir->file_catatan_perbaikan) {
                         $file_extension = explode(".", $data_terakhir->file_catatan_perbaikan);
+                        $extension = (count($file_extension) > 1) ? $file_extension[1] : 'pdf';
                         $perbaikan = base_url() . $this->config->item("file_usulan") . "/" . $data_terakhir->file_catatan_perbaikan;
-                        $file = "<button type='button' class='btn btn-primary' onclick=\"view_detail('" . $perbaikan . "','" . $file_extension[1] . "')\">View</butto>";
+                        $file = "<button type='button' class='btn btn-primary' onclick=\"view_detail('" . $perbaikan . "','" . $extension . "')\">View</button>";
                     }
 
                     $templist[$key]['status_terakhir'] = "<div class='badge badge-danger mb-3'>Usulan Tidak Disetujui Provinsi</div>" . ($data_terakhir->catatan_ditolak ? "<div>Catatan :</div>" . nl2br($data_terakhir->catatan_ditolak) : "") . ($data_terakhir->file_catatan_perbaikan ? "<br /><br />File Catatan Perbaikan : " . $file : "");
@@ -125,21 +130,26 @@ class Request extends MY_Controller
                 } else {
                     $templist[$key]['status_terakhir'] = "<div class='badge badge-success'>Usulan Disetujui " . $data_terakhir->nama_lengkap . "</div>";
                 }
-                
             } else if ($data_terakhir->status_tracking == "3" && $data_terakhir->kasubbag_agree_disagree == '2' && $data_terakhir->kabag_agree_disagree == '1') {
                 //kasubag tidak setuju dan kabag menyetujui
-
-                $file_extension = explode(".", $data_terakhir->file_catatan_perbaikan);
-                $usulan = base_url() . $this->config->item("file_usulan") . "/" . $data_terakhir->file_catatan_perbaikan;
-                $file = "<button type='button' class='btn btn-primary' onclick=\"view_detail('" . $usulan . "','" . $file_extension[1] . "')\">View</button>";
+                $file = "";
+                if ($data_terakhir->file_catatan_perbaikan) {
+                    $file_extension = explode(".", $data_terakhir->file_catatan_perbaikan);
+                    $extension = (count($file_extension) > 1) ? $file_extension[1] : 'pdf';
+                    $usulan = base_url() . $this->config->item("file_usulan") . "/" . $data_terakhir->file_catatan_perbaikan;
+                    $file = "<button type='button' class='btn btn-primary' onclick=\"view_detail('" . $usulan . "','" . $extension . "')\">View</button>";
+                }
 
                 $templist[$key]['status_terakhir'] = "<div class='badge badge-danger mb-3'>Usulan Tidak Disetujui " . $data_terakhir->nama_lengkap . "</div>" . ($data_terakhir->catatan_ditolak ? "Catatan :<br />" . nl2br($data_terakhir->catatan_ditolak) : "") . ($data_terakhir->file_catatan_perbaikan ? "<div class='mt-3'>File perbaikan : " . $file . "</div>" : "");
             } else if ($data_terakhir->status_tracking == "3" && $data_terakhir->kasubbag_agree_disagree == '2' && $data_terakhir->kabag_agree_disagree == '') {
                 //kasubag tidak setuju dan kabag menyetujui
-
-                $file_extension = explode(".", $data_terakhir->file_catatan_perbaikan);
-                $usulan = base_url() . $this->config->item("file_usulan") . "/" . $data_terakhir->file_catatan_perbaikan;
-                $file = "<button type='button' class='btn btn-primary' onclick=\"view_detail('" . $usulan . "','" . $file_extension[1] . "')\">View</button>";
+                $file = "";
+                if ($data_terakhir->file_catatan_perbaikan) {
+                    $file_extension = explode(".", $data_terakhir->file_catatan_perbaikan);
+                    $extension = (count($file_extension) > 1) ? $file_extension[1] : 'pdf';
+                    $usulan = base_url() . $this->config->item("file_usulan") . "/" . $data_terakhir->file_catatan_perbaikan;
+                    $file = "<button type='button' class='btn btn-primary' onclick=\"view_detail('" . $usulan . "','" . $extension . "')\">View</button>";
+                }
 
                 $templist[$key]['status_terakhir'] = "<div class='badge badge-danger mb-3'>Usulan Tidak Disetujui " . $data_terakhir->nama_lengkap . "</div>" . ($data_terakhir->catatan_ditolak ? "Catatan :<br />" . nl2br($data_terakhir->catatan_ditolak) : "") . ($data_terakhir->file_catatan_perbaikan ? "<div class='mt-3'>File perbaikan : " . $file . "</div>" : "");
             } else if ($data_terakhir->status_tracking == "3" && $data_terakhir->kasubbag_agree_disagree != '' && $data_terakhir->kabag_agree_disagree == '2') {
@@ -159,41 +169,53 @@ class Request extends MY_Controller
             }
 
             $templist[$key]['file_usulan'] = "";
-            $file_usulan_extension = explode(".", $data_terakhir->file_usulan_raperbup);
-            $usulan_url = base_url() . $this->config->item("file_usulan") . "/" . $data_terakhir->file_usulan_raperbup;
-            $templist[$key]['file_usulan'] = "<button type='button' class='btn btn-primary' onclick=\"view_detail('" . $usulan_url . "','" . $file_usulan_extension[1] . "')\">View</button>";
+            if ($data_terakhir->file_usulan_raperbup) {
+                $file_usulan_extension = explode(".", $data_terakhir->file_usulan_raperbup);
+                $extension = (count($file_usulan_extension) > 1) ? $file_usulan_extension[1] : 'pdf';
+                $usulan_url = base_url() . $this->config->item("file_usulan") . "/" . $data_terakhir->file_usulan_raperbup;
+                $templist[$key]['file_usulan'] = "<button type='button' class='btn btn-primary' onclick=\"view_detail('" . $usulan_url . "','" . $extension . "')\">View</button>";
+            }
 
             $templist[$key]['file'] = "";
-            if ($data_terakhir->status_tracking == "5") {
+            if ($data_terakhir->status_tracking == "5" && $data_terakhir->file_final) {
                 $file_extension = explode(".", $data_terakhir->file_final);
+                $extension = (count($file_extension) > 1) ? $file_extension[1] : 'pdf';
                 $usulan = base_url() . $this->config->item("file_final") . "/" . $data_terakhir->file_final;
-                $templist[$key]['file'] = "<button type='button' class='btn btn-primary' onclick=\"view_detail('" . $usulan . "','" . $file_extension[1] . "')\">View</button>";
+                $templist[$key]['file'] = "<button type='button' class='btn btn-primary' onclick=\"view_detail('" . $usulan . "','" . $extension . "')\">View</button>";
             }
+
+            // Initialize variables
+            $link_lampiran = "";
+            $link_lampiran_sk_tim = "";
+            $link_lampiran_daftar_hadir = "";
 
             if ($row->lampiran) {
                 $file_extension = explode(".", $row->lampiran);
+                $extension = (count($file_extension) > 1) ? $file_extension[1] : 'pdf';
                 $lampiran = base_url() . $this->config->item("file_lampiran") . "/" . $row->lampiran;
-                $link_lampiran = "<a href='#viewdetail' class='dropdown-item' onclick=\"view_detail('" . $lampiran . "','" . $file_extension[1] . "')\">Kepala Dinas</a>";
+                $link_lampiran = "<a href='#viewdetail' class='dropdown-item' onclick=\"view_detail('" . $lampiran . "','" . $extension . "')\">Kepala Dinas</a>";
             }
 
             if ($row->lampiran_sk_tim) {
                 $file_extension_sk_tim = explode(".", $row->lampiran_sk_tim);
+                $extension = (count($file_extension_sk_tim) > 1) ? $file_extension_sk_tim[1] : 'pdf';
                 $lampiran_sk_tim = base_url() . $this->config->item("file_lampiran") . "/" . $row->lampiran_sk_tim;
-                $link_lampiran_sk_tim = "<a href='#viewdetail' class='dropdown-item' onclick=\"view_detail('" . $lampiran_sk_tim . "','" . $file_extension_sk_tim[1] . "')\">SK Tim</a>";
+                $link_lampiran_sk_tim = "<a href='#viewdetail' class='dropdown-item' onclick=\"view_detail('" . $lampiran_sk_tim . "','" . $extension . "')\">SK Tim</a>";
             }
 
             if ($row->lampiran_daftar_hadir) {
                 $file_extension_daftar_hadir = explode(".", $row->lampiran_daftar_hadir);
+                $extension = (count($file_extension_daftar_hadir) > 1) ? $file_extension_daftar_hadir[1] : 'pdf';
                 $lampiran_daftar_hadir = base_url() . $this->config->item("file_lampiran") . "/" . $row->lampiran_daftar_hadir;
-                $link_lampiran_daftar_hadir = "<a href='#viewdetail' class='dropdown-item' onclick=\"view_detail('" . $lampiran_daftar_hadir . "','" . $file_extension_daftar_hadir[1] . "')\">Daftar Hadir</a>";
+                $link_lampiran_daftar_hadir = "<a href='#viewdetail' class='dropdown-item' onclick=\"view_detail('" . $lampiran_daftar_hadir . "','" . $extension . "')\">Daftar Hadir</a>";
             }
 
             $lampiran_group = "";
             $lampiran_group .= "<div class='dropdown d-inline mr-2'>
-            <button class='btn btn-info dropdown-toggle' type='button' id='dropdownMenuButton' data-toggle='dropdown' aria-haspopup='true' aria-expanded='false'>
-              Lampiran
-            </button>
-            <div class='dropdown-menu'>";
+        <button class='btn btn-info dropdown-toggle' type='button' id='dropdownMenuButton' data-toggle='dropdown' aria-haspopup='true' aria-expanded='false'>
+          Lampiran
+        </button>
+        <div class='dropdown-menu'>";
 
             if (in_array($row->kategori_usulan_id, array("1", "2"))) {
                 if ($row->lampiran) {
@@ -208,7 +230,9 @@ class Request extends MY_Controller
                     $lampiran_group .= $link_lampiran_daftar_hadir;
                 }
             } else {
-                $lampiran_group .= $link_lampiran;
+                if ($row->lampiran) {
+                    $lampiran_group .= $link_lampiran;
+                }
             }
 
             $lampiran_group .= "</div></div>";
@@ -332,7 +356,7 @@ class Request extends MY_Controller
                 $file_extension = explode(".", $row->file_catatan_perbaikan);
                 $usulan = base_url() . $this->config->item("file_usulan") . "/" . $row->file_catatan_perbaikan;
                 $file = "<button type='button' class='btn btn-primary' onclick=\"view_detail('" . $usulan . "','" . $file_extension[1] . "')\">View</button>";
-            
+
                 $templist[$key]['status_terakhir'] = "<div class='badge badge-danger mb-3'>Usulan Tidak Disetujui " . $row->nama_lengkap . "</div>" . ($row->catatan_ditolak ? "<br />Catatan :<br />" . nl2br($row->catatan_ditolak) : "") . ($row->file_catatan_perbaikan ? "<br /><br />File Catatan Perbaikan : " . $file : "");
             } else if ($row->status_tracking == "3" && $row->kasubbag_agree_disagree == '1' && $row->kabag_agree_disagree == '2') {
                 // Usulan ditangguhkan oleh Bagian Hukum setelah disetujui oleh Kasubbag
@@ -343,7 +367,7 @@ class Request extends MY_Controller
             } else if ($row->status_tracking == "3" && $row->kasubbag_agree_disagree != '' && $row->kabag_agree_disagree == '2') {
                 // Usulan ditolak oleh Kabag Hukum setelah disetujui oleh Kasubbag
                 $templist[$key]['status_terakhir'] = "<div class='badge badge-danger mb-3'>Usulan Ditangguhkan oleh Bagian Hukum " . $row->nama_lengkap . "</div>" . ($row->catatan_ditolak ? "<br />Catatan :<br />" . nl2br($row->catatan_ditolak) : "");
-                        
+
                 //usulan perbaikan
                 $file_extension = explode(".", $row->file_perbaikan);
                 $usulan = base_url() . $this->config->item("file_usulan") . "/" . $row->file_perbaikan;
