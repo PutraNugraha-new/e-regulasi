@@ -1,7 +1,8 @@
 <?php
+
 use Restserver\Libraries\REST_Controller;
 
-defined('BASEPATH') OR exit('No direct script access allowed');
+defined('BASEPATH') or exit('No direct script access allowed');
 
 // This can be removed if you use __autoload() in config.php OR use Modular Extensions
 /** @noinspection PhpIncludeInspection */
@@ -18,14 +19,15 @@ defined('BASEPATH') OR exit('No direct script access allowed');
  * @license         MIT
  * @link            https://github.com/chriskacerguis/codeigniter-restserver
  */
-class Key extends REST_Controller {
+class Key extends REST_Controller
+{
 
     protected $methods = [
-            'index_put' => ['level' => 10, 'limit' => 10],
-            'index_delete' => ['level' => 10],
-            'level_post' => ['level' => 10],
-            'regenerate_post' => ['level' => 10],
-        ];
+        'index_put' => ['level' => 10, 'limit' => 10],
+        'index_delete' => ['level' => 10],
+        'level_post' => ['level' => 10],
+        'regenerate_post' => ['level' => 10],
+    ];
 
     /**
      * Insert a key into the database
@@ -43,15 +45,12 @@ class Key extends REST_Controller {
         $ignore_limits = ctype_digit($this->put('ignore_limits')) ? (int) $this->put('ignore_limits') : 1;
 
         // Insert the new key
-        if ($this->_insert_key($key, ['level' => $level, 'ignore_limits' => $ignore_limits]))
-        {
+        if ($this->_insert_key($key, ['level' => $level, 'ignore_limits' => $ignore_limits])) {
             $this->response([
                 'status' => true,
                 'key' => $key
             ], REST_Controller::HTTP_CREATED); // CREATED (201) being the HTTP response code
-        }
-        else
-        {
+        } else {
             $this->response([
                 'status' => false,
                 'message' => 'Could not save the key'
@@ -70,8 +69,7 @@ class Key extends REST_Controller {
         $key = $this->delete('key');
 
         // Does this key exist?
-        if (!$this->_key_exists($key))
-        {
+        if (!$this->_key_exists($key)) {
             // It doesn't appear the key exists
             $this->response([
                 'status' => false,
@@ -86,7 +84,7 @@ class Key extends REST_Controller {
         $this->response([
             'status' => true,
             'message' => 'API key was deleted'
-            ], REST_Controller::HTTP_NO_CONTENT); // NO_CONTENT (204) being the HTTP response code
+        ], REST_Controller::HTTP_NO_CONTENT); // NO_CONTENT (204) being the HTTP response code
     }
 
     /**
@@ -101,8 +99,7 @@ class Key extends REST_Controller {
         $new_level = $this->post('level');
 
         // Does this key exist?
-        if (!$this->_key_exists($key))
-        {
+        if (!$this->_key_exists($key)) {
             // It doesn't appear the key exists
             $this->response([
                 'status' => false,
@@ -111,15 +108,12 @@ class Key extends REST_Controller {
         }
 
         // Update the key level
-        if ($this->_update_key($key, ['level' => $new_level]))
-        {
+        if ($this->_update_key($key, ['level' => $new_level])) {
             $this->response([
                 'status' => true,
                 'message' => 'API key was updated'
             ], REST_Controller::HTTP_OK); // OK (200) being the HTTP response code
-        }
-        else
-        {
+        } else {
             $this->response([
                 'status' => false,
                 'message' => 'Could not update the key level'
@@ -138,8 +132,7 @@ class Key extends REST_Controller {
         $key = $this->post('key');
 
         // Does this key exist?
-        if (!$this->_key_exists($key))
-        {
+        if (!$this->_key_exists($key)) {
             // It doesn't appear the key exists
             $this->response([
                 'status' => false,
@@ -148,15 +141,12 @@ class Key extends REST_Controller {
         }
 
         // Update the key level
-        if ($this->_update_key($key, ['level' => 0]))
-        {
+        if ($this->_update_key($key, ['level' => 0])) {
             $this->response([
                 'status' => true,
                 'message' => 'Key was suspended'
             ], REST_Controller::HTTP_OK); // OK (200) being the HTTP response code
-        }
-        else
-        {
+        } else {
             $this->response([
                 'status' => false,
                 'message' => 'Could not suspend the user'
@@ -176,8 +166,7 @@ class Key extends REST_Controller {
         $key_details = $this->_get_key($old_key);
 
         // Does this key exist?
-        if (!$key_details)
-        {
+        if (!$key_details) {
             // It doesn't appear the key exists
             $this->response([
                 'status' => false,
@@ -189,8 +178,7 @@ class Key extends REST_Controller {
         $new_key = $this->_generate_key();
 
         // Insert the new key
-        if ($this->_insert_key($new_key, ['level' => $key_details->level, 'ignore_limits' => $key_details->ignore_limits]))
-        {
+        if ($this->_insert_key($new_key, ['level' => $key_details->level, 'ignore_limits' => $key_details->ignore_limits])) {
             // Suspend old key
             $this->_update_key($old_key, ['level' => 0]);
 
@@ -198,9 +186,7 @@ class Key extends REST_Controller {
                 'status' => true,
                 'key' => $new_key
             ], REST_Controller::HTTP_CREATED); // CREATED (201) being the HTTP response code
-        }
-        else
-        {
+        } else {
             $this->response([
                 'status' => false,
                 'message' => 'Could not save the key'
@@ -212,20 +198,17 @@ class Key extends REST_Controller {
 
     private function _generate_key()
     {
-        do
-        {
+        do {
             // Generate a random salt
             $salt = base_convert(bin2hex($this->security->get_random_bytes(64)), 16, 36);
 
             // If an error occurred, then fall back to the previous method
-            if ($salt === false)
-            {
+            if ($salt === false) {
                 $salt = hash('sha256', time() . mt_rand());
             }
 
             $new_key = substr($salt, 0, config_item('rest_key_length'));
-        }
-        while ($this->_key_exists($new_key));
+        } while ($this->_key_exists($new_key));
 
         return $new_key;
     }
@@ -270,5 +253,4 @@ class Key extends REST_Controller {
             ->where(config_item('rest_key_column'), $key)
             ->delete(config_item('rest_keys_table'));
     }
-
 }

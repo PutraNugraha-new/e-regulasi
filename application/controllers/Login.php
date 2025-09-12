@@ -47,6 +47,8 @@ class Login extends CI_Controller
                 $this->session->set_userdata('is_logged_in', true);
                 $status = true;
             } else {
+                var_dump('disini');
+                die;
                 $status = false;
             }
         } else {
