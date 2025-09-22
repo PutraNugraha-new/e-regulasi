@@ -64,7 +64,7 @@
         <div class="content">
             <div class="card">
                 <div class="card-body">
-                    <?php echo form_open_multipart(); ?>
+                    <?php echo form_open_multipart('', ['id' => 'form-usulan']); ?>
                     <?php
                     if (!empty($this->session->flashdata('message'))) {
                         echo "<div class='alert " . ($this->session->flashdata('type-alert') == 'success' ? 'alert-success' : 'alert-danger') . " alert-dismissible show fade'>
@@ -82,7 +82,6 @@
                         <label class="col-form-label col-lg-2">Kategori Usulan <span class="text-danger">*</span></label>
                         <div class="col-lg-10">
                             <select class="form-control" name="kategori_usulan" onchange="check_lampiran()">
-                                <option value="">-- PILIH KATEGORI</option>
                                 <?php
                                 foreach ($kategori_usulan as $key => $value) {
                                     $selected = "";
@@ -134,7 +133,7 @@
                         </div>
                     </div>
 
-                    <!-- Peratruan Bupati -->
+                    <!-- Peraturan Bupati -->
                     <div class="card card-primary" id="peraturan-bupati-section">
                         <div class="card-body">
                             <div id="bab-container">
@@ -180,7 +179,7 @@
                                     <div class="field-header">
                                         <span class="field-number">KESATU</span>
                                     </div>
-                                    <textarea name="keputusan[1]" class="form-control" rows="3" placeholder="Masukkan isi keputusan kesatu..." required><?php echo !empty($content) ? $content->keputusan_1 : ""; ?></textarea>
+                                    <textarea name="keputusan[1]" id="keputusan_1" class="form-control" rows="3" placeholder="Masukkan isi keputusan kesatu..." required><?php echo !empty($content) ? $content->keputusan_1 : ""; ?></textarea>
                                 </div>
                             </div>
 
@@ -208,19 +207,19 @@
                     <!-- end Keputusan Bupati -->
 
                     <div class="form-group row">
-                        <label class="col-form-label col-lg-2">File Usulan <?php echo !empty($content) ? "" : "<span class='text-danger'>*</span>"; ?></label>
+                        <label class="col-form-label col-lg-2">Lampiran Usulan <?php echo !empty($content) ? "" : "<span class='text-danger'>*</span>"; ?></label>
                         <div class="col-lg-10">
                             <?php
                             if (!empty($content)) {
-                                echo $url_preview_usulan;
+                                echo $url_preview_lampiran;
                             }
                             ?>
-                            <input <?php echo !empty($content) ? "" : "required"; ?> type="file" class="form-control" name="file_upload" accept="application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document">
+                            <input type="file" class="form-control" name="file_lampiran_usulan" accept="application/pdf">
                             <small class="form-text text-muted">
                                 Max. Upload Size : 2 MB
                             </small>
                             <small class="form-text text-muted">
-                                Type File : doc, docx, & pdf
+                                Type File : pdf
                             </small>
                         </div>
                     </div>
@@ -278,7 +277,8 @@
                     </div>
 
                     <div class="text-right">
-                        <button type="submit" class="btn btn-primary">Simpan <i class="icon-paperplane ml-2"></i></button>
+                        <button type="button" id="preview-btn" class="btn btn-secondary mr-2">Preview PDF <i class="icon-eye ml-2"></i></button>
+                        <button type="submit" class="btn btn-primary">Simpan & Download <i class="icon-paperplane ml-2"></i></button>
                     </div>
                     <?php echo form_close(); ?>
                 </div>
@@ -324,40 +324,113 @@
 
     // Fungsi untuk inisialisasi CKEditor pada textarea tertentu
     function initCKEditor(textareaId) {
-        // Pastikan CKEditor belum ada pada textarea ini
         if (CKEDITOR.instances[textareaId]) {
-            CKEDITOR.instances[textareaId].destroy();
+            CKEDITOR.instances[textareaId].destroy(true);
         }
         CKEDITOR.replace(textareaId, ckeditorConfig);
     }
 
     // Inisialisasi CKEditor saat dokumen siap
     $(document).ready(function() {
-        // CKEditor untuk form utama
         initCKEditor('menimbang');
         initCKEditor('mengingat');
         initCKEditor('menetapkan');
         initCKEditor('tembusan');
         initCKEditor('penjelasan');
 
-        // CKEditor untuk setiap bab peraturan bupati
         <?php for ($i = 1; $i <= 6; $i++): ?>
             initCKEditor('isi_bab_<?php echo $i; ?>');
         <?php endfor; ?>
 
-        // CKEditor untuk keputusan pertama
-        initCKEditor('keputusan[1]');
+        initCKEditor('keputusan_1');
 
-        // Sembunyikan section yang tidak relevan berdasarkan kategori awal
         $(".is-show-lampiran-kepala-dinas").hide();
         $(".is-show-lampiran-sk-tim").hide();
         $(".is-show-lampiran-daftar-hadir").hide();
-        $('#peraturan-bupati-section').hide(); // Sembunyikan di awal, akan ditampilkan berdasarkan kategori
+        $('#peraturan-bupati-section').hide();
         $('#memutuskan-section').hide();
         $('#tembusan-section').hide();
 
-        // Panggil check_lampiran() untuk mengatur visibilitas awal berdasarkan kategori yang mungkin sudah terisi
         check_lampiran();
+
+        // Event handler untuk tombol Preview
+        $('#preview-btn').on('click', function() {
+            // Update semua instance CKEditor
+            for (var instance in CKEDITOR.instances) {
+                CKEDITOR.instances[instance].updateElement();
+            }
+
+            // Validasi field wajib berdasarkan kategori usulan
+            var kategori_usulan = $('select[name="kategori_usulan"]').val();
+            var kategori_usulan_id = $('select[name="kategori_usulan"] option:selected').data('id');
+            var nama_peraturan = $('input[name="nama_peraturan"]').val();
+            var menimbang = CKEDITOR.instances['menimbang'] ? CKEDITOR.instances['menimbang'].getData() : '';
+            var mengingat = CKEDITOR.instances['mengingat'] ? CKEDITOR.instances['mengingat'].getData() : '';
+            var menetapkan = CKEDITOR.instances['menetapkan'] ? CKEDITOR.instances['menetapkan'].getData() : '';
+            var keputusan_1 = CKEDITOR.instances['keputusan_1'] ? CKEDITOR.instances['keputusan_1'].getData() : '';
+            var tembusan = CKEDITOR.instances['tembusan'] ? CKEDITOR.instances['tembusan'].getData() : '';
+            var judul_bab_1 = $('input[name="judul_bab[1]"]').val();
+            var isi_bab_1 = CKEDITOR.instances['isi_bab_1'] ? CKEDITOR.instances['isi_bab_1'].getData() : '';
+
+            if (!kategori_usulan || !nama_peraturan) {
+                alert('Harap isi Kategori Usulan dan Tentang sebelum preview.');
+                return;
+            }
+
+            if (kategori_usulan_id == 3) { // Kepbup
+                if (!menimbang || !mengingat || !menetapkan || !keputusan_1 || !tembusan) {
+                    alert('Harap isi semua field wajib (Menimbang, Mengingat, Menetapkan, Keputusan Kesatu, dan Tembusan) untuk Keputusan Bupati.');
+                    return;
+                }
+            } else if (kategori_usulan_id == 1 || kategori_usulan_id == 2) { // Perda & Perbup
+                if (!menimbang || !mengingat || !judul_bab_1 || !isi_bab_1) {
+                    alert('Harap isi semua field wajib (Menimbang, Mengingat, Judul Bab, dan Isi Bab) untuk Peraturan Bupati.');
+                    return;
+                }
+            }
+
+            // Ambil data form
+            var formData = new FormData($('#form-usulan')[0]);
+
+            // Debugging: Log data yang dikirim
+            for (var pair of formData.entries()) {
+                console.log(pair[0] + ': ' + pair[1]);
+            }
+
+            // Kirim data ke endpoint preview
+            $.ajax({
+                url: '<?= base_url('usulan_raperbup/preview_pdf_raperbup') ?>',
+                type: 'POST',
+                data: formData,
+                processData: false,
+                contentType: false,
+                xhrFields: {
+                    responseType: 'blob' // Penting untuk menangani response sebagai blob
+                },
+                success: function(response, status, xhr) {
+                    // Periksa content-type dari response
+                    var contentType = xhr.getResponseHeader('Content-Type');
+                    if (contentType === 'application/json') {
+                        // Jika response adalah JSON (error), parse dan tampilkan pesan
+                        response.text().then(function(text) {
+                            var json = JSON.parse(text);
+                            alert(json.error || 'Gagal menghasilkan preview PDF');
+                        });
+                    } else {
+                        // Jika response adalah PDF, buat blob dan tampilkan
+                        var blob = new Blob([response], {
+                            type: 'application/pdf'
+                        });
+                        var url = window.URL.createObjectURL(blob);
+                        window.open(url, '_blank');
+                    }
+                },
+                error: function(xhr, status, error) {
+                    console.error('Error:', error, xhr);
+                    alert('Gagal menghasilkan preview PDF: ' + error);
+                }
+            });
+        });
     });
 
     // Array untuk menyimpan nama keputusan dalam Bahasa Indonesia
@@ -368,11 +441,10 @@
         'KEENAM BELAS', 'KETUJUH BELAS', 'KEDELAPAN BELAS', 'KESEMBILAN BELAS', 'KEDUA PULUH'
     ];
 
-    let keputusanCounter = 1; // Dimulai dari 1 karena KESATU sudah ada
+    let keputusanCounter = 1;
 
-    // Event listener untuk tombol "Tambah Keputusan"
     $(document).on('click', '#add-keputusan', function() {
-        if (keputusanCounter < 20) { // Batasi hingga 20 keputusan
+        if (keputusanCounter < 20) {
             keputusanCounter++;
             addKeputusanField(keputusanCounter);
         } else {
@@ -380,16 +452,14 @@
         }
     });
 
-    // Event listener untuk tombol hapus keputusan (menggunakan delegasi event)
     $(document).on('click', '.remove-keputusan', function() {
         const fieldNumber = $(this).data('number');
         removeKeputusanField(fieldNumber);
     });
 
-    // Fungsi untuk menambah field keputusan
     function addKeputusanField(number) {
-        const keputusanName = keputusanNames[number] || `KE-${number}`; // Gunakan nama dari array atau format KE-N
-        const textareaId = `keputusan_${number}`; // ID unik untuk textarea CKEditor
+        const keputusanName = keputusanNames[number] || `KE-${number}`;
+        const textareaId = `keputusan_${number}`;
         const newField = `
             <div class="keputusan-field" data-number="${number}">
                 <div class="field-header">
@@ -404,118 +474,96 @@
 
         $('#keputusan-container').append(newField);
 
-        // Inisialisasi CKEditor untuk textarea yang baru ditambahkan, setelah elemen ditambahkan ke DOM
         setTimeout(function() {
             initCKEditor(textareaId);
-        }, 100); // Delay singkat untuk memastikan elemen sudah siap
+        }, 100);
 
-        // Scroll ke field yang baru ditambahkan
         $('html, body').animate({
             scrollTop: $(`.keputusan-field[data-number="${number}"]`).offset().top - 100
         }, 500);
     }
 
-    // Fungsi untuk menghapus field keputusan
     function removeKeputusanField(number) {
         if (number === 1) {
             alert('Keputusan KESATU tidak dapat dihapus.');
             return;
         }
 
-        // Hancurkan instance CKEditor sebelum menghapus elemen DOM
         const textareaId = `keputusan_${number}`;
         if (CKEDITOR.instances[textareaId]) {
-            CKEDITOR.instances[textareaId].destroy();
+            CKEDITOR.instances[textareaId].destroy(true);
         }
 
-        // Animasi fade out sebelum menghapus elemen
         $(`.keputusan-field[data-number="${number}"]`).fadeOut(300, function() {
             $(this).remove();
-            reorganizeKeputusanFields(); // Atur ulang nomor dan nama setelah penghapusan
+            reorganizeKeputusanFields();
         });
     }
 
-    // Fungsi untuk mengatur ulang nomor, nama, dan atribut setelah penghapusan field
     function reorganizeKeputusanFields() {
-        const fields = $('.keputusan-field').get(); // Dapatkan semua elemen .keputusan-field
-        let tempKeputusanCounter = 0; // Counter sementara untuk re-organisasi
+        const fields = $('.keputusan-field').get();
+        let tempKeputusanCounter = 0;
 
         fields.forEach(function(field, index) {
-            const newNumber = index + 1; // Nomor baru dimulai dari 1
-            const oldNumber = $(field).attr('data-number'); // Nomor lama
-            tempKeputusanCounter = newNumber; // Update counter utama
+            const newNumber = index + 1;
+            const oldNumber = $(field).attr('data-number');
+            tempKeputusanCounter = newNumber;
 
-            const keputusanName = keputusanNames[newNumber] || `KE-${newNumber}`; // Dapatkan nama keputusan yang sesuai
+            const keputusanName = keputusanNames[newNumber] || `KE-${newNumber}`;
+            const oldTextareaId = newNumber === 1 ? 'keputusan_1' : `keputusan_${oldNumber}`;
+            const newTextareaId = newNumber === 1 ? 'keputusan_1' : `keputusan_${newNumber}`;
 
-            // ID CKEditor lama dan baru
-            const oldTextareaId = newNumber === 1 ? 'keputusan[1]' : `keputusan_${oldNumber}`;
-            const newTextareaId = newNumber === 1 ? 'keputusan[1]' : `keputusan_${newNumber}`;
-
-            // Simpan konten CKEditor sebelum destroy
             let content = '';
             if (CKEDITOR.instances[oldTextareaId]) {
                 content = CKEDITOR.instances[oldTextareaId].getData();
-                CKEDITOR.instances[oldTextareaId].destroy();
+                CKEDITOR.instances[oldTextareaId].destroy(true);
             }
 
-            // Update atribut elemen field
             $(field).attr('data-number', newNumber);
-            $(field).find('.field-number').text(keputusanName); // Update teks nomor keputusan
+            $(field).find('.field-number').text(keputusanName);
 
-            // Update elemen textarea
             const textarea = $(field).find('textarea');
-            textarea.attr('name', `keputusan[${newNumber}]`); // Update name atribut untuk pengiriman form
-            textarea.attr('id', newTextareaId); // Update id untuk inisialisasi CKEditor
-            textarea.attr('placeholder', `Masukkan isi keputusan ${keputusanName.toLowerCase()}...`); // Update placeholder
+            textarea.attr('name', `keputusan[${newNumber}]`);
+            textarea.attr('id', newTextareaId);
+            textarea.attr('placeholder', `Masukkan isi keputusan ${keputusanName.toLowerCase()}...`);
 
-            // Update tombol hapus
             const removeBtn = $(field).find('.remove-keputusan');
-            removeBtn.attr('data-number', newNumber); // Update data-number pada tombol hapus
+            removeBtn.attr('data-number', newNumber);
             if (newNumber === 1) {
-                removeBtn.hide(); // Sembunyikan tombol hapus untuk KESATU
+                removeBtn.hide();
             } else {
-                removeBtn.show(); // Tampilkan tombol hapus untuk yang lain
+                removeBtn.show();
             }
 
-            // Re-inisialisasi CKEditor dengan konten yang tersimpan, setelah atribut diupdate
             setTimeout(function() {
                 initCKEditor(newTextareaId);
                 if (content && CKEDITOR.instances[newTextareaId]) {
-                    CKEDITOR.instances[newTextareaId].setData(content); // Set kembali konten
+                    CKEDITOR.instances[newTextareaId].setData(content);
                 }
-            }, 200); // Sedikit delay untuk memastikan semua update DOM selesai
+            }, 200);
         });
 
-        keputusanCounter = tempKeputusanCounter; // Update counter global setelah re-organisasi
+        keputusanCounter = tempKeputusanCounter;
     }
 
-    // Tambahkan variabel counter untuk bab
-    let babCounter = 1; // Dimulai dari 1 karena Bab 1 sudah ada
+    let babCounter = 1;
 
-    // Tambahkan setelah bagian inisialisasi CKEditor dalam $(document).ready()
-    $(document).ready(function() {
-        // ... kode inisialisasi CKEditor yang sudah ada ...
-
-        // Event listener untuk tombol "Tambah Bab"
-        $(document).on('click', '#add-bab', function() {
-            if (babCounter < 10) { // Batasi hingga 10 bab
-                babCounter++;
-                addBabField(babCounter);
-            } else {
-                alert('Maksimal 10 bab yang dapat ditambahkan.');
-            }
-        });
-
-        // Event listener untuk tombol hapus bab (menggunakan delegasi event)
-        $(document).on('click', '.remove-bab', function() {
-            const fieldNumber = $(this).data('number');
-            removeBabField(fieldNumber);
-        });
+    $(document).on('click', '#add-bab', function() {
+        if (babCounter < 10) {
+            babCounter++;
+            addBabField(babCounter);
+        } else {
+            alert('Maksimal 10 bab yang dapat ditambahkan.');
+        }
     });
 
-    // Fungsi untuk menambah field bab
+    $(document).on('click', '.remove-bab', function() {
+        const fieldNumber = $(this).data('number');
+        removeBabField(fieldNumber);
+    });
+
     function addBabField(number) {
-        const textareaId = `isi_bab_${number}`; // ID unik untuk textarea CKEditor
+        const textareaId = `isi_bab_${number}`;
         const newField = `
         <div class="bab-field" data-number="${number}">
             <div class="field-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
@@ -542,82 +590,69 @@
 
         $('#bab-container').append(newField);
 
-        // Inisialisasi CKEditor untuk textarea yang baru ditambahkan
         setTimeout(function() {
             initCKEditor(textareaId);
-        }, 100); // Delay singkat untuk memastikan elemen sudah siap
+        }, 100);
 
-        // Scroll ke field yang baru ditambahkan
         $('html, body').animate({
             scrollTop: $(`.bab-field[data-number="${number}"]`).offset().top - 100
         }, 500);
     }
 
-    // Fungsi untuk menghapus field bab
     function removeBabField(number) {
         if (number === 1) {
             alert('Bab pertama tidak dapat dihapus.');
             return;
         }
 
-        // Hancurkan instance CKEditor sebelum menghapus elemen DOM
         const textareaId = `isi_bab_${number}`;
         if (CKEDITOR.instances[textareaId]) {
-            CKEDITOR.instances[textareaId].destroy();
+            CKEDITOR.instances[textareaId].destroy(true);
         }
 
-        // Animasi fade out sebelum menghapus elemen
         $(`.bab-field[data-number="${number}"]`).fadeOut(300, function() {
             $(this).remove();
-            reorganizeBabFields(); // Atur ulang nomor setelah penghapusan
+            reorganizeBabFields();
         });
     }
 
-    // Fungsi untuk mengatur ulang nomor dan atribut setelah penghapusan field bab
     function reorganizeBabFields() {
-        const fields = $('.bab-field').get(); // Dapatkan semua elemen .bab-field
-        let tempBabCounter = 0; // Counter sementara untuk re-organisasi
+        const fields = $('.bab-field').get();
+        let tempBabCounter = 0;
 
         fields.forEach(function(field, index) {
-            const newNumber = index + 1; // Nomor baru dimulai dari 1
-            const oldNumber = $(field).attr('data-number'); // Nomor lama
-            tempBabCounter = newNumber; // Update counter utama
+            const newNumber = index + 1;
+            const oldNumber = $(field).attr('data-number');
+            tempBabCounter = newNumber;
 
-            // ID CKEditor lama dan baru
             const oldTextareaId = `isi_bab_${oldNumber}`;
             const newTextareaId = `isi_bab_${newNumber}`;
 
-            // Simpan konten CKEditor sebelum destroy
             let content = '';
             if (CKEDITOR.instances[oldTextareaId]) {
                 content = CKEDITOR.instances[oldTextareaId].getData();
-                CKEDITOR.instances[oldTextareaId].destroy();
+                CKEDITOR.instances[oldTextareaId].destroy(true);
             }
 
-            // Update atribut elemen field
             $(field).attr('data-number', newNumber);
-            $(field).find('.field-number').text(`BAB ${newNumber}`); // Update teks nomor bab
+            $(field).find('.field-number').text(`BAB ${newNumber}`);
 
-            // Update elemen input judul bab
             const judulInput = $(field).find('input[name^="judul_bab"]');
             judulInput.attr('name', `judul_bab[${newNumber}]`);
             judulInput.attr('placeholder', `Masukkan Judul Bab ${newNumber}`);
 
-            // Update elemen textarea
             const textarea = $(field).find('textarea');
             textarea.attr('name', `isi_bab[${newNumber}]`);
             textarea.attr('id', newTextareaId);
 
-            // Update tombol hapus
             const removeBtn = $(field).find('.remove-bab');
             removeBtn.attr('data-number', newNumber);
             if (newNumber === 1) {
-                removeBtn.hide(); // Sembunyikan tombol hapus untuk BAB 1
+                removeBtn.hide();
             } else {
-                removeBtn.show(); // Tampilkan tombol hapus untuk yang lain
+                removeBtn.show();
             }
 
-            // Re-inisialisasi CKEditor dengan konten yang tersimpan
             setTimeout(function() {
                 initCKEditor(newTextareaId);
                 if (content && CKEDITOR.instances[newTextareaId]) {
@@ -626,33 +661,31 @@
             }, 200);
         });
 
-        babCounter = tempBabCounter; // Update counter global
+        babCounter = tempBabCounter;
     }
 
-    // Pastikan CKEditor terupdate sebelum form disubmit
     $('form').on('submit', function() {
         for (var instance in CKEDITOR.instances) {
             CKEDITOR.instances[instance].updateElement();
         }
     });
 
-    // Fungsi untuk melihat detail file
     function view_detail(file, ekstensi) {
-        let file_extension = ["pdf", "jpg", "jpeg", "png"]; // Ekstensi yang bisa ditampilkan inline
-        $("#showFormDetail").modal("show"); // Tampilkan modal
+        let file_extension = ["pdf", "jpg", "jpeg", "png"];
+        $("#showFormDetail").modal("show");
 
         if (file_extension.indexOf(ekstensi) >= 0) {
             if (ekstensi === "pdf") {
-                $(".isi-content").html("<div class='embed-responsive embed-responsive-16by9'>" + // Gunakan aspect ratio yang sesuai
+                $(".isi-content").html("<div class='embed-responsive embed-responsive-16by9'>" +
                     "<iframe class='embed-responsive-item' src='" + file + "' allowfullscreen></iframe>" +
                     "</div>");
-            } else { // Gambar
-                $(".isi-content").html("<img class='img-fluid' src='" + file + "' alt='File Preview' />"); // img-fluid agar responsif
+            } else {
+                $(".isi-content").html("<img class='img-fluid' src='" + file + "' alt='File Preview' />");
             }
-        } else { // File tidak bisa ditampilkan
+        } else {
             $(".isi-content").html(
                 "<div class='text-center'>" +
-                "<img height='300px' src='" + base_url + "assets/img/drawkit/drawkit-full-stack-man-colour.svg' alt='image'>" + // Ganti dengan path aset Anda
+                "<img height='300px' src='" + base_url + "assets/img/drawkit/drawkit-full-stack-man-colour.svg' alt='image'>" +
                 "<h6>Dokumen file tidak bisa dilihat karena ekstensi file tidak didukung untuk ditampilkan di browser.</h6>" +
                 "<a class='btn btn-success' download href='" + file + "'>Download File</a>" +
                 "</div>"
@@ -660,16 +693,14 @@
         }
     }
 
-    // Fungsi untuk mengatur visibilitas dan requirement lampiran berdasarkan kategori usulan
     function check_lampiran() {
-        // Reset required attribute terlebih dahulu
         $("input[name='file_lampiran']").prop("required", false);
         $("input[name='file_lampiran_sk_tim']").prop("required", false);
         $("input[name='file_lampiran_daftar_hadir']").prop("required", false);
 
         const kategori_usulan_hidden = $("input[name='kategori_usulan_hidden']").val();
         const selectedKategori = $("select[name='kategori_usulan'] option:selected");
-        const kategori_usulan_id = selectedKategori.data("id"); // Ambil data-id dari option yang dipilih
+        const kategori_usulan_id = selectedKategori.data("id");
 
         const $peraturanBupatiSection = $('#peraturan-bupati-section');
         const $memutuskanSection = $('#memutuskan-section');
@@ -679,16 +710,15 @@
         const $lampiranDaftarHadir = $(".is-show-lampiran-daftar-hadir");
         const $penjelasanSection = $("#penjelasan-section");
 
-        // Logika untuk menampilkan/menyembunyikan section "Peraturan Bupati", "Memutuskan", dan "Tembusan"
-        if (kategori_usulan_id === 1 || kategori_usulan_id === 2) { // Kategori yang menggunakan Peraturan Bupati
+        if (kategori_usulan_id === 1 || kategori_usulan_id === 2) {
             $peraturanBupatiSection.show();
             $memutuskanSection.hide();
             $tembusanSection.hide();
-        } else if (kategori_usulan_id === 3) { // Kategori yang menggunakan Keputusan Bupati
+        } else if (kategori_usulan_id === 3) {
             $peraturanBupatiSection.hide();
             $memutuskanSection.show();
             $tembusanSection.show();
-        } else { // Kategori lain atau pilihan default
+        } else {
             $peraturanBupatiSection.hide();
             $memutuskanSection.hide();
             $tembusanSection.hide();
@@ -700,12 +730,10 @@
             $penjelasanSection.hide();
         }
 
-        // Logika untuk menampilkan/menyembunyikan dan mengatur 'required' untuk lampiran
         if (kategori_usulan_id === 1 || kategori_usulan_id === 2) {
             $lampiranKepalaDinas.show();
             $lampiranSkTim.show();
             $lampiranDaftarHadir.show();
-            // Jika ini adalah form edit (ada value di hidden input), lampiran tidak 'required'
             if (kategori_usulan_hidden === "") {
                 $("input[name='file_lampiran']").prop("required", true);
                 $("input[name='file_lampiran_sk_tim']").prop("required", true);
@@ -717,14 +745,13 @@
             $lampiranDaftarHadir.hide();
             if (kategori_usulan_hidden === "") {
                 $("input[name='file_lampiran']").prop("required", true);
-                $("input[name='file_lampiran_sk_tim']").prop("required", false); // Tidak required
-                $("input[name='file_lampiran_daftar_hadir']").prop("required", false); // Tidak required
+                $("input[name='file_lampiran_sk_tim']").prop("required", false);
+                $("input[name='file_lampiran_daftar_hadir']").prop("required", false);
             }
-        } else { // Kategori tidak dipilih atau kategori lain yang tidak memerlukan lampiran khusus
+        } else {
             $lampiranKepalaDinas.hide();
             $lampiranSkTim.hide();
             $lampiranDaftarHadir.hide();
-            // Reset required jika section disembunyikan
             $("input[name='file_lampiran']").prop("required", false);
             $("input[name='file_lampiran_sk_tim']").prop("required", false);
             $("input[name='file_lampiran_daftar_hadir']").prop("required", false);
