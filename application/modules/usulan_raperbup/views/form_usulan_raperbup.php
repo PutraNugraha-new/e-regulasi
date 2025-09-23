@@ -3,13 +3,27 @@
         margin-bottom: 10px;
     }
 
-    .keputusan-field {
+    .keputusan-field,
+    .pasal-field,
+    .bagian-field {
         border: 1px solid #e9ecef;
         border-radius: 8px;
         padding: 15px;
         margin-bottom: 15px;
         background: #f8f9fa;
         animation: fadeInSlide 0.4s ease-out;
+    }
+
+    .bagian-field {
+        background: #e8f0fe;
+        border-left: 4px solid #007bff;
+        margin-left: 40px;
+    }
+
+    .pasal-field {
+        background: #fff8e1;
+        border-left: 4px solid #ffc107;
+        margin-left: 20px;
     }
 
     @keyframes fadeInSlide {
@@ -37,10 +51,34 @@
         font-size: 1.1em;
     }
 
+    .bagian-number {
+        font-weight: bold;
+        color: #007bff;
+        font-size: 1em;
+    }
+
+    .pasal-number {
+        font-weight: bold;
+        color: #f57c00;
+        font-size: 1em;
+    }
+
     .btn-add-field {
         background: linear-gradient(45deg, #28a745, #20c997);
         border: none;
         color: white;
+    }
+
+    .btn-add-bagian {
+        background: linear-gradient(45deg, #007bff, #0056b3);
+        border: none;
+        color: white;
+    }
+
+    .btn-add-pasal {
+        background: linear-gradient(45deg, #ffc107, #ffb300);
+        border: none;
+        color: #000;
     }
 
     .btn-remove-field {
@@ -56,6 +94,30 @@
         border: 2px dashed #dee2e6;
         border-radius: 8px;
         background: #f8f9fa;
+    }
+
+    .add-bagian-container {
+        text-align: center;
+        margin: 10px 0;
+        padding: 10px;
+        border: 2px dashed #007bff;
+        border-radius: 8px;
+        background: #e8f0fe;
+    }
+
+    .add-pasal-container {
+        text-align: center;
+        margin: 10px 0;
+        padding: 10px;
+        border: 2px dashed #ffc107;
+        border-radius: 8px;
+        background: #fff8e1;
+    }
+
+    .pasal-container {
+        margin-left: 20px;
+        border-left: 2px solid #ffc107;
+        padding-left: 15px;
     }
 </style>
 <div class="main-content">
@@ -138,16 +200,38 @@
                         <div class="card-body">
                             <div id="bab-container">
                                 <div class="bab-field" data-number="1">
+                                    <div class="field-header">
+                                        <span class="field-number">BAB 1</span>
+                                        <button type="button" class="btn btn-sm btn-remove-field remove-bab" data-number="1" style="display: none;">
+                                            <i class="fas fa-trash"></i> Hapus
+                                        </button>
+                                    </div>
                                     <div class="form-group row">
                                         <label class="col-form-label col-lg-2">Judul Bab <span class="text-danger">*</span></label>
                                         <div class="col-lg-10">
                                             <input type="text" class="form-control" name="judul_bab[1]" placeholder="Masukkan Judul Bab 1" value="<?php echo !empty($bab_data[1]['judul']) ? htmlspecialchars($bab_data[1]['judul']) : ''; ?>">
                                         </div>
                                     </div>
-                                    <div class="form-group row">
-                                        <label class="col-form-label col-lg-2">Isi Bab <span class="text-danger">*</span></label>
-                                        <div class="col-lg-10">
-                                            <textarea name="isi_bab[1]" id="isi_bab_1"><?php echo !empty($bab_data[1]['isi']) ? $bab_data[1]['isi'] : ''; ?></textarea>
+
+                                    <!-- Container untuk Bagian dan Pasal -->
+                                    <div class="bagian-container" data-bab="1">
+                                        <!-- Tombol Tambah Bagian -->
+                                        <div class="add-bagian-container">
+                                            <button type="button" class="btn btn-sm btn-add-bagian add-bagian-btn" data-bab="1">
+                                                <i class="fas fa-plus"></i> Tambah Bagian
+                                            </button>
+                                            <br>
+                                            <small class="text-muted mt-2 d-block">Klik untuk menambah bagian baru dalam bab ini</small>
+                                        </div>
+                                        <!-- Pasal langsung tanpa bagian -->
+                                        <div class="pasal-container" data-bab="1" data-bagian="0">
+                                            <div class="add-pasal-container">
+                                                <button type="button" class="btn btn-sm btn-add-pasal add-pasal-btn" data-bab="1" data-bagian="0">
+                                                    <i class="fas fa-plus"></i> Tambah Pasal
+                                                </button>
+                                                <br>
+                                                <small class="text-muted mt-2 d-block">Klik untuk menambah pasal baru tanpa bagian</small>
+                                            </div>
                                         </div>
                                     </div>
                                     <hr>
@@ -156,7 +240,7 @@
 
                             <div class="add-field-container">
                                 <button type="button" id="add-bab" class="btn btn-sm btn-add-field">
-                                    <i class="icon-plus"></i> Tambah Bab
+                                    <i class="fas fa-plus"></i> Tambah Bab
                                 </button>
                                 <br>
                                 <small class="text-muted mt-2 d-block">Klik untuk menambah bab baru</small>
@@ -178,6 +262,9 @@
                                 <div class="keputusan-field" data-number="1">
                                     <div class="field-header">
                                         <span class="field-number">KESATU</span>
+                                        <button type="button" class="btn btn-sm btn-remove-field remove-keputusan" data-number="1" style="display: none;">
+                                            <i class="fas fa-trash"></i> Hapus
+                                        </button>
                                     </div>
                                     <textarea name="keputusan[1]" id="keputusan_1" class="form-control" rows="3" placeholder="Masukkan isi keputusan kesatu..." required><?php echo !empty($content) ? $content->keputusan_1 : ""; ?></textarea>
                                 </div>
@@ -185,7 +272,7 @@
 
                             <div class="add-field-container">
                                 <button type="button" id="add-keputusan" class="btn btn-sm btn-add-field">
-                                    <i class="icon-plus"></i> Tambah Keputusan
+                                    <i class="fas fa-plus"></i> Tambah Keputusan
                                 </button>
                                 <br>
                                 <small class="text-muted mt-2 d-block">Klik untuk menambah keputusan kedua, ketiga, dan seterusnya</small>
@@ -206,7 +293,7 @@
                     </div>
                     <!-- end Keputusan Bupati -->
 
-                    <div class="form-group row">
+                    <div class="form-group row lampiran-usulan-section">
                         <label class="col-form-label col-lg-2">Lampiran Usulan <?php echo !empty($content) ? "" : "<span class='text-danger'>*</span>"; ?></label>
                         <div class="col-lg-10">
                             <?php
@@ -257,7 +344,6 @@
                             </small>
                         </div>
                     </div>
-
                     <div class="form-group row is-show-lampiran-daftar-hadir">
                         <label class="col-form-label col-lg-2">Lampiran Daftar Hadir <?php echo !empty($content) ? "" : "<span class='text-danger'>*</span>"; ?></label>
                         <div class="col-lg-10">
@@ -277,8 +363,8 @@
                     </div>
 
                     <div class="text-right">
-                        <button type="button" id="preview-btn" class="btn btn-secondary mr-2">Preview PDF <i class="icon-eye ml-2"></i></button>
-                        <button type="submit" class="btn btn-primary">Simpan & Download <i class="icon-paperplane ml-2"></i></button>
+                        <button type="button" id="preview-btn" class="btn btn-secondary mr-2">Preview PDF <i class="fas fa-eye ml-2"></i></button>
+                        <button type="submit" class="btn btn-primary">Simpan & Download <i class="fas fa-paper-plane ml-2"></i></button>
                     </div>
                     <?php echo form_close(); ?>
                 </div>
@@ -297,7 +383,6 @@
                 </button>
             </div>
             <div class="modal-body isi-content">
-
             </div>
         </div>
     </div>
@@ -330,6 +415,10 @@
         CKEDITOR.replace(textareaId, ckeditorConfig);
     }
 
+    // Counter global untuk pasal dan bagian
+    let globalPasalCounter = 0;
+    let bagianCounter = 0;
+
     // Inisialisasi CKEditor saat dokumen siap
     $(document).ready(function() {
         initCKEditor('menimbang');
@@ -337,11 +426,6 @@
         initCKEditor('menetapkan');
         initCKEditor('tembusan');
         initCKEditor('penjelasan');
-
-        <?php for ($i = 1; $i <= 6; $i++): ?>
-            initCKEditor('isi_bab_<?php echo $i; ?>');
-        <?php endfor; ?>
-
         initCKEditor('keputusan_1');
 
         $(".is-show-lampiran-kepala-dinas").hide();
@@ -355,12 +439,10 @@
 
         // Event handler untuk tombol Preview
         $('#preview-btn').on('click', function() {
-            // Update semua instance CKEditor
             for (var instance in CKEDITOR.instances) {
                 CKEDITOR.instances[instance].updateElement();
             }
 
-            // Validasi field wajib berdasarkan kategori usulan
             var kategori_usulan = $('select[name="kategori_usulan"]').val();
             var kategori_usulan_id = $('select[name="kategori_usulan"] option:selected').data('id');
             var nama_peraturan = $('input[name="nama_peraturan"]').val();
@@ -370,34 +452,35 @@
             var keputusan_1 = CKEDITOR.instances['keputusan_1'] ? CKEDITOR.instances['keputusan_1'].getData() : '';
             var tembusan = CKEDITOR.instances['tembusan'] ? CKEDITOR.instances['tembusan'].getData() : '';
             var judul_bab_1 = $('input[name="judul_bab[1]"]').val();
-            var isi_bab_1 = CKEDITOR.instances['isi_bab_1'] ? CKEDITOR.instances['isi_bab_1'].getData() : '';
 
             if (!kategori_usulan || !nama_peraturan) {
                 alert('Harap isi Kategori Usulan dan Tentang sebelum preview.');
                 return;
             }
 
-            if (kategori_usulan_id == 3) { // Kepbup
+            if (kategori_usulan_id == 3) {
                 if (!menimbang || !mengingat || !menetapkan || !keputusan_1 || !tembusan) {
                     alert('Harap isi semua field wajib (Menimbang, Mengingat, Menetapkan, Keputusan Kesatu, dan Tembusan) untuk Keputusan Bupati.');
                     return;
                 }
-            } else if (kategori_usulan_id == 1 || kategori_usulan_id == 2) { // Perda & Perbup
-                if (!menimbang || !mengingat || !judul_bab_1 || !isi_bab_1) {
-                    alert('Harap isi semua field wajib (Menimbang, Mengingat, Judul Bab, dan Isi Bab) untuk Peraturan Bupati.');
+            } else if (kategori_usulan_id == 1 || kategori_usulan_id == 2) {
+                if (!menimbang || !mengingat || !judul_bab_1) {
+                    alert('Harap isi semua field wajib (Menimbang, Mengingat, Judul Bab) untuk Peraturan Bupati.');
+                    return;
+                }
+                // Validasi setidaknya satu pasal ada
+                if ($('.pasal-field').length === 0) {
+                    alert('Harap tambahkan setidaknya satu pasal untuk Peraturan Bupati.');
                     return;
                 }
             }
 
-            // Ambil data form
             var formData = new FormData($('#form-usulan')[0]);
 
-            // Debugging: Log data yang dikirim
             for (var pair of formData.entries()) {
                 console.log(pair[0] + ': ' + pair[1]);
             }
 
-            // Kirim data ke endpoint preview
             $.ajax({
                 url: '<?= base_url('usulan_raperbup/preview_pdf_raperbup') ?>',
                 type: 'POST',
@@ -405,19 +488,16 @@
                 processData: false,
                 contentType: false,
                 xhrFields: {
-                    responseType: 'blob' // Penting untuk menangani response sebagai blob
+                    responseType: 'blob'
                 },
                 success: function(response, status, xhr) {
-                    // Periksa content-type dari response
                     var contentType = xhr.getResponseHeader('Content-Type');
                     if (contentType === 'application/json') {
-                        // Jika response adalah JSON (error), parse dan tampilkan pesan
                         response.text().then(function(text) {
                             var json = JSON.parse(text);
                             alert(json.error || 'Gagal menghasilkan preview PDF');
                         });
                     } else {
-                        // Jika response adalah PDF, buat blob dan tampilkan
                         var blob = new Blob([response], {
                             type: 'application/pdf'
                         });
@@ -433,7 +513,257 @@
         });
     });
 
-    // Array untuk menyimpan nama keputusan dalam Bahasa Indonesia
+    // Event handler untuk tombol tambah bagian
+    $(document).on('click', '.add-bagian-btn', function() {
+        const babNumber = $(this).data('bab');
+        bagianCounter++;
+        addBagianField(babNumber, bagianCounter);
+    });
+
+    // Event handler untuk tombol hapus bagian
+    $(document).on('click', '.remove-bagian', function() {
+        const bagianNumber = $(this).data('bagian');
+        removeBagianField(bagianNumber);
+    });
+
+    // Event handler untuk tombol tambah pasal
+    $(document).on('click', '.add-pasal-btn', function() {
+        const babNumber = $(this).data('bab');
+        const bagianNumber = $(this).data('bagian') || 0;
+        addPasalField(babNumber, bagianNumber);
+    });
+
+    // Event handler untuk tombol hapus pasal
+    $(document).on('click', '.remove-pasal', function() {
+        const pasalNumber = $(this).data('pasal');
+        removePasalField(pasalNumber);
+    });
+
+    // Fungsi untuk menambah field bagian
+    function addBagianField(babNumber, bagianNumber) {
+        globalPasalCounter++;
+        const firstPasalNumber = globalPasalCounter;
+        const pasalTextareaId = `isi_pasal_${firstPasalNumber}`;
+        const bagianNames = ['', 'Kesatu', 'Kedua', 'Ketiga', 'Keempat', 'Kelima', 'Keenam', 'Ketujuh', 'Kedelapan', 'Kesembilan', 'Kesepuluh'];
+        const bagianName = bagianNames[bagianNumber] || `Ke-${bagianNumber}`;
+
+        const newBagianField = `
+            <div class="bagian-field" data-bab="${babNumber}" data-bagian="${bagianNumber}">
+                <div class="field-header">
+                    <span class="bagian-number">Bagian ${bagianName}</span>
+                    <button type="button" class="btn btn-sm btn-remove-field remove-bagian" data-bagian="${bagianNumber}">
+                        <i class="fas fa-trash"></i> Hapus
+                    </button>
+                </div>
+                <div class="form-group">
+                    <input type="text" class="form-control" name="judul_bagian[${babNumber}][${bagianNumber}]" placeholder="Masukkan Judul Bagian ${bagianName}" required>
+                </div>
+                <div class="pasal-container" data-bab="${babNumber}" data-bagian="${bagianNumber}">
+                    <div class="pasal-field" data-bab="${babNumber}" data-pasal="${firstPasalNumber}" data-bagian="${bagianNumber}">
+                        <div class="field-header">
+                            <span class="pasal-number">Pasal ${firstPasalNumber}</span>
+                            <button type="button" class="btn btn-sm btn-remove-field remove-pasal" data-pasal="${firstPasalNumber}" style="display: none;">
+                                <i class="fas fa-trash"></i> Hapus
+                            </button>
+                        </div>
+                        <div class="form-group">
+                            <textarea name="isi_pasal[${firstPasalNumber}]" id="${pasalTextareaId}" class="form-control" rows="3" placeholder="Masukkan isi Pasal ${firstPasalNumber}..." required></textarea>
+                            <input type="hidden" name="pasal_bab_mapping[${firstPasalNumber}]" value="${babNumber}">
+                            <input type="hidden" name="pasal_bagian_mapping[${firstPasalNumber}]" value="${bagianNumber}">
+                        </div>
+                    </div>
+                    <div class="add-pasal-container">
+                        <button type="button" class="btn btn-sm btn-add-pasal add-pasal-btn" data-bab="${babNumber}" data-bagian="${bagianNumber}">
+                            <i class="fas fa-plus"></i> Tambah Pasal
+                        </button>
+                        <br>
+                        <small class="text-muted mt-2 d-block">Klik untuk menambah pasal baru dalam bagian ini</small>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        $(`.bagian-container[data-bab="${babNumber}"] .add-bagian-container`).before(newBagianField);
+
+        setTimeout(function() {
+            initCKEditor(pasalTextareaId);
+        }, 100);
+
+        $('html, body').animate({
+            scrollTop: $(`.bagian-field[data-bagian="${bagianNumber}"]`).offset().top - 100
+        }, 500);
+    }
+
+    // Fungsi untuk menghapus field bagian
+    function removeBagianField(bagianNumber) {
+        const bagianField = $(`.bagian-field[data-bagian="${bagianNumber}"]`);
+
+        bagianField.find('.pasal-field').each(function() {
+            const pasalNumber = $(this).data('pasal');
+            const pasalTextareaId = `isi_pasal_${pasalNumber}`;
+            if (CKEDITOR.instances[pasalTextareaId]) {
+                CKEDITOR.instances[pasalTextareaId].destroy(true);
+            }
+        });
+
+        bagianField.fadeOut(300, function() {
+            $(this).remove();
+            reorganizeBagianFields();
+            reorganizePasalFields();
+        });
+    }
+
+    // Fungsi untuk menambah field pasal
+    function addPasalField(babNumber, bagianNumber = 0) {
+        globalPasalCounter++;
+        const pasalNumber = globalPasalCounter;
+        const textareaId = `isi_pasal_${pasalNumber}`;
+
+        const newPasalField = `
+            <div class="pasal-field" data-bab="${babNumber}" data-pasal="${pasalNumber}" data-bagian="${bagianNumber}">
+                <div class="field-header">
+                    <span class="pasal-number">Pasal ${pasalNumber}</span>
+                    <button type="button" class="btn btn-sm btn-remove-field remove-pasal" data-pasal="${pasalNumber}">
+                        <i class="fas fa-trash"></i> Hapus
+                    </button>
+                </div>
+                <div class="form-group">
+                    <textarea name="isi_pasal[${pasalNumber}]" id="${textareaId}" class="form-control" rows="3" placeholder="Masukkan isi Pasal ${pasalNumber}..." required></textarea>
+                    <input type="hidden" name="pasal_bab_mapping[${pasalNumber}]" value="${babNumber}">
+                    <input type="hidden" name="pasal_bagian_mapping[${pasalNumber}]" value="${bagianNumber}">
+                </div>
+            </div>
+        `;
+
+        const containerSelector = bagianNumber === 0 ?
+            `.pasal-container[data-bab="${babNumber}"][data-bagian="0"]` :
+            `.pasal-container[data-bab="${babNumber}"][data-bagian="${bagianNumber}"]`;
+        $(`${containerSelector} .add-pasal-container`).before(newPasalField);
+
+        setTimeout(function() {
+            initCKEditor(textareaId);
+        }, 100);
+
+        $('html, body').animate({
+            scrollTop: $(`.pasal-field[data-pasal="${pasalNumber}"]`).offset().top - 100
+        }, 500);
+    }
+
+    // Fungsi untuk menghapus field pasal
+    function removePasalField(pasalNumber) {
+        const pasalField = $(`.pasal-field[data-pasal="${pasalNumber}"]`);
+        const pasalCountInContainer = pasalField.closest('.pasal-container').find('.pasal-field').length;
+
+        if (pasalCountInContainer === 1) {
+            alert('Setidaknya satu pasal harus tetap ada di setiap bagian atau bab.');
+            return;
+        }
+
+        const textareaId = `isi_pasal_${pasalNumber}`;
+        if (CKEDITOR.instances[textareaId]) {
+            CKEDITOR.instances[textareaId].destroy(true);
+        }
+
+        pasalField.fadeOut(300, function() {
+            $(this).remove();
+            reorganizePasalFields();
+        });
+    }
+
+    // Fungsi untuk reorganisasi penomoran pasal
+    function reorganizePasalFields() {
+        const allPasalFields = $('.pasal-field').get().sort(function(a, b) {
+            return parseInt($(a).data('pasal')) - parseInt($(b).data('pasal'));
+        });
+
+        let newPasalCounter = 0;
+
+        allPasalFields.forEach(function(field) {
+            newPasalCounter++;
+            const oldPasalNumber = $(field).data('pasal');
+            const babNumber = $(field).data('bab');
+            const bagianNumber = $(field).data('bagian');
+            const oldTextareaId = `isi_pasal_${oldPasalNumber}`;
+            const newTextareaId = `isi_pasal_${newPasalCounter}`;
+
+            let content = '';
+            if (CKEDITOR.instances[oldTextareaId]) {
+                content = CKEDITOR.instances[oldTextareaId].getData();
+                CKEDITOR.instances[oldTextareaId].destroy(true);
+            }
+
+            $(field).attr('data-pasal', newPasalCounter);
+            $(field).find('.pasal-number').text(`Pasal ${newPasalCounter}`);
+
+            const textarea = $(field).find('textarea');
+            textarea.attr('name', `isi_pasal[${newPasalCounter}]`);
+            textarea.attr('id', newTextareaId);
+            textarea.attr('placeholder', `Masukkan isi Pasal ${newPasalCounter}...`);
+
+            const mappingFieldBab = $(field).find('input[name^="pasal_bab_mapping"]');
+            mappingFieldBab.attr('name', `pasal_bab_mapping[${newPasalCounter}]`);
+            mappingFieldBab.val(babNumber);
+
+            const mappingFieldBagian = $(field).find('input[name^="pasal_bagian_mapping"]');
+            mappingFieldBagian.attr('name', `pasal_bagian_mapping[${newPasalCounter}]`);
+            mappingFieldBagian.val(bagianNumber);
+
+            const removeBtn = $(field).find('.remove-pasal');
+            removeBtn.attr('data-pasal', newPasalCounter);
+            const pasalCountInContainer = $(field).closest('.pasal-container').find('.pasal-field').length;
+            if (pasalCountInContainer === 1) {
+                removeBtn.hide();
+            } else {
+                removeBtn.show();
+            }
+
+            setTimeout(function() {
+                initCKEditor(newTextareaId);
+                if (content && CKEDITOR.instances[newTextareaId]) {
+                    CKEDITOR.instances[newTextareaId].setData(content);
+                }
+            }, 200);
+        });
+
+        globalPasalCounter = newPasalCounter;
+    }
+
+    // Fungsi untuk reorganisasi penomoran bagian
+    function reorganizeBagianFields() {
+        const allBagianFields = $('.bagian-field').get().sort(function(a, b) {
+            return parseInt($(a).data('bagian')) - parseInt($(b).data('bagian'));
+        });
+
+        let newBagianCounter = 0;
+        const bagianNames = ['', 'Kesatu', 'Kedua', 'Ketiga', 'Keempat', 'Kelima', 'Keenam', 'Ketujuh', 'Kedelapan', 'Kesembilan', 'Kesepuluh'];
+
+        allBagianFields.forEach(function(field) {
+            newBagianCounter++;
+            const oldBagianNumber = $(field).data('bagian');
+            const babNumber = $(field).data('bab');
+            const bagianName = bagianNames[newBagianCounter] || `Ke-${newBagianCounter}`;
+
+            $(field).attr('data-bagian', newBagianCounter);
+            $(field).find('.bagian-number').text(`Bagian ${bagianName}`);
+
+            const inputJudul = $(field).find('input[name^="judul_bagian"]');
+            inputJudul.attr('name', `judul_bagian[${babNumber}][${newBagianCounter}]`);
+            inputJudul.attr('placeholder', `Masukkan Judul Bagian ${bagianName}`);
+
+            const pasalContainer = $(field).find('.pasal-container');
+            pasalContainer.attr('data-bagian', newBagianCounter);
+
+            const addPasalBtn = $(field).find('.add-pasal-btn');
+            addPasalBtn.attr('data-bagian', newBagianCounter);
+
+            const removeBtn = $(field).find('.remove-bagian');
+            removeBtn.attr('data-bagian', newBagianCounter);
+        });
+
+        bagianCounter = newBagianCounter;
+    }
+
+    // Array untuk nama keputusan
     const keputusanNames = [
         '', 'KESATU', 'KEDUA', 'KETIGA', 'KEEMPAT', 'KELIMA',
         'KEENAM', 'KETUJUH', 'KEDELAPAN', 'KESEMBILAN', 'KESEPULUH',
@@ -465,7 +795,7 @@
                 <div class="field-header">
                     <span class="field-number">${keputusanName}</span>
                     <button type="button" class="btn btn-sm btn-remove-field remove-keputusan" data-number="${number}">
-                        <i class="icon-trash"></i> Hapus
+                        <i class="fas fa-trash"></i> Hapus
                     </button>
                 </div>
                 <textarea id="${textareaId}" name="keputusan[${number}]" class="form-control" rows="3" placeholder="Masukkan isi keputusan ${keputusanName.toLowerCase()}..." required></textarea>
@@ -563,36 +893,43 @@
     });
 
     function addBabField(number) {
-        const textareaId = `isi_bab_${number}`;
         const newField = `
-        <div class="bab-field" data-number="${number}">
-            <div class="field-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-                <span class="field-number" style="font-weight: bold; color: #495057; font-size: 1.1em;">BAB ${number}</span>
-                <button type="button" class="btn btn-sm btn-remove-field remove-bab" data-number="${number}" style="background: linear-gradient(45deg, #dc3545, #e74c3c); border: none; color: white;">
-                    <i class="icon-trash"></i> Hapus
-                </button>
-            </div>
-            <div class="form-group row">
-                <label class="col-form-label col-lg-2">Judul Bab <span class="text-danger">*</span></label>
-                <div class="col-lg-10">
-                    <input type="text" class="form-control" name="judul_bab[${number}]" placeholder="Masukkan Judul Bab ${number}" required>
+            <div class="bab-field" data-number="${number}">
+                <div class="field-header">
+                    <span class="field-number">BAB ${number}</span>
+                    <button type="button" class="btn btn-sm btn-remove-field remove-bab" data-number="${number}">
+                        <i class="fas fa-trash"></i> Hapus
+                    </button>
                 </div>
-            </div>
-            <div class="form-group row">
-                <label class="col-form-label col-lg-2">Isi Bab <span class="text-danger">*</span></label>
-                <div class="col-lg-10">
-                    <textarea name="isi_bab[${number}]" id="${textareaId}"></textarea>
+                <div class="form-group row">
+                    <label class="col-form-label col-lg-2">Judul Bab <span class="text-danger">*</span></label>
+                    <div class="col-lg-10">
+                        <input type="text" class="form-control" name="judul_bab[${number}]" placeholder="Masukkan Judul Bab ${number}" required>
+                    </div>
                 </div>
+                <div class="bagian-container" data-bab="${number}">
+                    <div class="add-bagian-container">
+                        <button type="button" class="btn btn-sm btn-add-bagian add-bagian-btn" data-bab="${number}">
+                            <i class="fas fa-plus"></i> Tambah Bagian
+                        </button>
+                        <br>
+                        <small class="text-muted mt-2 d-block">Klik untuk menambah bagian baru dalam bab ini</small>
+                    </div>
+                    <div class="pasal-container" data-bab="${number}" data-bagian="0">
+                        <div class="add-pasal-container">
+                            <button type="button" class="btn btn-sm btn-add-pasal add-pasal-btn" data-bab="${number}" data-bagian="0">
+                                <i class="fas fa-plus"></i> Tambah Pasal
+                            </button>
+                            <br>
+                            <small class="text-muted mt-2 d-block">Klik untuk menambah pasal baru tanpa bagian</small>
+                        </div>
+                    </div>
+                </div>
+                <hr>
             </div>
-            <hr>
-        </div>
-    `;
+        `;
 
         $('#bab-container').append(newField);
-
-        setTimeout(function() {
-            initCKEditor(textareaId);
-        }, 100);
 
         $('html, body').animate({
             scrollTop: $(`.bab-field[data-number="${number}"]`).offset().top - 100
@@ -605,14 +942,20 @@
             return;
         }
 
-        const textareaId = `isi_bab_${number}`;
-        if (CKEDITOR.instances[textareaId]) {
-            CKEDITOR.instances[textareaId].destroy(true);
-        }
+        const babField = $(`.bab-field[data-number="${number}"]`);
 
-        $(`.bab-field[data-number="${number}"]`).fadeOut(300, function() {
+        babField.find('.pasal-field').each(function() {
+            const pasalNumber = $(this).data('pasal');
+            const pasalTextareaId = `isi_pasal_${pasalNumber}`;
+            if (CKEDITOR.instances[pasalTextareaId]) {
+                CKEDITOR.instances[pasalTextareaId].destroy(true);
+            }
+        });
+
+        babField.fadeOut(300, function() {
             $(this).remove();
             reorganizeBabFields();
+            reorganizePasalFields();
         });
     }
 
@@ -622,28 +965,19 @@
 
         fields.forEach(function(field, index) {
             const newNumber = index + 1;
-            const oldNumber = $(field).attr('data-number');
             tempBabCounter = newNumber;
-
-            const oldTextareaId = `isi_bab_${oldNumber}`;
-            const newTextareaId = `isi_bab_${newNumber}`;
-
-            let content = '';
-            if (CKEDITOR.instances[oldTextareaId]) {
-                content = CKEDITOR.instances[oldTextareaId].getData();
-                CKEDITOR.instances[oldTextareaId].destroy(true);
-            }
 
             $(field).attr('data-number', newNumber);
             $(field).find('.field-number').text(`BAB ${newNumber}`);
 
+            $(field).find('.pasal-container').attr('data-bab', newNumber);
+            $(field).find('.add-pasal-btn').attr('data-bab', newNumber);
+            $(field).find('.bagian-container').attr('data-bab', newNumber);
+            $(field).find('.add-bagian-btn').attr('data-bab', newNumber);
+
             const judulInput = $(field).find('input[name^="judul_bab"]');
             judulInput.attr('name', `judul_bab[${newNumber}]`);
             judulInput.attr('placeholder', `Masukkan Judul Bab ${newNumber}`);
-
-            const textarea = $(field).find('textarea');
-            textarea.attr('name', `isi_bab[${newNumber}]`);
-            textarea.attr('id', newTextareaId);
 
             const removeBtn = $(field).find('.remove-bab');
             removeBtn.attr('data-number', newNumber);
@@ -652,13 +986,6 @@
             } else {
                 removeBtn.show();
             }
-
-            setTimeout(function() {
-                initCKEditor(newTextareaId);
-                if (content && CKEDITOR.instances[newTextareaId]) {
-                    CKEDITOR.instances[newTextareaId].setData(content);
-                }
-            }, 200);
         });
 
         babCounter = tempBabCounter;
@@ -709,19 +1036,23 @@
         const $lampiranSkTim = $(".is-show-lampiran-sk-tim");
         const $lampiranDaftarHadir = $(".is-show-lampiran-daftar-hadir");
         const $penjelasanSection = $("#penjelasan-section");
+        const $lampiranUsulanSection = $(".lampiran-usulan-section");
 
         if (kategori_usulan_id === 1 || kategori_usulan_id === 2) {
             $peraturanBupatiSection.show();
             $memutuskanSection.hide();
             $tembusanSection.hide();
+            $lampiranUsulanSection.hide();
         } else if (kategori_usulan_id === 3) {
             $peraturanBupatiSection.hide();
             $memutuskanSection.show();
             $tembusanSection.show();
+            $lampiranUsulanSection.show();
         } else {
             $peraturanBupatiSection.hide();
             $memutuskanSection.hide();
             $tembusanSection.hide();
+            $lampiranUsulanSection.hide();
         }
 
         if (kategori_usulan_id === 1) {

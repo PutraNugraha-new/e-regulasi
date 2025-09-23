@@ -47,8 +47,42 @@ class Usulan_raperbup extends MY_Controller
                         $upload_file_lampiran_daftar_hadir = $this->upload_file($input_name_lampiran_daftar_hadir, $this->config->item('file_lampiran'), "", "doc,pdf");
 
                         if (!isset($upload_file_lampiran_daftar_hadir['error'])) {
+                            // Ambil data bab dan pasal dari form
+                            $judul_bab = $this->input->post("judul_bab"); // array
+                            $isi_pasal = $this->input->post("isi_pasal"); // array
+                            $pasal_bab_mapping = $this->input->post("pasal_bab_mapping"); // array mapping pasal ke bab
+
+                            // Buat struktur JSON untuk bab_pasal_data
+                            $bab_pasal_data = array();
+
+                            if (!empty($judul_bab)) {
+                                // Inisialisasi struktur bab
+                                foreach ($judul_bab as $bab_number => $judul) {
+                                    $bab_pasal_data[$bab_number] = array(
+                                        'judul' => $judul,
+                                        'pasal' => array()
+                                    );
+                                }
+
+                                // Distribusikan pasal ke bab yang sesuai berdasarkan mapping
+                                if (!empty($isi_pasal) && !empty($pasal_bab_mapping)) {
+                                    foreach ($isi_pasal as $pasal_number => $isi) {
+                                        $bab_number = $pasal_bab_mapping[$pasal_number];
+                                        if (isset($bab_pasal_data[$bab_number])) {
+                                            $bab_pasal_data[$bab_number]['pasal'][$pasal_number] = array(
+                                                'isi' => $isi
+                                            );
+                                        }
+                                    }
+                                }
+                            }
+
                             $data = array(
                                 "nama_peraturan" => $this->ipost("nama_peraturan"),
+                                "menimbang" => $this->input->post("menimbang"),
+                                "mengingat" => $this->input->post("mengingat"),
+                                "menetapkan" => $this->input->post("menetapkan"),
+                                "bab_pasal_data" => json_encode($bab_pasal_data), // ENCODE JSON
                                 "lampiran" => $upload_file_lampiran['data']['file_name'],
                                 "lampiran_sk_tim" => $upload_file_lampiran_sk_tim['data']['file_name'],
                                 "lampiran_daftar_hadir" => $upload_file_lampiran_daftar_hadir['data']['file_name'],
@@ -161,17 +195,12 @@ class Usulan_raperbup extends MY_Controller
         $keputusan = $this->input->post('keputusan');
         $tembusan = $this->input->post('tembusan');
         $kategori_usulan_id = decrypt_data($this->input->post('kategori_usulan', TRUE));
-
-        // Debugging: Log data yang diterima
-        log_message('debug', 'Preview PDF Data: ' . print_r([
-            'nama_peraturan' => $nama_peraturan,
-            'menimbang' => $menimbang,
-            'mengingat' => $mengingat,
-            'menetapkan' => $menetapkan,
-            'keputusan' => $keputusan,
-            'tembusan' => $tembusan,
-            'kategori_usulan_id' => $kategori_usulan_id
-        ], true));
+        $judul_bab = $this->input->post('judul_bab');
+        $judul_bagian = $this->input->post('judul_bagian');
+        $isi_pasal = $this->input->post('isi_pasal');
+        $pasal_bab_mapping = $this->input->post('pasal_bab_mapping');
+        $pasal_bagian_mapping = $this->input->post('pasal_bagian_mapping');
+        $penjelasan = $this->input->post('penjelasan');
 
         // Validasi field wajib berdasarkan kategori
         if ($kategori_usulan_id == 3) { // Kepbup
@@ -181,9 +210,9 @@ class Usulan_raperbup extends MY_Controller
                 return;
             }
         } else if ($kategori_usulan_id == 1 || $kategori_usulan_id == 2) { // Perda & Perbup
-            if (empty($nama_peraturan) || empty($menimbang) || empty($mengingat) || empty($judul_bab) || empty($isi_bab)) {
+            if (empty($nama_peraturan) || empty($menimbang) || empty($mengingat) || empty($judul_bab) || empty($isi_pasal)) {
                 header('Content-Type: application/json');
-                echo json_encode(['error' => 'Field wajib (Nama Peraturan, Menimbang, Mengingat, Judul Bab, Isi Bab) harus diisi']);
+                echo json_encode(['error' => 'Field wajib (Nama Peraturan, Menimbang, Mengingat, Judul Bab, Isi Pasal) harus diisi']);
                 return;
             }
         } else {
@@ -192,32 +221,95 @@ class Usulan_raperbup extends MY_Controller
             return;
         }
 
-        // Proses keputusan sebagai array
-        $keputusan_data = is_array($keputusan) ? $keputusan : [$keputusan];
+        // Proses data berdasarkan kategori
+        if ($kategori_usulan_id == 1 || $kategori_usulan_id == 2) {
+            // Buat struktur bab-bagian-pasal untuk Peraturan Bupati
+            $bab_pasal_data = array();
 
-        // Siapkan data untuk view
-        $data = array(
-            'nama_peraturan' => $nama_peraturan,
-            'menimbang' => $menimbang,
-            'mengingat' => $mengingat,
-            'menetapkan' => $menetapkan,
-            'memutuskan' => $keputusan_data,
-            'tembusan' => $tembusan,
-            'nomor' => '123', // Nomor sementara untuk preview
-            'tanggal' => date('d F Y', strtotime($this->datetime())),
-            'lampiran' => '' // Kosong karena hanya preview
-        );
+            if (!empty($judul_bab)) {
+                // Inisialisasi struktur bab
+                foreach ($judul_bab as $bab_number => $judul) {
+                    $bab_pasal_data[$bab_number] = array(
+                        'judul' => $judul,
+                        'pasal' => array()
+                    );
+                }
+
+                // Distribusikan pasal ke bab dan bagian yang sesuai berdasarkan mapping
+                if (!empty($isi_pasal) && !empty($pasal_bab_mapping)) {
+                    foreach ($isi_pasal as $pasal_number => $isi) {
+                        $bab_number = isset($pasal_bab_mapping[$pasal_number]) ? $pasal_bab_mapping[$pasal_number] : null;
+                        $bagian_number = isset($pasal_bagian_mapping[$pasal_number]) ? $pasal_bagian_mapping[$pasal_number] : 0;
+                        if ($bab_number && isset($bab_pasal_data[$bab_number])) {
+                            $bab_pasal_data[$bab_number]['pasal'][$pasal_number] = array(
+                                'isi' => $isi,
+                                'bagian' => $bagian_number
+                            );
+                        }
+                    }
+                }
+            }
+
+            // Data untuk template Peraturan Bupati
+            $data = array(
+                'nama_peraturan' => $nama_peraturan,
+                'menimbang' => $menimbang,
+                'mengingat' => $mengingat,
+                'menetapkan' => $menetapkan,
+                'bab_pasal_data' => $bab_pasal_data,
+                'judul_bagian' => $judul_bagian,
+                'pasal_bab_mapping' => $pasal_bab_mapping,
+                'pasal_bagian_mapping' => $pasal_bagian_mapping,
+                'penjelasan' => $penjelasan,
+                'nomor' => '123', // Nomor sementara untuk preview
+                'tanggal' => date('d F Y', strtotime($this->datetime())),
+                'lampiran' => '' // Kosong karena hanya preview
+            );
+        } else {
+            // Proses keputusan sebagai array untuk Keputusan Bupati
+            $keputusan_data = is_array($keputusan) ? $keputusan : [$keputusan];
+
+            // Data untuk template Keputusan Bupati
+            $data = array(
+                'nama_peraturan' => $nama_peraturan,
+                'menimbang' => $menimbang,
+                'mengingat' => $mengingat,
+                'menetapkan' => $menetapkan,
+                'memutuskan' => $keputusan_data,
+                'tembusan' => $tembusan,
+                'nomor' => '123', // Nomor sementara untuk preview
+                'tanggal' => date('d F Y', strtotime($this->datetime())),
+                'lampiran' => '' // Kosong karena hanya preview
+            );
+        }
+
 
         // Pilih template berdasarkan kategori usulan
         $template = ($kategori_usulan_id == 1 || $kategori_usulan_id == 2) ? 'template/perbup' : 'template/kepbup';
         $html = $this->load->view($template, $data, TRUE);
 
         // Konfigurasi mPDF
-        $this->mpdf_library->mpdf->SetTitle('Preview Keputusan Bupati Katingan');
-        $this->mpdf_library->mpdf->WriteHTML($html);
+        $this->mpdf_library->mpdf->SetTitle('Preview Peraturan Bupati Katingan');
+        if ($kategori_usulan_id == 1 || $kategori_usulan_id == 2) {
+            // Atur header dengan nomor halaman untuk halaman genap dan ganjil
+            $header_html = '- {PAGENO} -';
+            $this->mpdf_library->mpdf->SetHTMLHeader($header_html, 'E', true);
+            $this->mpdf_library->mpdf->SetHTMLHeader($header_html, 'O', true);
+
+            // Paksa header di halaman pertama menjadi kosong
+            $this->mpdf_library->mpdf->SetHTMLHeader('', 'first');
+
+            // Tambahkan konten utama
+            $this->mpdf_library->mpdf->WriteHTML($html);
+        } else {
+            $this->mpdf_library->mpdf->WriteHTML($html);
+        }
 
         // Nama file PDF sementara untuk preview
-        $pdf_file_name = 'Preview_Keputusan_Bupati_' . time() . '.pdf';
+        $pdf_file_name = 'Preview_Peraturan_Bupati_' . time() . '.pdf';
+
+        // Bersihkan output buffer sebelum mengirim header PDF
+        ob_clean();
 
         // Output PDF untuk preview (inline)
         header('Content-Type: application/pdf');
@@ -225,6 +317,7 @@ class Usulan_raperbup extends MY_Controller
         header('Content-Transfer-Encoding: binary');
         header('Accept-Ranges: bytes');
         $this->mpdf_library->mpdf->Output($pdf_file_name, 'I');
+        exit; // Pastikan tidak ada kode lain yang dieksekusi setelah ini
     }
 
     public function generate_pdf_raperbup($id_usulan_raperbup, $trx_id, $output_mode = 'F')
@@ -247,19 +340,43 @@ class Usulan_raperbup extends MY_Controller
             return;
         }
 
-        // Siapkan data untuk view
-        $data = array(
-            'nama_peraturan' => $data_usulan->nama_peraturan,
-            'menimbang' => $data_usulan->menimbang,
-            'mengingat' => $data_usulan->mengingat,
-            'menetapkan' => $data_usulan->menetapkan,
-            'memutuskan' => json_decode($data_usulan->memutuskan, true),
-            'tembusan' => $data_usulan->tembusan,
-            'nomor' => '123',
-            'tanggal' => date('d F Y', strtotime($this->datetime())),
-            'lampiran' => $data_usulan->lampiran,
-            'lampiran_usulan' => $data_usulan->lampiran_usulan
-        );
+        // Siapkan data untuk view berdasarkan kategori
+        if ($data_usulan->kategori_usulan_id == 1 || $data_usulan->kategori_usulan_id == 2) {
+            // Untuk Perda & Perbup - decode bab_pasal_data
+            $bab_pasal_data = json_decode($data_usulan->bab_pasal_data, true);
+
+            $data = array(
+                'nama_peraturan' => $data_usulan->nama_peraturan,
+                'menimbang' => $data_usulan->menimbang,
+                'mengingat' => $data_usulan->mengingat,
+                'menetapkan' => $data_usulan->menetapkan,
+                'bab_pasal_data' => $bab_pasal_data,
+                'nomor' => '123',
+                'tanggal' => date('d F Y', strtotime($this->datetime())),
+                'lampiran' => $data_usulan->lampiran,
+                'lampiran_sk_tim' => isset($data_usulan->lampiran_sk_tim) ? $data_usulan->lampiran_sk_tim : '',
+                'lampiran_daftar_hadir' => isset($data_usulan->lampiran_daftar_hadir) ? $data_usulan->lampiran_daftar_hadir : ''
+            );
+
+            // Tambahkan penjelasan hanya untuk Perda (kategori_usulan_id = 1)
+            if ($data_usulan->kategori_usulan_id == 1) {
+                $data['penjelasan'] = isset($data_usulan->penjelasan) ? $data_usulan->penjelasan : '';
+            }
+        } else {
+            // Untuk Kepbup
+            $data = array(
+                'nama_peraturan' => $data_usulan->nama_peraturan,
+                'menimbang' => $data_usulan->menimbang,
+                'mengingat' => $data_usulan->mengingat,
+                'menetapkan' => $data_usulan->menetapkan,
+                'memutuskan' => json_decode($data_usulan->memutuskan, true),
+                'tembusan' => $data_usulan->tembusan,
+                'nomor' => '123',
+                'tanggal' => date('d F Y', strtotime($this->datetime())),
+                'lampiran' => $data_usulan->lampiran,
+                'lampiran_usulan' => $data_usulan->lampiran_usulan
+            );
+        }
 
         // Load view template berdasarkan kategori usulan
         $template = ($data_usulan->kategori_usulan_id == 1 || $data_usulan->kategori_usulan_id == 2) ? 'template/perbup' : 'template/kepbup';
@@ -267,6 +384,18 @@ class Usulan_raperbup extends MY_Controller
 
         // Konfigurasi mPDF untuk dokumen utama
         $this->mpdf_library->mpdf->SetTitle('Keputusan Bupati Katingan');
+
+        // Konfigurasi header khusus untuk Perda & Perbup (seperti di preview)
+        if ($data_usulan->kategori_usulan_id == 1 || $data_usulan->kategori_usulan_id == 2) {
+            // Header dengan nomor halaman untuk halaman genap dan ganjil
+            $header_html = '- {PAGENO} -';
+            $this->mpdf_library->mpdf->SetHTMLHeader($header_html, 'E', true);
+            $this->mpdf_library->mpdf->SetHTMLHeader($header_html, 'O', true);
+
+            // Paksa header di halaman pertama menjadi kosong
+            $this->mpdf_library->mpdf->SetHTMLHeader('', 'first');
+        }
+
         $this->mpdf_library->mpdf->WriteHTML($html);
 
         // Nama file PDF sementara untuk dokumen utama
@@ -361,8 +490,18 @@ class Usulan_raperbup extends MY_Controller
                     return;
                 }
             } else {
-                // Untuk kategori lain, gunakan instance mPDF untuk dokumen utama
-                $this->mpdf_library->mpdf->Output($pdf_file_name, $output_mode);
+                // Untuk kategori lain (Perda & Perbup), baca file dari disk karena sudah disimpan
+                if (file_exists($pdf_path)) {
+                    header('Content-Length: ' . filesize($pdf_path));
+                    readfile($pdf_path);
+                    exit;
+                } else {
+                    log_message('error', "File PDF tidak ditemukan: $pdf_path");
+                    $this->session->set_flashdata('message', 'File PDF tidak ditemukan');
+                    $this->session->set_flashdata('type-alert', 'danger');
+                    redirect('usulan_raperbup');
+                    return;
+                }
             }
         }
         // Jika output_mode adalah 'F' (File), hanya simpan file tanpa output ke browser
