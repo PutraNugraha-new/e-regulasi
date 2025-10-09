@@ -83,6 +83,7 @@ class Usulan_raperbup extends MY_Controller
                                 "mengingat" => $this->input->post("mengingat"),
                                 "menetapkan" => $this->input->post("menetapkan"),
                                 "bab_pasal_data" => json_encode($bab_pasal_data), // ENCODE JSON
+                                "penjelasan" => $this->input->post("penjelasan"),
                                 "lampiran" => $upload_file_lampiran['data']['file_name'],
                                 "lampiran_sk_tim" => $upload_file_lampiran_sk_tim['data']['file_name'],
                                 "lampiran_daftar_hadir" => $upload_file_lampiran_daftar_hadir['data']['file_name'],
@@ -285,7 +286,7 @@ class Usulan_raperbup extends MY_Controller
 
 
         // Pilih template berdasarkan kategori usulan
-        $template = ($kategori_usulan_id == 1 || $kategori_usulan_id == 2) ? 'template/perbup' : 'template/kepbup';
+        $template = ($kategori_usulan_id == 1) ? 'template/perda' : (($kategori_usulan_id == 2) ? 'template/perbup' : 'template/kepbup');
         $html = $this->load->view($template, $data, TRUE);
 
         // Konfigurasi mPDF
@@ -320,6 +321,7 @@ class Usulan_raperbup extends MY_Controller
         exit; // Pastikan tidak ada kode lain yang dieksekusi setelah ini
     }
 
+
     public function generate_pdf_raperbup($id_usulan_raperbup, $trx_id, $output_mode = 'F')
     {
         // Ambil data usulan berdasarkan ID
@@ -351,6 +353,7 @@ class Usulan_raperbup extends MY_Controller
                 'mengingat' => $data_usulan->mengingat,
                 'menetapkan' => $data_usulan->menetapkan,
                 'bab_pasal_data' => $bab_pasal_data,
+                'penjelasan' => isset($data_usulan->penjelasan) ? $data_usulan->penjelasan : '',
                 'nomor' => '123',
                 'tanggal' => date('d F Y', strtotime($this->datetime())),
                 'lampiran' => $data_usulan->lampiran,
@@ -379,7 +382,7 @@ class Usulan_raperbup extends MY_Controller
         }
 
         // Load view template berdasarkan kategori usulan
-        $template = ($data_usulan->kategori_usulan_id == 1 || $data_usulan->kategori_usulan_id == 2) ? 'template/perbup' : 'template/kepbup';
+        $template = ($data_usulan->kategori_usulan_id == 1) ? 'template/perda' : (($data_usulan->kategori_usulan_id == 2) ? 'template/perbup' : 'template/kepbup');
         $html = $this->load->view($template, $data, TRUE);
 
         // Konfigurasi mPDF untuk dokumen utama
@@ -519,6 +522,8 @@ class Usulan_raperbup extends MY_Controller
                 )
             )
         );
+        // var_dump($data_master);
+        // die;
 
         if (!$data_master) {
             $this->page_error();
@@ -544,7 +549,6 @@ class Usulan_raperbup extends MY_Controller
                         )
                     )
                 );
-
                 $data['content'] = $data_master[0];
 
                 $ekstensi_file_usulan = explode(".", $file_usulan_raperbup->file_usulan_raperbup);
@@ -569,6 +573,7 @@ class Usulan_raperbup extends MY_Controller
                 }
 
                 $data['breadcrumb'] = ["header_content" => "Usulan", "breadcrumb_link" => [['link' => true, 'url' => base_url() . 'usulan_raperbup', 'content' => 'Usulan', 'is_active' => false], ['link' => false, 'content' => 'Ubah Usulan', 'is_active' => true]]];
+
                 $this->execute('form_usulan_raperbup', $data);
             } else {
                 $nama_file_usulan = $file_usulan_raperbup->file_usulan_raperbup;
@@ -638,6 +643,9 @@ class Usulan_raperbup extends MY_Controller
                     'updated_at' => $this->datetime(),
                     "id_user_updated" => $this->session->userdata("id_user")
                 );
+
+                var_dump($data);
+                die;
 
                 $this->usulan_raperbup_model->edit(decrypt_data($id_usulan_raperbup), $data);
 
