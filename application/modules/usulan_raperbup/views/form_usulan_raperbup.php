@@ -527,7 +527,7 @@
                     </div>
                     <div class="text-right">
                         <button type="button" id="preview-btn" class="btn btn-danger mr-2">Preview PDF <i class="fas fa-eye ml-2"></i></button>
-                        <button type="submit" class="btn btn-primary">Simpan & Download <i class="fas fa-paper-plane ml-2"></i></button>
+                        <button type="submit" class="btn btn-primary">Simpan <i class="fas fa-paper-plane ml-2"></i></button>
                     </div>
                     <?php echo form_close(); ?>
                 </div>

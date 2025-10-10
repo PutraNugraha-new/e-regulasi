@@ -522,8 +522,6 @@ class Usulan_raperbup extends MY_Controller
                 )
             )
         );
-        // var_dump($data_master);
-        // die;
 
         if (!$data_master) {
             $this->page_error();
@@ -572,6 +570,12 @@ class Usulan_raperbup extends MY_Controller
                     $data['url_preview_lampiran_daftar_hadir'] = "<button type='button' class='btn btn-primary mb-2' onclick=\"view_detail('" . base_url() . $this->config->item("file_lampiran") . "/" . $data_master[0]->lampiran_daftar_hadir . "','" . $ekstensi_file_lampiran_daftar_hadir[1] . "')\">View</button>";
                 }
 
+                $data['url_preview_lampiran_usulan'] = "";
+                if ($data_master[0]->lampiran_usulan) {
+                    $ekstensi_file_lampiran_usulan = explode(".", $data_master[0]->lampiran_usulan);
+                    $data['url_preview_lampiran_usulan'] = "<button type='button' class='btn btn-primary mb-2' onclick=\"view_detail('" . base_url() . $this->config->item("file_lampiran") . "/" . $data_master[0]->lampiran_usulan . "','" . $ekstensi_file_lampiran_usulan[1] . "')\">View</button>";
+                }
+
                 $data['breadcrumb'] = ["header_content" => "Usulan", "breadcrumb_link" => [['link' => true, 'url' => base_url() . 'usulan_raperbup', 'content' => 'Usulan', 'is_active' => false], ['link' => false, 'content' => 'Ubah Usulan', 'is_active' => true]]];
 
                 $this->execute('form_usulan_raperbup', $data);
@@ -595,57 +599,139 @@ class Usulan_raperbup extends MY_Controller
                     }
                 }
 
-                $nama_file_lampiran = $data_master[0]->lampiran;
-                if (!empty($_FILES['file_lampiran']['name'])) {
-                    $input_name_lampiran = "file_lampiran";
-                    $upload_file_lampiran = $this->upload_file($input_name_lampiran, $this->config->item('file_lampiran'), "", "doc");
-                    if (isset($upload_file_lampiran['error'])) {
-                        $this->session->set_flashdata('message', $upload_file_lampiran['error']);
-                        $this->session->set_flashdata('type-alert', 'danger');
-                        redirect('usulan_raperbup/edit_usulan_raperbup/' . $id_usulan_raperbup);
+                // Cek kategori usulan untuk menentukan field yang perlu diupdate
+                $kategori_id = decrypt_data($this->ipost("kategori_usulan"));
+
+                if (in_array($kategori_id, array("1", "2"))) {
+                    // Perda & Perbup
+                    $nama_file_lampiran = $data_master[0]->lampiran;
+                    if (!empty($_FILES['file_lampiran']['name'])) {
+                        $input_name_lampiran = "file_lampiran";
+                        $upload_file_lampiran = $this->upload_file($input_name_lampiran, $this->config->item('file_lampiran'), "", "doc,pdf");
+                        if (isset($upload_file_lampiran['error'])) {
+                            $this->session->set_flashdata('message', $upload_file_lampiran['error']);
+                            $this->session->set_flashdata('type-alert', 'danger');
+                            redirect('usulan_raperbup/edit_usulan_raperbup/' . $id_usulan_raperbup);
+                        }
+
+                        $nama_file_lampiran = $upload_file_lampiran['data']['file_name'];
                     }
 
-                    $nama_file_lampiran = $upload_file_lampiran['data']['file_name'];
-                }
+                    $nama_file_lampiran_sk_tim = $data_master[0]->lampiran_sk_tim;
+                    if (!empty($_FILES['file_lampiran_sk_tim']['name'])) {
+                        $input_name_lampiran_sk_tim = "file_lampiran_sk_tim";
+                        $upload_file_lampiran_sk_tim = $this->upload_file($input_name_lampiran_sk_tim, $this->config->item('file_lampiran'), "", "doc,pdf");
+                        if (isset($upload_file_lampiran_sk_tim['error'])) {
+                            $this->session->set_flashdata('message', $upload_file_lampiran_sk_tim['error']);
+                            $this->session->set_flashdata('type-alert', 'danger');
+                            redirect('usulan_raperbup/edit_usulan_raperbup/' . $id_usulan_raperbup);
+                        }
 
-                $nama_file_lampiran_sk_tim = $data_master[0]->lampiran_sk_tim;
-                if (!empty($_FILES['file_lampiran_sk_tim']['name'])) {
-                    $input_name_lampiran_sk_tim = "file_lampiran_sk_tim";
-                    $upload_file_lampiran_sk_tim = $this->upload_file($input_name_lampiran_sk_tim, $this->config->item('file_lampiran'), "", "doc");
-                    if (isset($upload_file_lampiran_sk_tim['error'])) {
-                        $this->session->set_flashdata('message', $upload_file_lampiran_sk_tim['error']);
-                        $this->session->set_flashdata('type-alert', 'danger');
-                        redirect('usulan_raperbup/edit_usulan_raperbup/' . $id_usulan_raperbup);
+                        $nama_file_lampiran_sk_tim = $upload_file_lampiran_sk_tim['data']['file_name'];
                     }
 
-                    $nama_file_lampiran_sk_tim = $upload_file_lampiran_sk_tim['data']['file_name'];
-                }
+                    $nama_file_lampiran_daftar_hadir = $data_master[0]->lampiran_daftar_hadir;
+                    if (!empty($_FILES['file_lampiran_daftar_hadir']['name'])) {
+                        $input_name_lampiran_daftar_hadir = "file_lampiran_daftar_hadir";
+                        $upload_file_lampiran_daftar_hadir = $this->upload_file($input_name_lampiran_daftar_hadir, $this->config->item('file_lampiran'), "", "doc,pdf");
+                        if (isset($upload_file_lampiran_daftar_hadir['error'])) {
+                            $this->session->set_flashdata('message', $upload_file_lampiran_daftar_hadir['error']);
+                            $this->session->set_flashdata('type-alert', 'danger');
+                            redirect('usulan_raperbup/edit_usulan_raperbup/' . $id_usulan_raperbup);
+                        }
 
-                $nama_file_lampiran_daftar_hadir = $data_master[0]->lampiran_daftar_hadir;
-                if (!empty($_FILES['file_lampiran_daftar_hadir']['name'])) {
-                    $input_name_lampiran_daftar_hadir = "file_lampiran_daftar_hadir";
-                    $upload_file_lampiran_daftar_hadir = $this->upload_file($input_name_lampiran_daftar_hadir, $this->config->item('file_lampiran'), "", "doc");
-                    if (isset($upload_file_lampiran_daftar_hadir['error'])) {
-                        $this->session->set_flashdata('message', $upload_file_lampiran_daftar_hadir['error']);
-                        $this->session->set_flashdata('type-alert', 'danger');
-                        redirect('usulan_raperbup/edit_usulan_raperbup/' . $id_usulan_raperbup);
+                        $nama_file_lampiran_daftar_hadir = $upload_file_lampiran_daftar_hadir['data']['file_name'];
                     }
 
-                    $nama_file_lampiran_daftar_hadir = $upload_file_lampiran_daftar_hadir['data']['file_name'];
+                    // Ambil data bab dan pasal dari form
+                    $judul_bab = $this->input->post("judul_bab"); // array
+                    $isi_pasal = $this->input->post("isi_pasal"); // array
+                    $pasal_bab_mapping = $this->input->post("pasal_bab_mapping"); // array mapping pasal ke bab
+
+                    // Buat struktur JSON untuk bab_pasal_data
+                    $bab_pasal_data = array();
+
+                    if (!empty($judul_bab)) {
+                        // Inisialisasi struktur bab
+                        foreach ($judul_bab as $bab_number => $judul) {
+                            $bab_pasal_data[$bab_number] = array(
+                                'judul' => $judul,
+                                'pasal' => array()
+                            );
+                        }
+
+                        // Distribusikan pasal ke bab yang sesuai berdasarkan mapping
+                        if (!empty($isi_pasal) && !empty($pasal_bab_mapping)) {
+                            foreach ($isi_pasal as $pasal_number => $isi) {
+                                $bab_number = $pasal_bab_mapping[$pasal_number];
+                                if (isset($bab_pasal_data[$bab_number])) {
+                                    $bab_pasal_data[$bab_number]['pasal'][$pasal_number] = array(
+                                        'isi' => $isi
+                                    );
+                                }
+                            }
+                        }
+                    }
+
+                    $data = array(
+                        "nama_peraturan" => $this->ipost("nama_peraturan"),
+                        "menimbang" => $this->input->post("menimbang"),
+                        "mengingat" => $this->input->post("mengingat"),
+                        "menetapkan" => $this->input->post("menetapkan"),
+                        "bab_pasal_data" => json_encode($bab_pasal_data),
+                        "penjelasan" => $this->input->post("penjelasan"),
+                        "lampiran" => $nama_file_lampiran,
+                        "lampiran_sk_tim" => $nama_file_lampiran_sk_tim,
+                        "lampiran_daftar_hadir" => $nama_file_lampiran_daftar_hadir,
+                        "kategori_usulan_id" => $kategori_id,
+                        'updated_at' => $this->datetime(),
+                        "id_user_updated" => $this->session->userdata("id_user")
+                    );
+                } else {
+                    // Kepbup
+                    $nama_file_lampiran = $data_master[0]->lampiran;
+                    if (!empty($_FILES['file_lampiran']['name'])) {
+                        $input_name_lampiran = "file_lampiran";
+                        $upload_file_lampiran = $this->upload_file($input_name_lampiran, $this->config->item('file_lampiran'), "", "doc,pdf");
+                        if (isset($upload_file_lampiran['error'])) {
+                            $this->session->set_flashdata('message', $upload_file_lampiran['error']);
+                            $this->session->set_flashdata('type-alert', 'danger');
+                            redirect('usulan_raperbup/edit_usulan_raperbup/' . $id_usulan_raperbup);
+                        }
+
+                        $nama_file_lampiran = $upload_file_lampiran['data']['file_name'];
+                    }
+
+                    $nama_file_lampiran_usulan = $data_master[0]->lampiran_usulan;
+                    if (!empty($_FILES['file_lampiran_usulan']['name'])) {
+                        $input_name_lampiran_usulan = "file_lampiran_usulan";
+                        $upload_file_lampiran_usulan = $this->upload_file($input_name_lampiran_usulan, $this->config->item('file_lampiran'), "", "pdf");
+                        if (isset($upload_file_lampiran_usulan['error'])) {
+                            $this->session->set_flashdata('message', $upload_file_lampiran_usulan['error']);
+                            $this->session->set_flashdata('type-alert', 'danger');
+                            redirect('usulan_raperbup/edit_usulan_raperbup/' . $id_usulan_raperbup);
+                        }
+
+                        $nama_file_lampiran_usulan = $upload_file_lampiran_usulan['data']['file_name'];
+                    }
+
+                    $keputusan = $this->input->post("keputusan");
+                    $keputusan_string = is_array($keputusan) ? json_encode($keputusan) : $keputusan;
+
+                    $data = array(
+                        "nama_peraturan" => $this->ipost("nama_peraturan"),
+                        "menimbang" => $this->input->post("menimbang"),
+                        "mengingat" => $this->input->post("mengingat"),
+                        "menetapkan" => $this->input->post("menetapkan"),
+                        "memutuskan" => $keputusan_string,
+                        "tembusan" => $this->input->post("tembusan"),
+                        "lampiran" => $nama_file_lampiran,
+                        "lampiran_usulan" => $nama_file_lampiran_usulan,
+                        "kategori_usulan_id" => $kategori_id,
+                        'updated_at' => $this->datetime(),
+                        "id_user_updated" => $this->session->userdata("id_user")
+                    );
                 }
-
-                $data = array(
-                    "nama_peraturan" => $this->ipost("nama_peraturan"),
-                    "lampiran" => $nama_file_lampiran,
-                    "lampiran_sk_tim" => $nama_file_lampiran_sk_tim,
-                    "lampiran_daftar_hadir" => $nama_file_lampiran_daftar_hadir,
-                    "kategori_usulan_id" => decrypt_data($this->ipost("kategori_usulan")),
-                    'updated_at' => $this->datetime(),
-                    "id_user_updated" => $this->session->userdata("id_user")
-                );
-
-                var_dump($data);
-                die;
 
                 $this->usulan_raperbup_model->edit(decrypt_data($id_usulan_raperbup), $data);
 
@@ -657,6 +743,9 @@ class Usulan_raperbup extends MY_Controller
 
                 $status = $this->trx_raperbup_model->edit($data_master[0]->id_trx_raperbup, $data_trx);
                 if ($status) {
+                    // Regenerate PDF setelah edit
+                    $this->generate_pdf_raperbup(decrypt_data($id_usulan_raperbup), $data_master[0]->id_trx_raperbup, 'F');
+
                     $this->session->set_flashdata('message', 'Data berhasil diubah');
                     $this->session->set_flashdata('type-alert', 'success');
                     redirect('usulan_raperbup');
