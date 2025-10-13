@@ -6,7 +6,7 @@
             <?php
 $level_user_id = $this->session->userdata('level_user_id');
 ?>
-            <?php if ($level_user_id == 6): ?>
+            <?php if ($level_user_id == 4): ?>
             <div class="col-lg-4 col-md-12 col-12 col-sm-12">
               <div class="card">
                 <div class="card-header">

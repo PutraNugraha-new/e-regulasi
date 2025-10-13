@@ -97,7 +97,7 @@
 					<?php
 					$level_user_id = $this->session->userdata('level_user_id');
 					?>
-					<?php if ($level_user_id == 6): ?>
+					<?php if ($level_user_id == 4): ?>
 
 						<?php
 						$query = $this->db->query("
