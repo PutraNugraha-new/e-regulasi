@@ -19,14 +19,18 @@
                         <div class="card-header">
                             <h4><span class='last_file'></span></h4>
                             <div class="card-header-action">
-                                <a href="#disposisi" onclick="disposisi_monitoring_raperbup()" class="btn btn-info">Disposisi</a>
-                                <a href="#disetujui" onclick="change_status_pemeriksaan_kasubag('1')" class="btn btn-info">Disetujui</a>
-                                <a href="#tidakDisetujui" onclick="change_status_ditolak('2')" class="btn btn-info">Tidak Disetujui</a>
+                                <a href="#disposisi" onclick="disposisi_monitoring_raperbup()"
+                                    class="btn btn-info">Disposisi</a>
+                                <a href="#disetujui" onclick="change_status_pemeriksaan_kasubag('1')"
+                                    class="btn btn-info">Disetujui</a>
+                                <a href="#tidakDisetujui" onclick="change_status_ditolak('2')"
+                                    class="btn btn-info">Tidak Disetujui</a>
                             </div>
                         </div>
                         <div class="card-body data_detail_peraturan">
                             <div class="table-responsive">
-                                <table id="datatableUsulanRaperbup" class="table datatable-save-state table-bordered table-striped">
+                                <table id="datatableUsulanRaperbup"
+                                    class="table datatable-save-state table-bordered table-striped">
                                     <thead>
                                         <tr>
                                             <th>File</th>
@@ -90,7 +94,8 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title">Catatan Disposisi</h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close" onclick="get_detail_peraturan()">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"
+                    onclick="get_detail_peraturan()">
                     <span aria-hidden="true">&times;</span>
                 </button>
             </div>
@@ -110,7 +115,8 @@
             </div>
             <div class="modal-footer">
                 <button type="submit" class="btn btn-primary" onclick="save_disposisi()">Simpan</button>
-                <button type="button" class="btn btn-secondary" data-dismiss="modal" onclick="get_detail_peraturan()">Close</button>
+                <button type="button" class="btn btn-secondary" data-dismiss="modal"
+                    onclick="get_detail_peraturan()">Close</button>
             </div>
         </div>
     </div>
@@ -121,7 +127,8 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title">Catatan</h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close" onclick="get_detail_peraturan()">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"
+                    onclick="get_detail_peraturan()">
                     <span aria-hidden="true">&times;</span>
                 </button>
             </div>
@@ -129,13 +136,15 @@
                 <div class="form-group row">
                     <label class="col-form-label col-lg-2">Catatan</label>
                     <div class="col-lg-10">
-                        <textarea style="height: 100px;" class="form-control" name="catatan_tidak_setuju" require></textarea>
+                        <textarea style="height: 100px;" class="form-control" name="catatan_tidak_setuju"
+                            require></textarea>
                     </div>
                 </div>
             </div>
             <div class="modal-footer">
                 <button type="submit" class="btn btn-primary" onclick="save_tidak_setujui()">Simpan</button>
-                <button type="button" class="btn btn-secondary" data-dismiss="modal" onclick="get_detail_peraturan()">Close</button>
+                <button type="button" class="btn btn-secondary" data-dismiss="modal"
+                    onclick="get_detail_peraturan()">Close</button>
             </div>
         </div>
     </div>
@@ -145,17 +154,17 @@
     let datatableUsulanRaperbup = $("#datatableUsulanRaperbup").DataTable({
         "ordering": false,
         "columns": [{
-                "width": "5%"
-            },
-            {
-                "width": "35%"
-            },
-            {
-                "width": "20%"
-            },
-            {
-                "width": "10%"
-            }
+            "width": "5%"
+        },
+        {
+            "width": "35%"
+        },
+        {
+            "width": "20%"
+        },
+        {
+            "width": "10%"
+        }
         ]
     });
     $("a[href$='#disposisi']").hide();
@@ -168,13 +177,13 @@
         $.ajax({
             url: base_url + 'monitoring_raperbup/request/get_data_peraturan',
             type: 'GET',
-            beforeSend: function() {
+            beforeSend: function () {
                 HoldOn.open(optionsHoldOn);
             },
-            success: function(response) {
+            success: function (response) {
                 let list_peraturan = "";
                 if (response.length != 0) {
-                    $.each(response, function(index, value) {
+                    $.each(response, function (index, value) {
                         list_peraturan += "<li class='nav-item'><a href='#' class='nav-link list-peraturan-active' onclick=\"show_detail_peraturan('" + value.id_encrypt + "',this)\">" + value.nama_peraturan + "</a></li>"
                     });
                     $(".list-peraturan").html(list_peraturan);
@@ -184,7 +193,7 @@
                 }
 
             },
-            complete: function() {
+            complete: function () {
                 HoldOn.close();
             }
         });
@@ -207,11 +216,11 @@
                     id_peraturan: id_peraturan
                 },
                 type: 'GET',
-                beforeSend: function() {
+                beforeSend: function () {
                     HoldOn.open(optionsHoldOn);
                 },
-                success: function(response) {
-                    $.each(response, function(index, value) {
+                success: function (response) {
+                    $.each(response, function (index, value) {
                         datatableUsulanRaperbup.row.add([
                             value.file,
                             value.status_terakhir,
@@ -220,7 +229,7 @@
                         ]).draw(false);
                     });
                 },
-                complete: function() {
+                complete: function () {
                     HoldOn.close();
                 }
             });
@@ -237,12 +246,12 @@
         $.ajax({
             url: base_url + 'monitoring_raperbup/request/get_data_kasubbag',
             type: 'POST',
-            beforeSend: function() {
+            beforeSend: function () {
                 HoldOn.open(optionsHoldOn);
             },
-            success: function(response) {
+            success: function (response) {
                 let html = "<option value=''>-- Pilih Kasubbag --</option>";
-                $.each(response, function(index, value) {
+                $.each(response, function (index, value) {
                     let selected = "";
                     if (id_selected) {
                         if (id_selected == value.id_user) {
@@ -253,7 +262,7 @@
                 });
                 $("select[name='id_kasubbag']").html(html);
             },
-            complete: function(response) {
+            complete: function (response) {
                 HoldOn.close();
             }
         });
@@ -277,10 +286,10 @@
                     id_kasubbag: id_kasubbag
                 },
                 type: 'POST',
-                beforeSend: function() {
+                beforeSend: function () {
                     HoldOn.open(optionsHoldOn);
                 },
-                success: function(response) {
+                success: function (response) {
                     get_detail_peraturan();
                     $("#showPanelDisposisi").modal("toggle");
                     $("select[name='id_kasubbag'").val("");
@@ -291,7 +300,7 @@
                         swal('Gagal', 'Status tidak bisa diubah', 'error');
                     }
                 },
-                complete: function(response) {
+                complete: function (response) {
                     HoldOn.close();
                 }
             });
@@ -308,10 +317,10 @@
                 status_disposisi: status
             },
             type: 'POST',
-            beforeSend: function() {
+            beforeSend: function () {
                 HoldOn.open(optionsHoldOn);
             },
-            success: function(response) {
+            success: function (response) {
                 if (response) {
                     get_detail_peraturan();
                     swal('Berhasil', 'Status berhasil diubah', 'success');
@@ -320,7 +329,7 @@
                     swal('Gagal', 'Status tidak bisa diubah', 'error');
                 }
             },
-            complete: function(response) {
+            complete: function (response) {
                 HoldOn.close();
             }
         });
@@ -346,10 +355,10 @@
                     catatan: catatan
                 },
                 type: 'POST',
-                beforeSend: function() {
+                beforeSend: function () {
                     HoldOn.open(optionsHoldOn);
                 },
-                success: function(response) {
+                success: function (response) {
                     get_detail_peraturan();
                     $("#showPanelTidakSetuju").modal("toggle");
                     $("textarea[name='catatan_tidak_setuju']").html("");
@@ -359,7 +368,7 @@
                         swal('Gagal', 'Status tidak bisa diubah', 'error');
                     }
                 },
-                complete: function(response) {
+                complete: function (response) {
                     HoldOn.close();
                 }
             });
@@ -375,17 +384,17 @@
                 id_peraturan: id_peraturan
             },
             type: 'GET',
-            beforeSend: function() {
+            beforeSend: function () {
                 HoldOn.open(optionsHoldOn);
             },
-            success: function(response) {
+            success: function (response) {
                 if (response) {
                     $("a[href$='#disposisi']").hide();
                 } else {
                     $("a[href$='#disposisi']").show();
                 }
             },
-            complete: function() {
+            complete: function () {
                 HoldOn.close();
             }
         });
@@ -401,10 +410,10 @@
                 id_peraturan: id_peraturan
             },
             type: 'GET',
-            beforeSend: function() {
+            beforeSend: function () {
                 HoldOn.open(optionsHoldOn);
             },
-            success: function(response) {
+            success: function (response) {
                 if (response) {
                     $("a[href$='#disetujui']").show();
                     $("a[href$='#tidakDisetujui']").show();
@@ -413,7 +422,7 @@
                     $("a[href$='#tidakDisetujui']").hide();
                 }
             },
-            complete: function() {
+            complete: function () {
                 HoldOn.close();
             }
         });
@@ -421,11 +430,11 @@
 
     function confirm_delete(id_trx_raperbup) {
         swal({
-                title: 'Apakah anda yakin menghapus data ini?',
-                icon: 'warning',
-                buttons: true,
-                dangerMode: true,
-            })
+            title: 'Apakah anda yakin menghapus data ini?',
+            icon: 'warning',
+            buttons: true,
+            dangerMode: true,
+        })
             .then((willDelete) => {
                 if (willDelete) {
                     $.ajax({
@@ -434,10 +443,10 @@
                             id_trx_raperbup: id_trx_raperbup
                         },
                         type: 'GET',
-                        beforeSend: function() {
+                        beforeSend: function () {
                             HoldOn.open(optionsHoldOn);
                         },
-                        success: function(response) {
+                        success: function (response) {
                             if (response) {
                                 get_detail_peraturan();
                                 swal('Berhasil', 'Data berhasil dihapus', 'success');
@@ -446,12 +455,12 @@
                                 swal('Gagal', 'Data tidak bisa dihapus', 'error');
                             }
                         },
-                        complete: function(response) {
+                        complete: function (response) {
                             HoldOn.close();
                         }
                     });
                 } else {
-                    swal('Batal', 'Data masih tersimpan!', 'error').then(function(results) {
+                    swal('Batal', 'Data masih tersimpan!', 'error').then(function (results) {
                         HoldOn.close();
                         if (result.results) {
                             get_detail_peraturan();
@@ -469,13 +478,13 @@
                 id_peraturan: id_peraturan
             },
             type: 'GET',
-            beforeSend: function() {
+            beforeSend: function () {
                 HoldOn.open(optionsHoldOn);
             },
-            success: function(response) {
+            success: function (response) {
                 $(".last_file").html("File : " + response);
             },
-            complete: function(response) {
+            complete: function (response) {
                 HoldOn.close();
             }
         });
