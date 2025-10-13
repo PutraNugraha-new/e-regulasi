@@ -146,12 +146,7 @@
                             <select class="form-control" name="kategori_usulan" onchange="check_lampiran()">
                                 <?php
                                 foreach ($kategori_usulan as $key => $value) {
-                                    $selected = "";
-                                    if (!empty($content)) {
-                                        if ($value->id_kategori_usulan == $content->kategori_usulan_id) {
-                                            $selected = "selected";
-                                        }
-                                    }
+                                    $selected = !empty($content) && $value->id_kategori_usulan == $content->kategori_usulan_id ? "selected" : "";
                                 ?>
                                     <option <?php echo $selected; ?> value="<?php echo encrypt_data($value->id_kategori_usulan); ?>" data-id="<?php echo $value->id_kategori_usulan; ?>"><?php echo $value->nama_kategori; ?></option>
                                 <?php
@@ -163,35 +158,25 @@
                     <div class="form-group row">
                         <label class="col-form-label col-lg-2">Tentang <span class="text-danger">*</span></label>
                         <div class="col-lg-10">
-                            <input required type="text" class="form-control" name="nama_peraturan" value="<?php echo !empty($content) ? $content->nama_peraturan : ""; ?>">
+                            <input required type="text" class="form-control" name="nama_peraturan" value="<?php echo !empty($content) ? htmlspecialchars($content->nama_peraturan) : ""; ?>">
                         </div>
                     </div>
                     <div class="form-group row">
                         <label class="col-form-label col-lg-2">Menimbang <span class="text-danger">*</span></label>
                         <div class="col-lg-10">
-                            <textarea name="menimbang" id="menimbang">
-                                <ol type="a">
-                                    <li>.....</li>
-                                    <li>.....</li>
-                                </ol>
-                            </textarea>
+                            <textarea name="menimbang" id="menimbang"><?php echo !empty($content) ? htmlspecialchars($content->menimbang) : "<ol type='a'><li>.....</li><li>.....</li></ol>"; ?></textarea>
                         </div>
                     </div>
                     <div class="form-group row">
                         <label class="col-form-label col-lg-2">Mengingat <span class="text-danger">*</span></label>
                         <div class="col-lg-10">
-                            <textarea name="mengingat" id="mengingat">
-                                <ol>
-                                    <li>.....</li>
-                                    <li>.....</li>
-                                </ol>
-                            </textarea>
+                            <textarea name="mengingat" id="mengingat"><?php echo !empty($content) ? htmlspecialchars($content->mengingat) : "<ol><li>.....</li><li>.....</li></ol>"; ?></textarea>
                         </div>
                     </div>
                     <div class="form-group row">
                         <label class="col-form-label col-lg-2">Menetapkan <span class="text-danger">*</span></label>
                         <div class="col-lg-10">
-                            <textarea name="menetapkan" id="menetapkan"></textarea>
+                            <textarea name="menetapkan" id="menetapkan"><?php echo !empty($content) ? htmlspecialchars($content->menetapkan) : "<ol><li>.....</li><li>.....</li></ol>"; ?></textarea>
                         </div>
                     </div>
 
@@ -199,77 +184,279 @@
                     <div class="card card-primary" id="peraturan-bupati-section">
                         <div class="card-body">
                             <div id="bab-container">
-                                <div class="bab-field" data-number="1">
-                                    <div class="field-header">
-                                        <span class="field-number">BAB 1</span>
-                                        <button type="button" class="btn btn-sm btn-remove-field remove-bab" data-number="1" style="display: none;">
-                                            <i class="fas fa-trash"></i> Hapus
-                                        </button>
-                                    </div>
-                                    <div class="form-group row">
-                                        <label class="col-form-label col-lg-2">Judul Bab <span class="text-danger">*</span></label>
-                                        <div class="col-lg-10">
-                                            <input type="text" class="form-control" name="judul_bab[1]" placeholder="Masukkan Judul Bab 1" value="<?php echo !empty($bab_data[1]['judul']) ? htmlspecialchars($bab_data[1]['judul']) : ''; ?>">
-                                        </div>
-                                    </div>
+                                <?php
+                                // Parse bab_pasal_data dari JSON string
+                                if (!empty($content->bab_pasal_data)) {
+                                    $bab_data = json_decode($content->bab_pasal_data, true);
+                                }
 
-                                    <!-- Container untuk Bagian dan Pasal -->
-                                    <div class="bagian-container" data-bab="1">
-                                        <!-- Tombol Tambah Bagian -->
-                                        <div class="add-bagian-container">
-                                            <button type="button" class="btn btn-sm btn-add-bagian add-bagian-btn" data-bab="1">
-                                                <i class="fas fa-plus"></i> Tambah Bagian
+                                // Jika data kosong atau error parsing, gunakan default
+                                if (empty($bab_data)) {
+                                    $bab_data = [
+                                        "1" => [
+                                            "judul" => "",
+                                            "pasal" => [
+                                                "1" => [
+                                                    "isi" => ""
+                                                ]
+                                            ]
+                                        ]
+                                    ];
+                                }
+
+                                // Counter untuk tracking nomor pasal global
+                                $global_pasal_counter = 0;
+
+                                // Hitung total pasal untuk set global counter
+                                foreach ($bab_data as $bab) {
+                                    if (!empty($bab['pasal'])) {
+                                        foreach ($bab['pasal'] as $pasal_num => $pasal) {
+                                            if ($pasal_num > $global_pasal_counter) {
+                                                $global_pasal_counter = $pasal_num;
+                                            }
+                                        }
+                                    }
+                                    if (!empty($bab['bagian'])) {
+                                        foreach ($bab['bagian'] as $bagian) {
+                                            if (!empty($bagian['pasal'])) {
+                                                foreach ($bagian['pasal'] as $pasal_num => $pasal) {
+                                                    if ($pasal_num > $global_pasal_counter) {
+                                                        $global_pasal_counter = $pasal_num;
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+
+                                // Loop setiap BAB
+                                foreach ($bab_data as $bab_number => $bab) {
+                                ?>
+                                    <div class="bab-field" data-number="<?php echo $bab_number; ?>">
+                                        <div class="field-header">
+                                            <span class="field-number">BAB <?php echo $bab_number; ?></span>
+                                            <button type="button" class="btn btn-sm btn-remove-field remove-bab"
+                                                data-number="<?php echo $bab_number; ?>"
+                                                <?php echo $bab_number == 1 ? 'style="display: none;"' : ''; ?>>
+                                                <i class="fas fa-trash"></i> Hapus
                                             </button>
-                                            <br>
-                                            <small class="text-muted mt-2 d-block">Klik untuk menambah bagian baru dalam bab ini</small>
                                         </div>
-                                        <!-- Pasal langsung tanpa bagian -->
-                                        <div class="pasal-container" data-bab="1" data-bagian="0">
-                                            <div class="add-pasal-container">
-                                                <button type="button" class="btn btn-sm btn-add-pasal add-pasal-btn" data-bab="1" data-bagian="0">
-                                                    <i class="fas fa-plus"></i> Tambah Pasal
-                                                </button>
-                                                <br>
-                                                <small class="text-muted mt-2 d-block">Klik untuk menambah pasal baru tanpa bagian</small>
+
+                                        <!-- Input Judul Bab -->
+                                        <div class="form-group row">
+                                            <label class="col-form-label col-lg-2">Judul Bab <span class="text-danger">*</span></label>
+                                            <div class="col-lg-10">
+                                                <input type="text" class="form-control"
+                                                    name="judul_bab[<?php echo $bab_number; ?>]"
+                                                    placeholder="Masukkan Judul Bab <?php echo $bab_number; ?>"
+                                                    value="<?php echo isset($bab['judul']) ? htmlspecialchars($bab['judul']) : ''; ?>">
                                             </div>
                                         </div>
+
+                                        <div class="bagian-container" data-bab="<?php echo $bab_number; ?>">
+                                            <?php
+                                            // Tampilkan BAGIAN jika ada
+                                            $bagian_counter = 0;
+                                            $bagian_names = [
+                                                '',
+                                                'Kesatu',
+                                                'Kedua',
+                                                'Ketiga',
+                                                'Keempat',
+                                                'Kelima',
+                                                'Keenam',
+                                                'Ketujuh',
+                                                'Kedelapan',
+                                                'Kesembilan',
+                                                'Kesepuluh'
+                                            ];
+
+                                            if (!empty($bab['bagian']) && is_array($bab['bagian'])) {
+                                                foreach ($bab['bagian'] as $bagian_number => $bagian) {
+                                                    $bagian_counter++;
+                                                    $bagian_name = $bagian_names[$bagian_number] ?? "Ke-$bagian_number";
+                                            ?>
+                                                    <div class="bagian-field" data-bab="<?php echo $bab_number; ?>"
+                                                        data-bagian="<?php echo $bagian_number; ?>">
+                                                        <div class="field-header">
+                                                            <span class="bagian-number">Bagian <?php echo $bagian_name; ?></span>
+                                                            <button type="button" class="btn btn-sm btn-remove-field remove-bagian"
+                                                                data-bagian="<?php echo $bagian_number; ?>">
+                                                                <i class="fas fa-trash"></i> Hapus
+                                                            </button>
+                                                        </div>
+
+                                                        <!-- Input Judul Bagian -->
+                                                        <div class="form-group">
+                                                            <input type="text" class="form-control"
+                                                                name="judul_bagian[<?php echo $bab_number; ?>][<?php echo $bagian_number; ?>]"
+                                                                placeholder="Masukkan Judul Bagian <?php echo $bagian_name; ?>"
+                                                                value="<?php echo isset($bagian['judul']) ? htmlspecialchars($bagian['judul']) : ''; ?>"
+                                                                required>
+                                                        </div>
+
+                                                        <!-- Pasal dalam Bagian -->
+                                                        <div class="pasal-container" data-bab="<?php echo $bab_number; ?>"
+                                                            data-bagian="<?php echo $bagian_number; ?>">
+                                                            <?php
+                                                            $pasal_count_in_bagian = 0;
+                                                            if (!empty($bagian['pasal']) && is_array($bagian['pasal'])) {
+                                                                $pasal_count_in_bagian = count($bagian['pasal']);
+                                                                foreach ($bagian['pasal'] as $pasal_number => $pasal) {
+                                                                    $textarea_id = "isi_pasal_$pasal_number";
+                                                            ?>
+                                                                    <div class="pasal-field" data-bab="<?php echo $bab_number; ?>"
+                                                                        data-pasal="<?php echo $pasal_number; ?>"
+                                                                        data-bagian="<?php echo $bagian_number; ?>">
+                                                                        <div class="field-header">
+                                                                            <span class="pasal-number">Pasal <?php echo $pasal_number; ?></span>
+                                                                            <button type="button" class="btn btn-sm btn-remove-field remove-pasal"
+                                                                                data-pasal="<?php echo $pasal_number; ?>"
+                                                                                <?php echo $pasal_count_in_bagian == 1 ? 'style="display: none;"' : ''; ?>>
+                                                                                <i class="fas fa-trash"></i> Hapus
+                                                                            </button>
+                                                                        </div>
+                                                                        <div class="form-group">
+                                                                            <textarea name="isi_pasal[<?php echo $pasal_number; ?>]"
+                                                                                id="<?php echo $textarea_id; ?>"
+                                                                                class="form-control" rows="3"
+                                                                                placeholder="Masukkan isi Pasal <?php echo $pasal_number; ?>..."
+                                                                                required><?php echo isset($pasal['isi']) ? $pasal['isi'] : ''; ?></textarea>
+                                                                            <input type="hidden" name="pasal_bab_mapping[<?php echo $pasal_number; ?>]"
+                                                                                value="<?php echo $bab_number; ?>">
+                                                                            <input type="hidden" name="pasal_bagian_mapping[<?php echo $pasal_number; ?>]"
+                                                                                value="<?php echo $bagian_number; ?>">
+                                                                        </div>
+                                                                    </div>
+                                                            <?php
+                                                                }
+                                                            }
+                                                            ?>
+                                                            <!-- Tombol Tambah Pasal dalam Bagian -->
+                                                            <div class="add-pasal-container">
+                                                                <button type="button" class="btn btn-sm btn-add-pasal add-pasal-btn"
+                                                                    data-bab="<?php echo $bab_number; ?>"
+                                                                    data-bagian="<?php echo $bagian_number; ?>">
+                                                                    <i class="fas fa-plus"></i> Tambah Pasal
+                                                                </button>
+                                                                <br>
+                                                                <small class="text-muted mt-2 d-block">Klik untuk menambah pasal baru dalam bagian ini</small>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                            <?php
+                                                }
+                                            }
+                                            ?>
+
+                                            <!-- Tombol Tambah Bagian -->
+                                            <div class="add-bagian-container">
+                                                <button type="button" class="btn btn-sm btn-add-bagian add-bagian-btn"
+                                                    data-bab="<?php echo $bab_number; ?>">
+                                                    <i class="fas fa-plus"></i> Tambah Bagian
+                                                </button>
+                                                <br>
+                                                <small class="text-muted mt-2 d-block">Klik untuk menambah bagian baru dalam bab ini</small>
+                                            </div>
+
+                                            <!-- Pasal tanpa Bagian (langsung di Bab) -->
+                                            <div class="pasal-container" data-bab="<?php echo $bab_number; ?>" data-bagian="0">
+                                                <?php
+                                                $pasal_count_without_bagian = 0;
+                                                if (!empty($bab['pasal']) && is_array($bab['pasal'])) {
+                                                    $pasal_count_without_bagian = count($bab['pasal']);
+                                                    foreach ($bab['pasal'] as $pasal_number => $pasal) {
+                                                        $textarea_id = "isi_pasal_$pasal_number";
+                                                ?>
+                                                        <div class="pasal-field" data-bab="<?php echo $bab_number; ?>"
+                                                            data-pasal="<?php echo $pasal_number; ?>" data-bagian="0">
+                                                            <div class="field-header">
+                                                                <span class="pasal-number">Pasal <?php echo $pasal_number; ?></span>
+                                                                <button type="button" class="btn btn-sm btn-remove-field remove-pasal"
+                                                                    data-pasal="<?php echo $pasal_number; ?>"
+                                                                    <?php echo $pasal_count_without_bagian == 1 ? 'style="display: none;"' : ''; ?>>
+                                                                    <i class="fas fa-trash"></i> Hapus
+                                                                </button>
+                                                            </div>
+                                                            <div class="form-group">
+                                                                <textarea name="isi_pasal[<?php echo $pasal_number; ?>]"
+                                                                    id="<?php echo $textarea_id; ?>"
+                                                                    class="form-control" rows="3"
+                                                                    placeholder="Masukkan isi Pasal <?php echo $pasal_number; ?>..."
+                                                                    required><?php echo isset($pasal['isi']) ? $pasal['isi'] : ''; ?></textarea>
+                                                                <input type="hidden" name="pasal_bab_mapping[<?php echo $pasal_number; ?>]"
+                                                                    value="<?php echo $bab_number; ?>">
+                                                                <input type="hidden" name="pasal_bagian_mapping[<?php echo $pasal_number; ?>]"
+                                                                    value="0">
+                                                            </div>
+                                                        </div>
+                                                <?php
+                                                    }
+                                                }
+                                                ?>
+                                                <!-- Tombol Tambah Pasal tanpa Bagian -->
+                                                <div class="add-pasal-container">
+                                                    <button type="button" class="btn btn-sm btn-add-pasal add-pasal-btn"
+                                                        data-bab="<?php echo $bab_number; ?>" data-bagian="0">
+                                                        <i class="fas fa-plus"></i> Tambah Pasal
+                                                    </button>
+                                                    <br>
+                                                    <small class="text-muted mt-2 d-block">Klik untuk menambah pasal baru tanpa bagian</small>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <hr>
                                     </div>
-                                    <hr>
+                                <?php
+                                }
+                                ?>
+
+                                <!-- Tombol Tambah Bab -->
+                                <div class="add-field-container">
+                                    <button type="button" id="add-bab" class="btn btn-sm btn-add-field">
+                                        <i class="fas fa-plus"></i> Tambah Bab
+                                    </button>
+                                    <br>
+                                    <small class="text-muted mt-2 d-block">Klik untuk menambah bab baru</small>
                                 </div>
                             </div>
-
-                            <div class="add-field-container">
-                                <button type="button" id="add-bab" class="btn btn-sm btn-add-field">
-                                    <i class="fas fa-plus"></i> Tambah Bab
-                                </button>
-                                <br>
-                                <small class="text-muted mt-2 d-block">Klik untuk menambah bab baru</small>
-                            </div>
-                        </div>
-                        <div class="form-group row" id="penjelasan-section">
-                            <label class="col-form-label col-lg-2">Penjelasan <span class="text-danger">*</span></label>
-                            <div class="col-lg-10">
-                                <textarea name="penjelasan" id="penjelasan"></textarea>
+                            <div class="form-group row" id="penjelasan-section">
+                                <label class="col-form-label col-lg-2">Penjelasan <span class="text-danger">*</span></label>
+                                <div class="col-lg-10">
+                                    <textarea name="penjelasan" id="penjelasan"><?php echo !empty($content) ? htmlspecialchars($content->penjelasan) : ''; ?></textarea>
+                                </div>
                             </div>
                         </div>
                     </div>
-                    <!-- end Peraturan bupati -->
+                    <!-- end Peraturan Bupati -->
                     <!-- Keputusan Bupati -->
                     <div class="form-group row" id="memutuskan-section">
                         <label class="col-form-label col-lg-2">Memutuskan <span class="text-danger">*</span></label>
                         <div class="col-lg-10">
                             <div id="keputusan-container">
-                                <div class="keputusan-field" data-number="1">
-                                    <div class="field-header">
-                                        <span class="field-number">KESATU</span>
-                                        <button type="button" class="btn btn-sm btn-remove-field remove-keputusan" data-number="1" style="display: none;">
-                                            <i class="fas fa-trash"></i> Hapus
-                                        </button>
-                                    </div>
-                                    <textarea name="keputusan[1]" id="keputusan_1" class="form-control" rows="3" placeholder="Masukkan isi keputusan kesatu..." required><?php echo !empty($content) ? $content->keputusan_1 : ""; ?></textarea>
-                                </div>
-                            </div>
+                                <?php
+                                $keputusan_data = !empty($content->memutuskan) ? json_decode($content->memutuskan, true) : [1 => ''];
+                                $keputusan_names = ['', 'KESATU', 'KEDUA', 'KETIGA', 'KEEMPAT', 'KELIMA', 'KEENAM', 'KETUJUH', 'KEDELAPAN', 'KESEMBILAN', 'KESEPULUH', 'KESEBELAS', 'KEDUA BELAS', 'KETIGA BELAS', 'KEEMPAT BELAS', 'KELIMA BELAS', 'KEENAM BELAS', 'KETUJUH BELAS', 'KEDELAPAN BELAS', 'KESEMBILAN BELAS', 'KEDUA PULUH'];
+                                $keputusan_counter = 0;
 
+                                foreach ($keputusan_data as $keputusan_number => $keputusan) {
+                                    $keputusan_counter++;
+                                    $keputusan_name = $keputusan_names[$keputusan_number] ?? "KE-$keputusan_number";
+                                    $textarea_id = $keputusan_number == 1 ? 'keputusan_1' : "keputusan_$keputusan_number";
+                                ?>
+                                    <div class="keputusan-field" data-number="<?php echo $keputusan_number; ?>">
+                                        <div class="field-header">
+                                            <span class="field-number"><?php echo $keputusan_name; ?></span>
+                                            <button type="button" class="btn btn-sm btn-remove-field remove-keputusan" data-number="<?php echo $keputusan_number; ?>" <?php echo $keputusan_number == 1 ? 'style="display: none;"' : ''; ?>>
+                                                <i class="fas fa-trash"></i> Hapus
+                                            </button>
+                                        </div>
+                                        <textarea id="<?php echo $textarea_id; ?>" name="keputusan[<?php echo $keputusan_number; ?>]" class="form-control" rows="3" placeholder="Masukkan isi keputusan <?php echo strtolower($keputusan_name); ?>..." required><?php echo !empty($keputusan) ? htmlspecialchars($keputusan) : ''; ?></textarea>
+                                    </div>
+                                <?php
+                                }
+                                ?>
+                            </div>
                             <div class="add-field-container">
                                 <button type="button" id="add-keputusan" class="btn btn-sm btn-add-field">
                                     <i class="fas fa-plus"></i> Tambah Keputusan
@@ -282,17 +469,10 @@
                     <div class="form-group row" id="tembusan-section">
                         <label class="col-form-label col-lg-2">Tembusan <span class="text-danger">*</span></label>
                         <div class="col-lg-10">
-                            <textarea name="tembusan" id="tembusan">
-                                Tembusan :
-                                <ol>
-                                    <li>.....</li>
-                                    <li>.....</li>
-                                </ol>
-                            </textarea>
+                            <textarea name="tembusan" id="tembusan"><?php echo !empty($content) ? htmlspecialchars($content->tembusan) : "Tembusan :<ol><li>.....</li><li>.....</li></ol>"; ?></textarea>
                         </div>
                     </div>
                     <!-- end Keputusan Bupati -->
-
                     <div class="form-group row lampiran-usulan-section">
                         <label class="col-form-label col-lg-2">Lampiran Usulan <?php echo !empty($content) ? "" : "<span class='text-danger'>*</span>"; ?></label>
                         <div class="col-lg-10">
@@ -302,12 +482,8 @@
                             }
                             ?>
                             <input type="file" class="form-control" name="file_lampiran_usulan" accept="application/pdf">
-                            <small class="form-text text-muted">
-                                Max. Upload Size : 2 MB
-                            </small>
-                            <small class="form-text text-muted">
-                                Type File : pdf
-                            </small>
+                            <small class="form-text text-muted">Max. Upload Size: 2 MB</small>
+                            <small class="form-text text-muted">Type File: pdf</small>
                         </div>
                     </div>
                     <div class="form-group row is-show-lampiran-kepala-dinas">
@@ -319,12 +495,8 @@
                             }
                             ?>
                             <input type="file" class="form-control" name="file_lampiran" accept="application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document">
-                            <small class="form-text text-muted">
-                                Max. Upload Size : 2 MB
-                            </small>
-                            <small class="form-text text-muted">
-                                Type File : doc, docx, & pdf
-                            </small>
+                            <small class="form-text text-muted">Max. Upload Size: 2 MB</small>
+                            <small class="form-text text-muted">Type File: doc, docx, & pdf</small>
                         </div>
                     </div>
                     <div class="form-group row is-show-lampiran-sk-tim">
@@ -336,12 +508,8 @@
                             }
                             ?>
                             <input type="file" class="form-control" name="file_lampiran_sk_tim" accept="application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document">
-                            <small class="form-text text-muted">
-                                Max. Upload Size : 2 MB
-                            </small>
-                            <small class="form-text text-muted">
-                                Type File : doc, docx, & pdf
-                            </small>
+                            <small class="form-text text-muted">Max. Upload Size: 2 MB</small>
+                            <small class="form-text text-muted">Type File: doc, docx, & pdf</small>
                         </div>
                     </div>
                     <div class="form-group row is-show-lampiran-daftar-hadir">
@@ -353,18 +521,13 @@
                             }
                             ?>
                             <input type="file" class="form-control" name="file_lampiran_daftar_hadir" accept="application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document">
-                            <small class="form-text text-muted">
-                                Max. Upload Size : 2 MB
-                            </small>
-                            <small class="form-text text-muted">
-                                Type File : doc, docx, & pdf
-                            </small>
+                            <small class="form-text text-muted">Max. Upload Size: 2 MB</small>
+                            <small class="form-text text-muted">Type File: doc, docx, & pdf</small>
                         </div>
                     </div>
-
                     <div class="text-right">
-                        <button type="button" id="preview-btn" class="btn btn-secondary mr-2">Preview PDF <i class="fas fa-eye ml-2"></i></button>
-                        <button type="submit" class="btn btn-primary">Simpan & Download <i class="fas fa-paper-plane ml-2"></i></button>
+                        <button type="button" id="preview-btn" class="btn btn-danger mr-2">Preview PDF <i class="fas fa-eye ml-2"></i></button>
+                        <button type="submit" class="btn btn-primary">Simpan <i class="fas fa-paper-plane ml-2"></i></button>
                     </div>
                     <?php echo form_close(); ?>
                 </div>
@@ -382,8 +545,7 @@
                     <span aria-hidden="true">&times;</span>
                 </button>
             </div>
-            <div class="modal-body isi-content">
-            </div>
+            <div class="modal-body isi-content"></div>
         </div>
     </div>
 </div>
@@ -415,9 +577,11 @@
         CKEDITOR.replace(textareaId, ckeditorConfig);
     }
 
-    // Counter global untuk pasal dan bagian
-    let globalPasalCounter = 0;
-    let bagianCounter = 0;
+    // Counter global untuk pasal, bagian, dan keputusan
+    let globalPasalCounter = <?php echo $global_pasal_counter; ?>;
+    let bagianCounter = <?php echo $bagian_counter ?? 0; ?>;
+    let keputusanCounter = <?php echo $keputusan_counter ?? 0; ?>;
+    let babCounter = <?php echo count($bab_data); ?>;
 
     // Inisialisasi CKEditor saat dokumen siap
     $(document).ready(function() {
@@ -427,6 +591,37 @@
         initCKEditor('tembusan');
         initCKEditor('penjelasan');
         initCKEditor('keputusan_1');
+
+        <?php
+        foreach ($bab_data as $bab_number => $bab) {
+            // Inisialisasi CKEditor untuk pasal dalam bagian
+            if (!empty($bab['bagian']) && is_array($bab['bagian'])) {
+                foreach ($bab['bagian'] as $bagian_number => $bagian) {
+                    if (!empty($bagian['pasal']) && is_array($bagian['pasal'])) {
+                        foreach ($bagian['pasal'] as $pasal_number => $pasal) {
+                            $textarea_id = "isi_pasal_$pasal_number";
+                            echo "initCKEditor('$textarea_id');\n";
+                        }
+                    }
+                }
+            }
+
+            // Inisialisasi CKEditor untuk pasal tanpa bagian
+            if (!empty($bab['pasal']) && is_array($bab['pasal'])) {
+                foreach ($bab['pasal'] as $pasal_number => $pasal) {
+                    $textarea_id = "isi_pasal_$pasal_number";
+                    echo "initCKEditor('$textarea_id');\n";
+                }
+            }
+        }
+        foreach ($keputusan_data as $keputusan_number => $keputusan) {
+            $textarea_id = $keputusan_number == 1 ? 'keputusan_1' : "keputusan_$keputusan_number";
+            echo "initCKEditor('$textarea_id');";
+            if (!empty($keputusan)) {
+                echo "CKEDITOR.instances['$textarea_id'].setData(" . json_encode($keputusan) . ");";
+            }
+        }
+        ?>
 
         $(".is-show-lampiran-kepala-dinas").hide();
         $(".is-show-lampiran-sk-tim").hide();
@@ -468,7 +663,6 @@
                     alert('Harap isi semua field wajib (Menimbang, Mengingat, Judul Bab) untuk Peraturan Bupati.');
                     return;
                 }
-                // Validasi setidaknya satu pasal ada
                 if ($('.pasal-field').length === 0) {
                     alert('Harap tambahkan setidaknya satu pasal untuk Peraturan Bupati.');
                     return;
@@ -476,10 +670,6 @@
             }
 
             var formData = new FormData($('#form-usulan')[0]);
-
-            for (var pair of formData.entries()) {
-                console.log(pair[0] + ': ' + pair[1]);
-            }
 
             $.ajax({
                 url: '<?= base_url('usulan_raperbup/preview_pdf_raperbup') ?>',
@@ -514,29 +704,70 @@
     });
 
     // Event handler untuk tombol tambah bagian
-    $(document).on('click', '.add-bagian-btn', function() {
-        const babNumber = $(this).data('bab');
-        bagianCounter++;
-        addBagianField(babNumber, bagianCounter);
-    });
-
-    // Event handler untuk tombol hapus bagian
-    $(document).on('click', '.remove-bagian', function() {
-        const bagianNumber = $(this).data('bagian');
-        removeBagianField(bagianNumber);
-    });
-
-    // Event handler untuk tombol tambah pasal
     $(document).on('click', '.add-pasal-btn', function() {
         const babNumber = $(this).data('bab');
         const bagianNumber = $(this).data('bagian') || 0;
         addPasalField(babNumber, bagianNumber);
+
+        // Reorganisasi setelah tambah
+        setTimeout(function() {
+            reorganizePasalFields();
+        }, 300);
     });
 
     // Event handler untuk tombol hapus pasal
     $(document).on('click', '.remove-pasal', function() {
         const pasalNumber = $(this).data('pasal');
-        removePasalField(pasalNumber);
+        const pasalField = $(`.pasal-field[data-pasal="${pasalNumber}"]`);
+        const pasalCountInContainer = pasalField.closest('.pasal-container').find('.pasal-field').length;
+
+        if (pasalCountInContainer === 1) {
+            alert('Setidaknya satu pasal harus tetap ada di setiap bagian atau bab.');
+            return;
+        }
+
+        const textareaId = `isi_pasal_${pasalNumber}`;
+        if (CKEDITOR.instances[textareaId]) {
+            CKEDITOR.instances[textareaId].destroy(true);
+        }
+
+        pasalField.fadeOut(300, function() {
+            $(this).remove();
+            reorganizePasalFields();
+        });
+    });
+
+    // Event handler untuk tombol tambah bagian
+    $(document).on('click', '.add-bagian-btn', function() {
+        const babNumber = $(this).data('bab');
+        bagianCounter++;
+        addBagianField(babNumber, bagianCounter);
+
+        // Reorganisasi setelah tambah
+        setTimeout(function() {
+            reorganizeBagianFields();
+            reorganizePasalFields();
+        }, 300);
+    });
+
+    // Event handler untuk tombol hapus bagian
+    $(document).on('click', '.remove-bagian', function() {
+        const bagianNumber = $(this).data('bagian');
+        const bagianField = $(`.bagian-field[data-bagian="${bagianNumber}"]`);
+
+        bagianField.find('.pasal-field').each(function() {
+            const pasalNumber = $(this).data('pasal');
+            const pasalTextareaId = `isi_pasal_${pasalNumber}`;
+            if (CKEDITOR.instances[pasalTextareaId]) {
+                CKEDITOR.instances[pasalTextareaId].destroy(true);
+            }
+        });
+
+        bagianField.fadeOut(300, function() {
+            $(this).remove();
+            reorganizeBagianFields();
+            reorganizePasalFields();
+        });
     });
 
     // Fungsi untuk menambah field bagian
@@ -548,40 +779,40 @@
         const bagianName = bagianNames[bagianNumber] || `Ke-${bagianNumber}`;
 
         const newBagianField = `
-            <div class="bagian-field" data-bab="${babNumber}" data-bagian="${bagianNumber}">
-                <div class="field-header">
-                    <span class="bagian-number">Bagian ${bagianName}</span>
-                    <button type="button" class="btn btn-sm btn-remove-field remove-bagian" data-bagian="${bagianNumber}">
-                        <i class="fas fa-trash"></i> Hapus
-                    </button>
-                </div>
-                <div class="form-group">
-                    <input type="text" class="form-control" name="judul_bagian[${babNumber}][${bagianNumber}]" placeholder="Masukkan Judul Bagian ${bagianName}" required>
-                </div>
-                <div class="pasal-container" data-bab="${babNumber}" data-bagian="${bagianNumber}">
-                    <div class="pasal-field" data-bab="${babNumber}" data-pasal="${firstPasalNumber}" data-bagian="${bagianNumber}">
-                        <div class="field-header">
-                            <span class="pasal-number">Pasal ${firstPasalNumber}</span>
-                            <button type="button" class="btn btn-sm btn-remove-field remove-pasal" data-pasal="${firstPasalNumber}" style="display: none;">
-                                <i class="fas fa-trash"></i> Hapus
-                            </button>
-                        </div>
-                        <div class="form-group">
-                            <textarea name="isi_pasal[${firstPasalNumber}]" id="${pasalTextareaId}" class="form-control" rows="3" placeholder="Masukkan isi Pasal ${firstPasalNumber}..." required></textarea>
-                            <input type="hidden" name="pasal_bab_mapping[${firstPasalNumber}]" value="${babNumber}">
-                            <input type="hidden" name="pasal_bagian_mapping[${firstPasalNumber}]" value="${bagianNumber}">
-                        </div>
-                    </div>
-                    <div class="add-pasal-container">
-                        <button type="button" class="btn btn-sm btn-add-pasal add-pasal-btn" data-bab="${babNumber}" data-bagian="${bagianNumber}">
-                            <i class="fas fa-plus"></i> Tambah Pasal
+        <div class="bagian-field" data-bab="${babNumber}" data-bagian="${bagianNumber}">
+            <div class="field-header">
+                <span class="bagian-number">Bagian ${bagianName}</span>
+                <button type="button" class="btn btn-sm btn-remove-field remove-bagian" data-bagian="${bagianNumber}">
+                    <i class="fas fa-trash"></i> Hapus
+                </button>
+            </div>
+            <div class="form-group">
+                <input type="text" class="form-control" name="judul_bagian[${babNumber}][${bagianNumber}]" placeholder="Masukkan Judul Bagian ${bagianName}" required>
+            </div>
+            <div class="pasal-container" data-bab="${babNumber}" data-bagian="${bagianNumber}">
+                <div class="pasal-field" data-bab="${babNumber}" data-pasal="${firstPasalNumber}" data-bagian="${bagianNumber}">
+                    <div class="field-header">
+                        <span class="pasal-number">Pasal ${firstPasalNumber}</span>
+                        <button type="button" class="btn btn-sm btn-remove-field remove-pasal" data-pasal="${firstPasalNumber}" style="display: none;">
+                            <i class="fas fa-trash"></i> Hapus
                         </button>
-                        <br>
-                        <small class="text-muted mt-2 d-block">Klik untuk menambah pasal baru dalam bagian ini</small>
                     </div>
+                    <div class="form-group">
+                        <textarea name="isi_pasal[${firstPasalNumber}]" id="${pasalTextareaId}" class="form-control" rows="3" placeholder="Masukkan isi Pasal ${firstPasalNumber}..." required></textarea>
+                        <input type="hidden" name="pasal_bab_mapping[${firstPasalNumber}]" value="${babNumber}">
+                        <input type="hidden" name="pasal_bagian_mapping[${firstPasalNumber}]" value="${bagianNumber}">
+                    </div>
+                </div>
+                <div class="add-pasal-container">
+                    <button type="button" class="btn btn-sm btn-add-pasal add-pasal-btn" data-bab="${babNumber}" data-bagian="${bagianNumber}">
+                        <i class="fas fa-plus"></i> Tambah Pasal
+                    </button>
+                    <br>
+                    <small class="text-muted mt-2 d-block">Klik untuk menambah pasal baru dalam bagian ini</small>
                 </div>
             </div>
-        `;
+        </div>
+    `;
 
         $(`.bagian-container[data-bab="${babNumber}"] .add-bagian-container`).before(newBagianField);
 
@@ -620,24 +851,25 @@
         const textareaId = `isi_pasal_${pasalNumber}`;
 
         const newPasalField = `
-            <div class="pasal-field" data-bab="${babNumber}" data-pasal="${pasalNumber}" data-bagian="${bagianNumber}">
-                <div class="field-header">
-                    <span class="pasal-number">Pasal ${pasalNumber}</span>
-                    <button type="button" class="btn btn-sm btn-remove-field remove-pasal" data-pasal="${pasalNumber}">
-                        <i class="fas fa-trash"></i> Hapus
-                    </button>
-                </div>
-                <div class="form-group">
-                    <textarea name="isi_pasal[${pasalNumber}]" id="${textareaId}" class="form-control" rows="3" placeholder="Masukkan isi Pasal ${pasalNumber}..." required></textarea>
-                    <input type="hidden" name="pasal_bab_mapping[${pasalNumber}]" value="${babNumber}">
-                    <input type="hidden" name="pasal_bagian_mapping[${pasalNumber}]" value="${bagianNumber}">
-                </div>
+        <div class="pasal-field" data-bab="${babNumber}" data-pasal="${pasalNumber}" data-bagian="${bagianNumber}">
+            <div class="field-header">
+                <span class="pasal-number">Pasal ${pasalNumber}</span>
+                <button type="button" class="btn btn-sm btn-remove-field remove-pasal" data-pasal="${pasalNumber}">
+                    <i class="fas fa-trash"></i> Hapus
+                </button>
             </div>
-        `;
+            <div class="form-group">
+                <textarea name="isi_pasal[${pasalNumber}]" id="${textareaId}" class="form-control" rows="3" placeholder="Masukkan isi Pasal ${pasalNumber}..." required></textarea>
+                <input type="hidden" name="pasal_bab_mapping[${pasalNumber}]" value="${babNumber}">
+                <input type="hidden" name="pasal_bagian_mapping[${pasalNumber}]" value="${bagianNumber}">
+            </div>
+        </div>
+    `;
 
         const containerSelector = bagianNumber === 0 ?
             `.pasal-container[data-bab="${babNumber}"][data-bagian="0"]` :
             `.pasal-container[data-bab="${babNumber}"][data-bagian="${bagianNumber}"]`;
+
         $(`${containerSelector} .add-pasal-container`).before(newPasalField);
 
         setTimeout(function() {
@@ -672,12 +904,29 @@
 
     // Fungsi untuk reorganisasi penomoran pasal
     function reorganizePasalFields() {
-        const allPasalFields = $('.pasal-field').get().sort(function(a, b) {
-            return parseInt($(a).data('pasal')) - parseInt($(b).data('pasal'));
+        // Kumpulkan semua pasal berdasarkan urutan di DOM
+        const allPasalFields = [];
+
+        // Loop setiap bab sesuai urutan
+        $('.bab-field').each(function() {
+            const babNumber = $(this).data('number');
+
+            // 1. Ambil pasal dalam bagian (urut per bagian)
+            $(this).find('.bagian-field').each(function() {
+                $(this).find('.pasal-field').each(function() {
+                    allPasalFields.push(this);
+                });
+            });
+
+            // 2. Ambil pasal tanpa bagian (data-bagian="0")
+            $(this).find('.pasal-container[data-bagian="0"] > .pasal-field').each(function() {
+                allPasalFields.push(this);
+            });
         });
 
         let newPasalCounter = 0;
 
+        // Renomor semua pasal sesuai urutan di array
         allPasalFields.forEach(function(field) {
             newPasalCounter++;
             const oldPasalNumber = $(field).data('pasal');
@@ -710,6 +959,8 @@
 
             const removeBtn = $(field).find('.remove-pasal');
             removeBtn.attr('data-pasal', newPasalCounter);
+
+            // Cek jumlah pasal dalam container yang sama
             const pasalCountInContainer = $(field).closest('.pasal-container').find('.pasal-field').length;
             if (pasalCountInContainer === 1) {
                 removeBtn.hide();
@@ -730,37 +981,41 @@
 
     // Fungsi untuk reorganisasi penomoran bagian
     function reorganizeBagianFields() {
-        const allBagianFields = $('.bagian-field').get().sort(function(a, b) {
-            return parseInt($(a).data('bagian')) - parseInt($(b).data('bagian'));
+        $('.bab-field').each(function() {
+            const babNumber = $(this).data('number');
+            let newBagianCounter = 0;
+            const bagianNames = ['', 'Kesatu', 'Kedua', 'Ketiga', 'Keempat', 'Kelima',
+                'Keenam', 'Ketujuh', 'Kedelapan', 'Kesembilan', 'Kesepuluh'
+            ];
+
+            $(this).find('.bagian-field').each(function() {
+                newBagianCounter++;
+                const oldBagianNumber = $(this).data('bagian');
+                const bagianName = bagianNames[newBagianCounter] || `Ke-${newBagianCounter}`;
+
+                $(this).attr('data-bagian', newBagianCounter);
+                $(this).find('.bagian-number').text(`Bagian ${bagianName}`);
+
+                const inputJudul = $(this).find('input[name^="judul_bagian"]');
+                inputJudul.attr('name', `judul_bagian[${babNumber}][${newBagianCounter}]`);
+                inputJudul.attr('placeholder', `Masukkan Judul Bagian ${bagianName}`);
+
+                const pasalContainer = $(this).find('.pasal-container');
+                pasalContainer.attr('data-bagian', newBagianCounter);
+
+                const addPasalBtn = $(this).find('.add-pasal-btn');
+                addPasalBtn.attr('data-bagian', newBagianCounter);
+
+                const removeBtn = $(this).find('.remove-bagian');
+                removeBtn.attr('data-bagian', newBagianCounter);
+
+                // Update data-bagian pada semua pasal dalam bagian ini
+                $(this).find('.pasal-field').each(function() {
+                    $(this).attr('data-bagian', newBagianCounter);
+                    $(this).find('input[name^="pasal_bagian_mapping"]').val(newBagianCounter);
+                });
+            });
         });
-
-        let newBagianCounter = 0;
-        const bagianNames = ['', 'Kesatu', 'Kedua', 'Ketiga', 'Keempat', 'Kelima', 'Keenam', 'Ketujuh', 'Kedelapan', 'Kesembilan', 'Kesepuluh'];
-
-        allBagianFields.forEach(function(field) {
-            newBagianCounter++;
-            const oldBagianNumber = $(field).data('bagian');
-            const babNumber = $(field).data('bab');
-            const bagianName = bagianNames[newBagianCounter] || `Ke-${newBagianCounter}`;
-
-            $(field).attr('data-bagian', newBagianCounter);
-            $(field).find('.bagian-number').text(`Bagian ${bagianName}`);
-
-            const inputJudul = $(field).find('input[name^="judul_bagian"]');
-            inputJudul.attr('name', `judul_bagian[${babNumber}][${newBagianCounter}]`);
-            inputJudul.attr('placeholder', `Masukkan Judul Bagian ${bagianName}`);
-
-            const pasalContainer = $(field).find('.pasal-container');
-            pasalContainer.attr('data-bagian', newBagianCounter);
-
-            const addPasalBtn = $(field).find('.add-pasal-btn');
-            addPasalBtn.attr('data-bagian', newBagianCounter);
-
-            const removeBtn = $(field).find('.remove-bagian');
-            removeBtn.attr('data-bagian', newBagianCounter);
-        });
-
-        bagianCounter = newBagianCounter;
     }
 
     // Array untuk nama keputusan
@@ -770,8 +1025,6 @@
         'KESEBELAS', 'KEDUA BELAS', 'KETIGA BELAS', 'KEEMPAT BELAS', 'KELIMA BELAS',
         'KEENAM BELAS', 'KETUJUH BELAS', 'KEDELAPAN BELAS', 'KESEMBILAN BELAS', 'KEDUA PULUH'
     ];
-
-    let keputusanCounter = 1;
 
     $(document).on('click', '#add-keputusan', function() {
         if (keputusanCounter < 20) {
@@ -876,60 +1129,85 @@
         keputusanCounter = tempKeputusanCounter;
     }
 
-    let babCounter = 1;
-
     $(document).on('click', '#add-bab', function() {
         if (babCounter < 10) {
             babCounter++;
             addBabField(babCounter);
+
+            // Reorganisasi setelah tambah
+            setTimeout(function() {
+                reorganizeBabFields();
+            }, 300);
         } else {
             alert('Maksimal 10 bab yang dapat ditambahkan.');
         }
     });
 
+    // Event handler untuk tombol hapus bab
     $(document).on('click', '.remove-bab', function() {
         const fieldNumber = $(this).data('number');
-        removeBabField(fieldNumber);
+
+        if (fieldNumber === 1) {
+            alert('Bab pertama tidak dapat dihapus.');
+            return;
+        }
+
+        const babField = $(`.bab-field[data-number="${fieldNumber}"]`);
+
+        babField.find('.pasal-field').each(function() {
+            const pasalNumber = $(this).data('pasal');
+            const pasalTextareaId = `isi_pasal_${pasalNumber}`;
+            if (CKEDITOR.instances[pasalTextareaId]) {
+                CKEDITOR.instances[pasalTextareaId].destroy(true);
+            }
+        });
+
+        babField.fadeOut(300, function() {
+            $(this).remove();
+            reorganizeBabFields();
+            reorganizeBagianFields();
+            reorganizePasalFields();
+        });
     });
 
     function addBabField(number) {
         const newField = `
-            <div class="bab-field" data-number="${number}">
-                <div class="field-header">
-                    <span class="field-number">BAB ${number}</span>
-                    <button type="button" class="btn btn-sm btn-remove-field remove-bab" data-number="${number}">
-                        <i class="fas fa-trash"></i> Hapus
+        <div class="bab-field" data-number="${number}">
+            <div class="field-header">
+                <span class="field-number">BAB ${number}</span>
+                <button type="button" class="btn btn-sm btn-remove-field remove-bab" data-number="${number}">
+                    <i class="fas fa-trash"></i> Hapus
+                </button>
+            </div>
+            <div class="form-group row">
+                <label class="col-form-label col-lg-2">Judul Bab <span class="text-danger">*</span></label>
+                <div class="col-lg-10">
+                    <input type="text" class="form-control" name="judul_bab[${number}]" placeholder="Masukkan Judul Bab ${number}" required>
+                </div>
+            </div>
+            <div class="bagian-container" data-bab="${number}">
+                <div class="add-bagian-container">
+                    <button type="button" class="btn btn-sm btn-add-bagian add-bagian-btn" data-bab="${number}">
+                        <i class="fas fa-plus"></i> Tambah Bagian
                     </button>
+                    <br>
+                    <small class="text-muted mt-2 d-block">Klik untuk menambah bagian baru dalam bab ini</small>
                 </div>
-                <div class="form-group row">
-                    <label class="col-form-label col-lg-2">Judul Bab <span class="text-danger">*</span></label>
-                    <div class="col-lg-10">
-                        <input type="text" class="form-control" name="judul_bab[${number}]" placeholder="Masukkan Judul Bab ${number}" required>
-                    </div>
-                </div>
-                <div class="bagian-container" data-bab="${number}">
-                    <div class="add-bagian-container">
-                        <button type="button" class="btn btn-sm btn-add-bagian add-bagian-btn" data-bab="${number}">
-                            <i class="fas fa-plus"></i> Tambah Bagian
+                <div class="pasal-container" data-bab="${number}" data-bagian="0">
+                    <div class="add-pasal-container">
+                        <button type="button" class="btn btn-sm btn-add-pasal add-pasal-btn" data-bab="${number}" data-bagian="0">
+                            <i class="fas fa-plus"></i> Tambah Pasal
                         </button>
                         <br>
-                        <small class="text-muted mt-2 d-block">Klik untuk menambah bagian baru dalam bab ini</small>
-                    </div>
-                    <div class="pasal-container" data-bab="${number}" data-bagian="0">
-                        <div class="add-pasal-container">
-                            <button type="button" class="btn btn-sm btn-add-pasal add-pasal-btn" data-bab="${number}" data-bagian="0">
-                                <i class="fas fa-plus"></i> Tambah Pasal
-                            </button>
-                            <br>
-                            <small class="text-muted mt-2 d-block">Klik untuk menambah pasal baru tanpa bagian</small>
-                        </div>
+                        <small class="text-muted mt-2 d-block">Klik untuk menambah pasal baru tanpa bagian</small>
                     </div>
                 </div>
-                <hr>
             </div>
-        `;
+            <hr>
+        </div>
+    `;
 
-        $('#bab-container').append(newField);
+        $('#bab-container .add-field-container').before(newField);
 
         $('html, body').animate({
             scrollTop: $(`.bab-field[data-number="${number}"]`).offset().top - 100
@@ -968,14 +1246,20 @@
             tempBabCounter = newNumber;
 
             $(field).attr('data-number', newNumber);
-            $(field).find('.field-number').text(`BAB ${newNumber}`);
+            $(field).find('.field-number').first().text(`BAB ${newNumber}`);
 
-            $(field).find('.pasal-container').attr('data-bab', newNumber);
-            $(field).find('.add-pasal-btn').attr('data-bab', newNumber);
             $(field).find('.bagian-container').attr('data-bab', newNumber);
             $(field).find('.add-bagian-btn').attr('data-bab', newNumber);
 
-            const judulInput = $(field).find('input[name^="judul_bab"]');
+            // Update semua pasal-container dalam bab ini
+            $(field).find('.pasal-container').each(function() {
+                $(this).attr('data-bab', newNumber);
+            });
+
+            // Update semua add-pasal-btn dalam bab ini
+            $(field).find('.add-pasal-btn').attr('data-bab', newNumber);
+
+            const judulInput = $(field).find('input[name^="judul_bab"]').first();
             judulInput.attr('name', `judul_bab[${newNumber}]`);
             judulInput.attr('placeholder', `Masukkan Judul Bab ${newNumber}`);
 
@@ -986,6 +1270,21 @@
             } else {
                 removeBtn.show();
             }
+
+            // Update data-bab pada semua pasal dalam bab ini
+            $(field).find('.pasal-field').each(function() {
+                $(this).attr('data-bab', newNumber);
+                $(this).find('input[name^="pasal_bab_mapping"]').val(newNumber);
+            });
+
+            // Update data-bab pada semua bagian dalam bab ini
+            $(field).find('.bagian-field').each(function() {
+                $(this).attr('data-bab', newNumber);
+                $(this).find('input[name^="judul_bagian"]').each(function() {
+                    const bagianNum = $(this).closest('.bagian-field').data('bagian');
+                    $(this).attr('name', `judul_bagian[${newNumber}][${bagianNum}]`);
+                });
+            });
         });
 
         babCounter = tempBabCounter;

@@ -60,25 +60,27 @@
 	<script src="<?php echo base_url(); ?>assets/js/scripts.js"></script>
 	<script src="<?php echo base_url(); ?>assets/js/custom.js"></script>
 	<script>
-    // Fungsi untuk menandai semua pesan telah dibaca
-    function tandaiSemuaDibaca() {
-        // Kirim permintaan AJAX untuk mengupdate status pesan
-        $.ajax({
-            url: base_url + 'monitoring_raperbup/request/tandaiSemuaDibaca', // Gantilah dengan URL yang sesuai
-            method: "POST",
-            data: { status_pesan: 2 },
-            success: function(response) {
-                // Tampilkan pesan atau lakukan tindakan lain jika diperlukan
-                alert(response);
-                // Refresh halaman (opsional)
-                location.reload();
-            },
-            error: function(error) {
-                console.log(error);
-            }
-        });
-    }
-</script>
+		// Fungsi untuk menandai semua pesan telah dibaca
+		function tandaiSemuaDibaca() {
+			// Kirim permintaan AJAX untuk mengupdate status pesan
+			$.ajax({
+				url: base_url + 'monitoring_raperbup/request/tandaiSemuaDibaca', // Gantilah dengan URL yang sesuai
+				method: "POST",
+				data: {
+					status_pesan: 2
+				},
+				success: function(response) {
+					// Tampilkan pesan atau lakukan tindakan lain jika diperlukan
+					alert(response);
+					// Refresh halaman (opsional)
+					location.reload();
+				},
+				error: function(error) {
+					console.log(error);
+				}
+			});
+		}
+	</script>
 
 </head>
 
@@ -92,13 +94,13 @@
 					<!-- <li><a href="#" data-toggle="search" class="nav-link nav-link-lg "><i class="fas fa-search"></i></a></li> -->
 				</ul>
 				<ul class="navbar-nav navbar-right">
-				<?php
-$level_user_id = $this->session->userdata('level_user_id');
-?>
-<?php if ($level_user_id == 6): ?>
-	
-	<?php
-    $query = $this->db->query("
+					<?php
+					$level_user_id = $this->session->userdata('level_user_id');
+					?>
+					<?php if ($level_user_id == 6): ?>
+
+						<?php
+						$query = $this->db->query("
 	SELECT DISTINCT
     trx_raperbup.usulan_raperbup_id,
     usulan_raperbup.id_user_created,
@@ -116,51 +118,47 @@ WHERE trx_raperbup.kasubbag_agree_disagree = 1
     AND trx_raperbup.level_user_id_status = 7
     AND trx_raperbup.status_pesan = 1
         ");
-    $result = $query->result();
-	$totalRows = $query->num_rows();
+						$result = $query->result();
+						$totalRows = $query->num_rows();
 
-    ?>
-				<li class="dropdown dropdown-list-toggle"><a href="#" data-toggle="dropdown" class="nav-link notification-toggle nav-link-lg"><i class="far fa-bell"></i>
-				<span class="badge badge-danger" id="notificationCount"><?php echo $totalRows; ?></span>
-			</a>
-            <div class="dropdown-menu dropdown-list dropdown-menu-right">
-              <div class="dropdown-header">Pemberitahuan
-                <div class="float-right">
-                  <a href="#" onclick="tandaiSemuaDibaca();">Tandai semua telah di baca</a>
-                </div>
-              </div>
-              <div class="dropdown-list-content dropdown-list-icons">
-			
-  
-	 <?php foreach ($result as $row): ?>
-                <a href="#" class="dropdown-item">
-                  <div class="dropdown-item-icon bg-info text-white">
-                    <i class="fas fa-bell"></i>
-                  </div>
-                  <div class="dropdown-item-desc">
-				  <b><p style="font-size:16px;"><?php echo $row->nama_pengguna; ?></p></b>
-				  <i><?php echo $row->nama_peraturan; ?></i>
-                    <div class="time">
-						<?php
-							setlocale(LC_TIME, 'id_ID'); // Set lokal ke Bahasa Indonesia
+						?>
+						<li class="dropdown dropdown-list-toggle"><a href="#" data-toggle="dropdown" class="nav-link notification-toggle nav-link-lg"><i class="far fa-bell"></i>
+								<span class="badge badge-danger" id="notificationCount"><?php echo $totalRows; ?></span>
+							</a>
+							<div class="dropdown-menu dropdown-list dropdown-menu-right">
+								<div class="dropdown-header">Pemberitahuan
+									<div class="float-right">
+										<a href="#" onclick="tandaiSemuaDibaca();">Tandai semua telah di baca</a>
+									</div>
+								</div>
+								<div class="dropdown-list-content dropdown-list-icons">
 
-							// Format tanggal menggunakan strftime
-							echo strftime('%A, %d %B %Y', strtotime($row->created_at));
-							
-							?>
-</div>
-                  </div>
-              </div>
-			</a>
-			<?php endforeach; ?>
 
-              <div class="dropdown-footer text-center">
-                <!-- <a href="#">View All <i class="fas fa-chevron-right"></i></a> -->
-              </div>
-            </div>
-          </li>
-		  <?php endif; ?>
-				<li class="dropdown"><a href="#" data-toggle="dropdown" class="nav-link dropdown-toggle nav-link-lg nav-link-user">
+									<?php foreach ($result as $row): ?>
+										<a href="#" class="dropdown-item">
+											<div class="dropdown-item-icon bg-info text-white">
+												<i class="fas fa-bell"></i>
+											</div>
+											<div class="dropdown-item-desc">
+												<b><?php echo $row->nama_pengguna; ?></b><br>
+												<i><?php echo $row->nama_peraturan; ?></i>
+												<div class="time">
+													<?php
+													setlocale(LC_TIME, 'id_ID');
+													echo strftime('%A, %d %B %Y', strtotime($row->created_at));
+													?>
+												</div>
+											</div>
+										</a>
+									<?php endforeach; ?>
+
+									<div class="dropdown-footer text-center">
+										<!-- <a href="#">View All <i class="fas fa-chevron-right"></i></a> -->
+									</div>
+								</div>
+						</li>
+					<?php endif; ?>
+					<li class="dropdown"><a href="#" data-toggle="dropdown" class="nav-link dropdown-toggle nav-link-lg nav-link-user">
 							<div class="d-sm-none d-lg-inline-block"><?php echo $this->session->userdata("nama_lengkap"); ?></div>
 						</a>
 						<div class="dropdown-menu dropdown-menu-right">
