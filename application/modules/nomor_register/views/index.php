@@ -189,16 +189,31 @@
 
 <script>
     let datatableUsulanRaperbup = $("#datatableUsulanRaperbup").DataTable({
-        "columns": [
-            { "width": "20%" },
-            { "width": "10%" },
-            { "width": "35%" },
-            { "width": "10%" },
-            { "width": "10%" },
-            { "width": "15%" },
-            { "width": "5%" },
+        "columns": [{
+                "width": "20%"
+            },
+            {
+                "width": "10%"
+            },
+            {
+                "width": "35%"
+            },
+            {
+                "width": "10%"
+            },
+            {
+                "width": "10%"
+            },
+            {
+                "width": "15%"
+            },
+            {
+                "width": "5%"
+            },
         ],
-        "order": [[1, 'desc']]
+        "order": [
+            [1, 'desc']
+        ]
     });
     get_data_usulan_raperbup();
 
@@ -214,18 +229,19 @@
                 tipe: $("select[name='tipe']").val()
             },
             type: 'GET',
-            beforeSend: function () {
+            beforeSend: function() {
                 HoldOn.open(optionsHoldOn);
             },
-            success: function (response) {
+            success: function(response) {
                 console.log('Response:', response); // Debug response
                 if (response.length === 0) {
                     swal('Info', 'Tidak ada data yang sesuai dengan filter', 'info');
                 }
-                $.each(response, function (index, value) {
-                    let actions = "<a class='btn btn-danger btn-icon' onClick=\"show_panel_nomor_register('" + value.id_encrypt + "')\" href='#'><i class='ion ion-edit'></i></a>";
+                $.each(response, function(index, value) {
+                    let actions = "<a class='btn btn-danger btn-icon' onClick=\"show_panel_nomor_register('" + value.id_encrypt + "')\" href='#'>Teruskan</a>";
+                    actions += "<a class='btn btn-info btn-icon my-2' href='" + base_url + "Nomor_register/edit_usulan_raperbup/" + value.id_encrypt + "'>Revisi</a>";
                     if (value.status_terakhir.indexOf('Dibatalkan') === -1 && value.status_terakhir.indexOf('Sudah Di Publish') === -1) {
-                        actions += " <a class='btn btn-warning btn-icon' onClick=\"show_panel_cancel_usulan('" + value.id_encrypt + "')\" href='#'><i class='ion ion-close'></i></a>";
+                        actions += "<a class='btn btn-warning btn-icon' onClick=\"show_panel_cancel_usulan('" + value.id_encrypt + "')\" href='#'>Batalkan</a>";
                     }
                     datatableUsulanRaperbup.row.add([
                         value.nama || '-',
@@ -238,11 +254,11 @@
                     ]).draw(false);
                 });
             },
-            error: function (xhr, status, error) {
+            error: function(xhr, status, error) {
                 console.log('AJAX Error:', xhr.responseText); // Debug error
                 swal('Error', 'Gagal mengambil data: ' + error, 'error');
             },
-            complete: function () {
+            complete: function() {
                 HoldOn.close();
             }
         });
@@ -257,17 +273,17 @@
                 id_usulan_raperbup: id_usulan_raperbup
             },
             type: 'GET',
-            beforeSend: function () {
+            beforeSend: function() {
                 HoldOn.open(optionsHoldOn);
             },
-            success: function (response) {
+            success: function(response) {
                 $("input[name='nomor_register']").val(response.usulan_raperbup.nomor_register);
                 if (response.trx_raperbup) {
                     $("textarea[name='catatan']").val(response.trx_raperbup.catatan_ditolak);
                 }
                 get_data_kasubbag(response.usulan_raperbup.id_user_kasubbag);
             },
-            complete: function () {
+            complete: function() {
                 HoldOn.close();
             }
         });
@@ -295,10 +311,10 @@
                 catatan_pembatalan: catatan_pembatalan
             },
             type: 'POST',
-            beforeSend: function () {
+            beforeSend: function() {
                 HoldOn.open(optionsHoldOn);
             },
-            success: function (response) {
+            success: function(response) {
                 $("#showPanelCancelUsulan").modal("toggle");
                 get_data_usulan_raperbup();
                 if (response.status) {
@@ -307,10 +323,10 @@
                     swal('Gagal', response.message, 'error');
                 }
             },
-            error: function (xhr, status, error) {
+            error: function(xhr, status, error) {
                 swal('Error', 'Gagal membatalkan usulan: ' + error, 'error');
             },
-            complete: function () {
+            complete: function() {
                 HoldOn.close();
             }
         });
@@ -337,10 +353,10 @@
                     id_kasubbag: id_kasubbag,
                 },
                 type: 'POST',
-                beforeSend: function () {
+                beforeSend: function() {
                     HoldOn.open(optionsHoldOn);
                 },
-                success: function (response) {
+                success: function(response) {
                     get_data_usulan_raperbup();
                     $("#showPanelNomorRegister").modal("toggle");
                     $("input[name='id_usulan_raperbup']").val("");
@@ -352,7 +368,7 @@
                         swal('Gagal', 'Data tidak bisa disimpan', 'error');
                     }
                 },
-                complete: function () {
+                complete: function() {
                     HoldOn.close();
                 }
             });
@@ -380,12 +396,12 @@
         $.ajax({
             url: base_url + 'monitoring_raperbup/request/get_data_kasubbag',
             type: 'POST',
-            beforeSend: function () {
+            beforeSend: function() {
                 HoldOn.open(optionsHoldOn);
             },
-            success: function (response) {
+            success: function(response) {
                 let html = "<option value=''>-- Pilih Kasubbag --</option>";
-                $.each(response, function (index, value) {
+                $.each(response, function(index, value) {
                     let selected = "";
                     if (id_selected) {
                         if (id_selected == value.id_user) {
@@ -396,7 +412,7 @@
                 });
                 $("select[name='id_kasubbag']").html(html);
             },
-            complete: function (response) {
+            complete: function(response) {
                 HoldOn.close();
             }
         });
