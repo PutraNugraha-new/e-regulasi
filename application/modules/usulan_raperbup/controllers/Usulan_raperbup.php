@@ -523,6 +523,9 @@ class Usulan_raperbup extends MY_Controller
             )
         );
 
+        var_dump($data_master);
+        die;
+
         if (!$data_master) {
             $this->page_error();
         } else {
