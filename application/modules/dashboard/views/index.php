@@ -3,69 +3,22 @@
         <?php echo $breadcrumb_main; ?>
         <div class="section-body">
             <div class="row">
-            <?php
-$level_user_id = $this->session->userdata('level_user_id');
-?>
-            <?php if ($level_user_id == 4): ?>
-            <div class="col-lg-4 col-md-12 col-12 col-sm-12">
-              <div class="card">
-                <div class="card-header">
-                  <h4>Pemberitahuan Pengajuan Baru</h4>
+                <div class="col-12 col-md-6 col-lg-4">
+                    <div class="card">
+                        <div class="card-header">
+                            <h4>Pemberitahuan</h4>
+                            <div class="card-header-action">
+                                <a href="#" onclick="tandaiSemuaDibaca();" class="btn btn-primary">Tandai semua dibaca</a>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <ul class="list-unstyled list-unstyled-border" id="notificationListDashboard">
+                                <li class="media text-center">Memuat notifikasi...</li>
+                            </ul>
+                        </div>
+                    </div>
                 </div>
-                <div class="card-body">             
-                  <ul class="list-unstyled list-unstyled-border">
-                  
-	<?php
-    $query = $this->db->query("
-	SELECT DISTINCT
-    trx_raperbup.usulan_raperbup_id,
-    usulan_raperbup.id_user_created,
-    user.nama_lengkap AS nama_pengguna,
-    usulan_raperbup.nama_peraturan,
-    trx_raperbup.level_user_id_status,
-    trx_raperbup.status_tracking,
-    trx_raperbup.kasubbag_agree_disagree,
-    trx_raperbup.status_pesan,
-    trx_raperbup.created_at
-FROM trx_raperbup
-LEFT JOIN usulan_raperbup ON trx_raperbup.usulan_raperbup_id = usulan_raperbup.id_usulan_raperbup
-LEFT JOIN user ON usulan_raperbup.id_user_created = user.id_user
-WHERE trx_raperbup.kasubbag_agree_disagree = 1
-    AND trx_raperbup.level_user_id_status = 7
-    AND trx_raperbup.status_pesan = 1
-        ");
-    $result = $query->result();
-	$totalRows = $query->num_rows();
-
-    ?>
-    <?php foreach ($result as $row): ?>
-                    <li class="media">
-                      <img class="mr-3 rounded-circle" width="50" src="assets/img/avatar/avatar-1.png" alt="avatar">
-                      <div class="media-body">
-                        <p><?php
-							setlocale(LC_TIME, 'id_ID'); // Set lokal ke Bahasa Indonesia
-
-							// Format tanggal menggunakan strftime
-							echo strftime('%A, %d %B %Y', strtotime($row->created_at));
-							
-							?></p>
-                        <div class="media-title"><?php echo $row->nama_pengguna; ?></div>
-                        <span class="text-small text-muted"><?php echo $row->nama_peraturan; ?></span>
-                      </div>
-                    </li>
-                    <?php endforeach; ?>
-                  </ul>
-                  <div class="text-center pt-1 pb-1">
-                    <a href="#" class="btn btn-primary btn-lg btn-round" onclick="tandaiSemuaDibaca();">
-                        Tandai semua telah dibaca
-                    </a>
-                </div>
-                </div>
-              </div>
-            </div>
-            <?php endif; ?>
-                <div class="col-12">
-                    
+                <div class="col-12 col-md-6 col-lg-8">
                     <div class="card">
                         <div class="card-body">
                             <div class="empty-state" data-height="600">
@@ -79,3 +32,48 @@ WHERE trx_raperbup.kasubbag_agree_disagree = 1
         </div>
     </section>
 </div>
+
+<script>
+    $(document).ready(function() {
+        function loadNotifikasiDashboard() {
+            $.ajax({
+                url: base_url + 'dashboard/request/get_notifikasi',
+                type: 'GET',
+                dataType: 'json',
+                success: function(response) {
+                    var html = '';
+                    if (response.error) {
+                        html = '<li class="media text-center text-danger">Gagal memuat notifikasi: ' + response.error + '</li>';
+                    } else if (response.notifikasi.length > 0) {
+                        $.each(response.notifikasi, function(index, item) {
+                            var date = new Date(item.created_at);
+                            var formattedDate = date.toLocaleDateString('id-ID', {
+                                weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'
+                            });
+                            html += `
+                                <li class="media">
+                                    <img class="mr-3 rounded-circle" width="50" src="<?php echo base_url(); ?>assets/img/avatar/avatar-1.png" alt="avatar">
+                                    <div class="media-body">
+                                        <div class="media-title">${item.nama_pengguna}</div>
+                                        <span class="text-small text-muted">${item.pesan}</span>
+                                        <div class="text-small text-muted">${formattedDate}</div>
+                                        <a href="${item.link}" onclick="tandaiDibaca(${item.id_notifikasi})" class="btn btn-sm btn-primary mt-2">Lihat Detail</a>
+                                    </div>
+                                </li>`;
+                        });
+                    } else {
+                        html = '<li class="media text-center">Tidak ada pemberitahuan baru</li>';
+                    }
+                    $('#notificationListDashboard').html(html);
+                },
+                error: function(xhr, status, error) {
+                    console.log('Error loading notifications:', xhr.responseText);
+                    $('#notificationListDashboard').html('<li class="media text-center text-danger">Gagal memuat notifikasi: ' + (xhr.responseJSON ? xhr.responseJSON.error : 'Server error') + '</li>');
+                }
+            });
+        }
+
+        // Load notifikasi saat halaman dimuat
+        loadNotifikasiDashboard();
+    });
+</script>

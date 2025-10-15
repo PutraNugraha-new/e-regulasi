@@ -12,6 +12,7 @@ class Nomor_register extends MY_Controller
         $this->load->model('monitoring_raperbup/trx_raperbup_model', 'trx_raperbup_model');
         $this->load->model('Kategori_usulan_model', 'kategori_usulan_model');
         $this->load->model('Usulan_revisi_model');
+        $this->load->model('Notifikasi_model'); // Tambah model notifikasi
     }
 
     public function index()
@@ -89,6 +90,43 @@ class Nomor_register extends MY_Controller
 
                 $this->trx_raperbup_model->save($data_trx);
             }
+
+            if ($status) {
+                // Ambil nama peraturan untuk pesan notifikasi
+                $id_usulan_raperbup = decrypt_data($this->ipost("id_usulan_raperbup"));
+                $nama_peraturan = $this->usulan_raperbup_model->get_by($id_usulan_raperbup)->nama_peraturan ?: 'Usulan Tanpa Nama';
+
+                // Trigger notifikasi ke Kasubbag Per-UU (level 7)
+                $kasubbag_id = decrypt_data($this->ipost("id_kasubbag"));
+                if ($kasubbag_id) {
+                    $data_notif = [
+                        'id_user_tujuan' => $kasubbag_id,
+                        'id_usulan_raperbup' => $id_usulan_raperbup,
+                        'tipe_notif' => 'disposisi',
+                        'pesan' => 'Usulan disetujui oleh Admin Hukum dan diteruskan untuk koreksi: ' . $nama_peraturan . ($this->ipost("catatan_disposisi") ? ' (Catatan: ' . $this->ipost("catatan_disposisi") . ')' : ''),
+                        'link' => base_url('usulan_raperbup/detail_usulan_raperbup/' . $this->ipost("id_usulan_raperbup"))
+                    ];
+                    $this->Notifikasi_model->simpan_notif($data_notif);
+                    log_message('debug', 'Notif disposisi saved for Kasubbag: ' . json_encode($data_notif));
+                } else {
+                    log_message('error', 'No Kasubbag selected for usulan: ' . $id_usulan_raperbup);
+                }
+
+                // Trigger notifikasi ke Admin Perangkat Daerah (pengaju)
+                $id_pengaju = $this->db->select('id_user_created')
+                    ->where('id_usulan_raperbup', $id_usulan_raperbup)
+                    ->get('usulan_raperbup')
+                    ->row()->id_user_created;
+                $data_notif = [
+                    'id_user_tujuan' => $id_pengaju,
+                    'id_usulan_raperbup' => $id_usulan_raperbup,
+                    'tipe_notif' => 'disposisi',
+                    'pesan' => 'Usulan Anda disetujui oleh Admin Hukum dan diteruskan ke Kasubbag: ' . $nama_peraturan . ($this->ipost("catatan_disposisi") ? ' (Catatan: ' . $this->ipost("catatan_disposisi") . ')' : ''),
+                    'link' => base_url('usulan_raperbup/detail_usulan_raperbup/' . $this->ipost("id_usulan_raperbup"))
+                ];
+                $this->Notifikasi_model->simpan_notif($data_notif);
+                log_message('debug', 'Notif disposisi saved for Admin PD: ' . json_encode($data_notif));
+            }
         }
 
         $this->output
@@ -149,6 +187,26 @@ class Nomor_register extends MY_Controller
 
         $status = $this->trx_raperbup_model->save($data_trx);
 
+        if ($status) {
+            // Ambil nama peraturan untuk pesan notifikasi
+            $nama_peraturan = $this->usulan_raperbup_model->get_by($id_usulan_raperbup)->nama_peraturan ?: 'Usulan Tanpa Nama';
+
+            // Trigger notifikasi ke Admin Perangkat Daerah (pengaju)
+            $id_pengaju = $this->db->select('id_user_created')
+                ->where('id_usulan_raperbup', $id_usulan_raperbup)
+                ->get('usulan_raperbup')
+                ->row()->id_user_created;
+            $data_notif = [
+                'id_user_tujuan' => $id_pengaju,
+                'id_usulan_raperbup' => $id_usulan_raperbup,
+                'tipe_notif' => 'usulan_dibatalkan',
+                'pesan' => 'Usulan "' . $nama_peraturan . '" dibatalkan oleh Admin Hukum. Catatan: ' . $catatan_pembatalan,
+                'link' => base_url('usulan_raperbup/detail_usulan_raperbup/' . $this->ipost("id_usulan_raperbup"))
+            ];
+            $this->Notifikasi_model->simpan_notif($data_notif);
+            log_message('debug', 'Notif usulan_dibatalkan saved: ' . json_encode($data_notif));
+        }
+
         $this->output
             ->set_content_type('application/json')
             ->set_output(json_encode(['status' => $status, 'message' => $status ? 'Usulan berhasil dibatalkan' : 'Gagal membatalkan usulan']));
@@ -176,9 +234,7 @@ class Nomor_register extends MY_Controller
 
         // Siapkan data untuk view berdasarkan kategori
         if ($data_usulan->kategori_usulan_id == 1 || $data_usulan->kategori_usulan_id == 2) {
-            // Untuk Perda & Perbup - decode bab_pasal_data
             $bab_pasal_data = json_decode($data_usulan->bab_pasal_data, true);
-
             $data = array(
                 'nama_peraturan' => $data_usulan->nama_peraturan,
                 'menimbang' => $data_usulan->menimbang,
@@ -193,12 +249,10 @@ class Nomor_register extends MY_Controller
                 'lampiran_daftar_hadir' => isset($data_usulan->lampiran_daftar_hadir) ? $data_usulan->lampiran_daftar_hadir : ''
             );
 
-            // Tambahkan penjelasan hanya untuk Perda (kategori_usulan_id = 1)
             if ($data_usulan->kategori_usulan_id == 1) {
                 $data['penjelasan'] = isset($data_usulan->penjelasan) ? $data_usulan->penjelasan : '';
             }
         } else {
-            // Untuk Kepbup
             $data = array(
                 'nama_peraturan' => $data_usulan->nama_peraturan,
                 'menimbang' => $data_usulan->menimbang,
@@ -220,24 +274,18 @@ class Nomor_register extends MY_Controller
         // Konfigurasi mPDF untuk dokumen utama
         $this->mpdf_library->mpdf->SetTitle('Keputusan Bupati Katingan');
 
-        // Konfigurasi header khusus untuk Perda & Perbup (seperti di preview)
         if ($data_usulan->kategori_usulan_id == 1 || $data_usulan->kategori_usulan_id == 2) {
-            // Header dengan nomor halaman untuk halaman genap dan ganjil
             $header_html = '- {PAGENO} -';
             $this->mpdf_library->mpdf->SetHTMLHeader($header_html, 'E', true);
             $this->mpdf_library->mpdf->SetHTMLHeader($header_html, 'O', true);
-
-            // Paksa header di halaman pertama menjadi kosong
             $this->mpdf_library->mpdf->SetHTMLHeader('', 'first');
         }
 
         $this->mpdf_library->mpdf->WriteHTML($html);
 
-        // Nama file PDF sementara untuk dokumen utama
         $pdf_file_name = 'Keputusan_Bupati_' . str_replace(' ', '_', $data_usulan->nama_peraturan) . '_' . time() . '.pdf';
         $pdf_path = FCPATH . 'assets/file_usulan/' . $pdf_file_name;
 
-        // Simpan PDF dokumen utama
         try {
             $this->mpdf_library->mpdf->Output($pdf_path, 'F');
             log_message('debug', "PDF dokumen utama disimpan di: $pdf_path");
@@ -249,12 +297,10 @@ class Nomor_register extends MY_Controller
             return;
         }
 
-        // Jika kategori adalah Kepbup (kategori_usulan_id = 3), gabungkan dengan lampiran_usulan
         if ($data_usulan->kategori_usulan_id == 3 && !empty($data_usulan->lampiran_usulan)) {
             $lampiran_path = FCPATH . $this->config->item('file_lampiran') . '/' . $data_usulan->lampiran_usulan;
             $merged_pdf_path = FCPATH . 'assets/file_usulan/merged_' . $pdf_file_name;
 
-            // Validasi file
             if (!file_exists($pdf_path)) {
                 log_message('error', "File dokumen utama tidak ditemukan: $pdf_path");
                 $this->session->set_flashdata('message', 'Gagal menggabungkan: File dokumen utama tidak ditemukan');
@@ -277,12 +323,10 @@ class Nomor_register extends MY_Controller
                 return;
             }
 
-            // Gabungkan PDF
             $pdf_files = [$pdf_path, $lampiran_path];
             $merge_result = $this->mpdf_library->merge_pdfs($pdf_files, $merged_pdf_path);
 
             if ($merge_result) {
-                // Hapus file PDF sementara (dokumen utama)
                 unlink($pdf_path);
                 $pdf_path = $merged_pdf_path;
                 $pdf_file_name = basename($merged_pdf_path);
@@ -296,23 +340,19 @@ class Nomor_register extends MY_Controller
             }
         }
 
-        // Update data transaksi dengan nama file PDF
         $this->trx_raperbup_model->edit($trx_id, array(
             'file_usulan_raperbup' => $pdf_file_name,
             'updated_at' => $this->datetime(),
             'id_user_updated' => $this->session->userdata("id_user")
         ));
 
-        // Jika output_mode adalah untuk preview atau download khusus, tampilkan PDF
         if ($output_mode === 'I' || $output_mode === 'D') {
             header('Content-Type: application/pdf');
             header('Content-Disposition: ' . ($output_mode === 'D' ? 'attachment' : 'inline') . '; filename="' . $pdf_file_name . '"');
             header('Content-Transfer-Encoding: binary');
             header('Accept-Ranges: bytes');
 
-            // Jika kategori adalah Kepbup, kirim file yang sudah digabung
             if ($data_usulan->kategori_usulan_id == 3 && !empty($data_usulan->lampiran_usulan)) {
-                // Langsung kirim file hasil penggabungan dari disk
                 if (file_exists($pdf_path)) {
                     header('Content-Length: ' . filesize($pdf_path));
                     readfile($pdf_path);
@@ -325,7 +365,6 @@ class Nomor_register extends MY_Controller
                     return;
                 }
             } else {
-                // Untuk kategori lain (Perda & Perbup), baca file dari disk karena sudah disimpan
                 if (file_exists($pdf_path)) {
                     header('Content-Length: ' . filesize($pdf_path));
                     readfile($pdf_path);
@@ -339,7 +378,6 @@ class Nomor_register extends MY_Controller
                 }
             }
         }
-        // Jika output_mode adalah 'F' (File), hanya simpan file tanpa output ke browser
     }
 
     public function edit_usulan_raperbup($id_usulan_raperbup)
@@ -434,11 +472,9 @@ class Nomor_register extends MY_Controller
                     }
                 }
 
-                // Cek kategori usulan untuk menentukan field yang perlu diupdate
                 $kategori_id = decrypt_data($this->ipost("kategori_usulan"));
 
                 if (in_array($kategori_id, array("1", "2"))) {
-                    // Perda & Perbup
                     $nama_file_lampiran = $data_master[0]->lampiran;
                     if (!empty($_FILES['file_lampiran']['name'])) {
                         $input_name_lampiran = "file_lampiran";
@@ -478,16 +514,12 @@ class Nomor_register extends MY_Controller
                         $nama_file_lampiran_daftar_hadir = $upload_file_lampiran_daftar_hadir['data']['file_name'];
                     }
 
-                    // Ambil data bab dan pasal dari form
-                    $judul_bab = $this->input->post("judul_bab"); // array
-                    $isi_pasal = $this->input->post("isi_pasal"); // array
-                    $pasal_bab_mapping = $this->input->post("pasal_bab_mapping"); // array mapping pasal ke bab
-
-                    // Buat struktur JSON untuk bab_pasal_data
+                    $judul_bab = $this->input->post("judul_bab");
+                    $isi_pasal = $this->input->post("isi_pasal");
+                    $pasal_bab_mapping = $this->input->post("pasal_bab_mapping");
                     $bab_pasal_data = array();
 
                     if (!empty($judul_bab)) {
-                        // Inisialisasi struktur bab
                         foreach ($judul_bab as $bab_number => $judul) {
                             $bab_pasal_data[$bab_number] = array(
                                 'judul' => $judul,
@@ -495,7 +527,6 @@ class Nomor_register extends MY_Controller
                             );
                         }
 
-                        // Distribusikan pasal ke bab yang sesuai berdasarkan mapping
                         if (!empty($isi_pasal) && !empty($pasal_bab_mapping)) {
                             foreach ($isi_pasal as $pasal_number => $isi) {
                                 $bab_number = $pasal_bab_mapping[$pasal_number];
@@ -523,7 +554,6 @@ class Nomor_register extends MY_Controller
                         "id_user_updated" => $this->session->userdata("id_user")
                     );
                 } else {
-                    // Kepbup
                     $nama_file_lampiran = $data_master[0]->lampiran;
                     if (!empty($_FILES['file_lampiran']['name'])) {
                         $input_name_lampiran = "file_lampiran";
@@ -580,6 +610,23 @@ class Nomor_register extends MY_Controller
                 if ($status) {
                     // Regenerate PDF setelah edit
                     $this->generate_pdf_raperbup(decrypt_data($id_usulan_raperbup), $data_master[0]->id_trx_raperbup, 'F');
+
+                    // Trigger notifikasi ke Admin Perangkat Daerah (pengaju)
+                    $id_usulan_raperbup_decrypted = decrypt_data($id_usulan_raperbup);
+                    $nama_peraturan = $this->usulan_raperbup_model->get_by($id_usulan_raperbup_decrypted)->nama_peraturan ?: 'Usulan Tanpa Nama';
+                    $id_pengaju = $this->db->select('id_user_created')
+                        ->where('id_usulan_raperbup', $id_usulan_raperbup_decrypted)
+                        ->get('usulan_raperbup')
+                        ->row()->id_user_created;
+                    $data_notif = [
+                        'id_user_tujuan' => $id_pengaju,
+                        'id_usulan_raperbup' => $id_usulan_raperbup_decrypted,
+                        'tipe_notif' => 'revisi_admin_hukum',
+                        'pesan' => 'Usulan "' . $nama_peraturan . '" direvisi oleh Admin Hukum',
+                        'link' => base_url('usulan_raperbup/detail_usulan_raperbup/' . $id_usulan_raperbup)
+                    ];
+                    $this->Notifikasi_model->simpan_notif($data_notif);
+                    log_message('debug', 'Notif revisi_admin_hukum saved: ' . json_encode($data_notif));
 
                     $this->session->set_flashdata('message', 'Data berhasil diubah');
                     $this->session->set_flashdata('type-alert', 'success');
