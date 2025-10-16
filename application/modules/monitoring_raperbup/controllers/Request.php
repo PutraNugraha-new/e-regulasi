@@ -9,6 +9,7 @@ class Request extends MY_Controller
         $this->is_login();
         $this->load->model('usulan_raperbup/usulan_raperbup_model', 'usulan_raperbup_model');
         $this->load->model('trx_raperbup_model');
+        $this->load->model('monitoring_raperbup/Trx_raperbup_model', 'trx_raperbup_model');
         $this->load->model('user_model');
         $this->load->model('level_user/level_user_model', 'level_user_model');
     }
@@ -217,7 +218,8 @@ class Request extends MY_Controller
             ->set_content_type('application/json')
             ->set_output(json_encode($data));
     }
-    public function tandaiSemuaDibaca() {
+    public function tandaiSemuaDibaca()
+    {
         // Load model
         $this->load->model('trx_raperbup_model');
 
@@ -227,10 +229,11 @@ class Request extends MY_Controller
         // Respon ke view atau lakukan tindakan lain yang diperlukan
         echo 'Pesan telah ditandai semua telah dibaca!';
     }
+
     public function get_data_peraturan()
     {
-        $skpd = $this->iget("skpd");
         $filter = $this->iget("filter");
+        $usulan_id = $this->iget("usulan_id");
         if ($this->iget("kategori_usulan")) {
             $kategori_usulan = $this->iget("kategori_usulan");
         } else {
@@ -238,11 +241,14 @@ class Request extends MY_Controller
         }
 
         $wh = array();
-        if ($skpd) {
-            $wh["master_satker_id"] = $skpd;
+        if ($usulan_id) {
+            $wh["usulan_raperbup.id_usulan_raperbup"] = $usulan_id; // Gunakan ID mentah
+        }
+        if ($kategori_usulan != "all") {
+            $wh["kategori_usulan_id"] = $kategori_usulan; // Gunakan ID mentah
         }
 
-        //kasubbag
+        // Kasubbag
         if ($this->session->userdata("level_user_id") == '7') {
             $wh["id_user_kasubbag"] = $this->session->userdata("id_user");
 
@@ -259,10 +265,7 @@ class Request extends MY_Controller
                 )
             );
         } else {
-            //kabag && admin
-            if ($kategori_usulan != "all") {
-                $wh["kategori_usulan_id"] = decrypt_data($kategori_usulan);
-            }
+            // Kabag && Admin
             $data_usulan = $this->usulan_raperbup_model->get(
                 array(
                     "join" => array(
@@ -279,27 +282,6 @@ class Request extends MY_Controller
 
         $templist = array();
         foreach ($data_usulan as $key => $row) {
-            // if ($this->session->userdata("level_user_id") == '7') {
-            //     $data_disposisi = $this->trx_raperbup_model->get(
-            //         array(
-            //             "where" => array(
-            //                 "usulan_raperbup_id" => $row->id_usulan_raperbup,
-            //                 "status_tracking" => "2"
-            //             ),
-            //         ),
-            //         "row"
-            //     );
-            // } else {
-            //     $data_disposisi = true;
-            // }
-
-            // if ($data_disposisi) {
-            //     foreach ($row as $keys => $rows) {
-            //         $templist[$key][$keys] = $rows;
-            //     }
-            //     $templist[$key]['id_encrypt'] = encrypt_data($row->id_usulan_raperbup);
-            // }
-
             $data_terakhir = $this->trx_raperbup_model->get(
                 array(
                     "where" => array(
@@ -313,9 +295,12 @@ class Request extends MY_Controller
                 "row"
             );
 
-            //belum diperiksa
+            if (!$data_terakhir) {
+                continue; // Skip jika tidak ada data transaksi
+            }
+
+            // Filter belum diperiksa
             if ($filter == "belum") {
-                //kasubbag
                 if ($this->session->userdata("level_user_id") == '7') {
                     if (($data_terakhir->status_tracking == "3" && (($data_terakhir->kasubbag_agree_disagree == "1" && $data_terakhir->kabag_agree_disagree == "1") || ($data_terakhir->kasubbag_agree_disagree == "2" && $data_terakhir->kabag_agree_disagree == "1") || (in_array($data_terakhir->kasubbag_agree_disagree, array("1", "2")) && $data_terakhir->kabag_agree_disagree == ""))) || $data_terakhir->status_tracking == "5") {
                         continue;
@@ -327,6 +312,7 @@ class Request extends MY_Controller
                 }
             }
 
+            // Filter sudah diperiksa
             if ($filter == "sudah") {
                 if ($this->session->userdata("level_user_id") == '7') {
                     if ($data_terakhir->status_tracking == "2" || ($data_terakhir->status_tracking == "3" && (($data_terakhir->kasubbag_agree_disagree == "1" && $data_terakhir->kabag_agree_disagree == "2") || ($data_terakhir->kasubbag_agree_disagree == "2" && $data_terakhir->kabag_agree_disagree == "2"))) || $data_terakhir->status_tracking == "5") {
@@ -342,7 +328,7 @@ class Request extends MY_Controller
             foreach ($row as $keys => $rows) {
                 $templist[$key][$keys] = $rows;
             }
-            $templist[$key]['id_encrypt'] = encrypt_data($row->id_usulan_raperbup);
+            $templist[$key]['id_encrypt'] = $row->id_usulan_raperbup; // Gunakan ID mentah
         }
 
         $data = $templist;
@@ -1072,7 +1058,7 @@ class Request extends MY_Controller
         $id_peraturan = decrypt_data($this->iget("id_peraturan"));
         $data = $this->usulan_raperbup_model->get(
             array(
-                "fields"    => "usulan_raperbup.*,nama_level_user",
+                "fields" => "usulan_raperbup.*,nama_level_user",
                 "left_join" => array(
                     "level_user" => "id_level_user=last_level_user"
                 ),
@@ -1178,13 +1164,14 @@ class Request extends MY_Controller
             ->set_output(json_encode($data));
     }
 
-    function get_trx_raperbup(){
+    function get_trx_raperbup()
+    {
         $id = $this->iget("id");
 
         $data = $this->trx_raperbup_model->get_by($id);
-        $expl_created_at = explode(" ",$data->created_at);
-        $tanggal = explode("-",$expl_created_at[0]);
-        $data->created_at = $tanggal[2]."-".$tanggal[1]."-".$tanggal[0]." ".$expl_created_at[1];
+        $expl_created_at = explode(" ", $data->created_at);
+        $tanggal = explode("-", $expl_created_at[0]);
+        $data->created_at = $tanggal[2] . "-" . $tanggal[1] . "-" . $tanggal[0] . " " . $expl_created_at[1];
 
         $this->output
             ->set_content_type('application/json')

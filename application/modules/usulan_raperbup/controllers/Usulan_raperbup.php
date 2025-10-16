@@ -174,10 +174,10 @@ class Usulan_raperbup extends MY_Controller
                         foreach ($admin_hukum_users as $admin) {
                             $data_notif = [
                                 'id_user_tujuan' => $admin->id_user,
-                                'id_usulan_raperbup' => $status,
+                                'id_usulan_raperbup' => $status,  // Gunakan ini untuk tracking
                                 'tipe_notif' => 'usulan_baru',
                                 'pesan' => 'Usulan baru dari Admin Perangkat Daerah: ' . $this->ipost("nama_peraturan"),
-                                'link' => base_url('usulan_raperbup/detail_usulan_raperbup/' . encrypt_data($status))
+                                'created_at' => $this->datetime()
                             ];
                             $this->Notifikasi_model->simpan_notif($data_notif);
                         }
@@ -770,7 +770,6 @@ class Usulan_raperbup extends MY_Controller
                             'id_usulan_raperbup' => decrypt_data($id_usulan_raperbup),
                             'tipe_notif' => 'revisi',
                             'pesan' => 'Usulan direvisi oleh Admin Perangkat Daerah: ' . $this->ipost("nama_peraturan"),
-                            'link' => base_url('usulan_raperbup/detail_usulan_raperbup/' . $id_usulan_raperbup)
                         ];
                         $this->Notifikasi_model->simpan_notif($data_notif);
                     }
@@ -814,7 +813,7 @@ class Usulan_raperbup extends MY_Controller
                 $this->trx_raperbup_model->edit($row->id_trx_raperbup, $data_remove);
             }
             $status = $this->usulan_raperbup_model->edit($id_usulan_raperbup, $data_remove);
-            
+
             if ($status) {
                 // Trigger notifikasi ke Admin Hukum (level 4)
                 $admin_hukum_users = $this->db->select('id_user')->where('level_user_id', 4)->get('user')->result();
@@ -824,7 +823,6 @@ class Usulan_raperbup extends MY_Controller
                         'id_usulan_raperbup' => $id_usulan_raperbup,
                         'tipe_notif' => 'usulan_dihapus',
                         'pesan' => 'Usulan dihapus oleh Admin Perangkat Daerah',
-                        'link' => base_url('usulan_raperbup')
                     ];
                     $this->Notifikasi_model->simpan_notif($data_notif);
                 }
@@ -946,7 +944,6 @@ class Usulan_raperbup extends MY_Controller
                     'id_usulan_raperbup' => decrypt_data($id_usulan_raperbup),
                     'tipe_notif' => 'perbaikan_upload',
                     'pesan' => 'Perbaikan usulan diupload oleh Admin Perangkat Daerah',
-                    'link' => base_url('usulan_raperbup/detail_usulan_raperbup/' . $id_usulan_raperbup)
                 ];
                 $this->Notifikasi_model->simpan_notif($data_notif);
             }
@@ -987,7 +984,6 @@ class Usulan_raperbup extends MY_Controller
                     'id_usulan_raperbup' => decrypt_data($id_usulan_raperbup),
                     'tipe_notif' => 'perbaikan_hasil_rapat',
                     'pesan' => 'Perbaikan hasil rapat diupload oleh Admin Perangkat Daerah',
-                    'link' => base_url('usulan_raperbup/detail_usulan_raperbup/' . $id_usulan_raperbup)
                 ];
                 $this->Notifikasi_model->simpan_notif($data_notif);
             }

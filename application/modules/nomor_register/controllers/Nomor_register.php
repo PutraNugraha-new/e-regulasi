@@ -92,37 +92,36 @@ class Nomor_register extends MY_Controller
             }
 
             if ($status) {
-                // Ambil nama peraturan untuk pesan notifikasi
-                $id_usulan_raperbup = decrypt_data($this->ipost("id_usulan_raperbup"));
-                $nama_peraturan = $this->usulan_raperbup_model->get_by($id_usulan_raperbup)->nama_peraturan ?: 'Usulan Tanpa Nama';
+                $id_usulan_raperbup_decrypted = decrypt_data($this->ipost("id_usulan_raperbup"));
+                $nama_peraturan = $this->usulan_raperbup_model->get_by($id_usulan_raperbup_decrypted)->nama_peraturan ?: 'Usulan Tanpa Nama';
 
-                // Trigger notifikasi ke Kasubbag Per-UU (level 7)
+                // Notif ke Kasubbag
                 $kasubbag_id = decrypt_data($this->ipost("id_kasubbag"));
                 if ($kasubbag_id) {
                     $data_notif = [
                         'id_user_tujuan' => $kasubbag_id,
-                        'id_usulan_raperbup' => $id_usulan_raperbup,
+                        'id_usulan_raperbup' => $id_usulan_raperbup_decrypted,
                         'tipe_notif' => 'disposisi',
                         'pesan' => 'Usulan disetujui oleh Admin Hukum dan diteruskan untuk koreksi: ' . $nama_peraturan . ($this->ipost("catatan_disposisi") ? ' (Catatan: ' . $this->ipost("catatan_disposisi") . ')' : ''),
-                        'link' => base_url('usulan_raperbup/detail_usulan_raperbup/' . $this->ipost("id_usulan_raperbup"))
+                        'created_at' => $this->datetime()
                     ];
                     $this->Notifikasi_model->simpan_notif($data_notif);
                     log_message('debug', 'Notif disposisi saved for Kasubbag: ' . json_encode($data_notif));
                 } else {
-                    log_message('error', 'No Kasubbag selected for usulan: ' . $id_usulan_raperbup);
+                    log_message('error', 'No Kasubbag selected for usulan: ' . $id_usulan_raperbup_decrypted);
                 }
 
-                // Trigger notifikasi ke Admin Perangkat Daerah (pengaju)
+                // Notif ke Admin PD
                 $id_pengaju = $this->db->select('id_user_created')
-                    ->where('id_usulan_raperbup', $id_usulan_raperbup)
+                    ->where('id_usulan_raperbup', $id_usulan_raperbup_decrypted)
                     ->get('usulan_raperbup')
                     ->row()->id_user_created;
                 $data_notif = [
                     'id_user_tujuan' => $id_pengaju,
-                    'id_usulan_raperbup' => $id_usulan_raperbup,
+                    'id_usulan_raperbup' => $id_usulan_raperbup_decrypted,
                     'tipe_notif' => 'disposisi',
                     'pesan' => 'Usulan Anda disetujui oleh Admin Hukum dan diteruskan ke Kasubbag: ' . $nama_peraturan . ($this->ipost("catatan_disposisi") ? ' (Catatan: ' . $this->ipost("catatan_disposisi") . ')' : ''),
-                    'link' => base_url('usulan_raperbup/detail_usulan_raperbup/' . $this->ipost("id_usulan_raperbup"))
+                    'created_at' => $this->datetime()
                 ];
                 $this->Notifikasi_model->simpan_notif($data_notif);
                 log_message('debug', 'Notif disposisi saved for Admin PD: ' . json_encode($data_notif));
@@ -201,7 +200,6 @@ class Nomor_register extends MY_Controller
                 'id_usulan_raperbup' => $id_usulan_raperbup,
                 'tipe_notif' => 'usulan_dibatalkan',
                 'pesan' => 'Usulan "' . $nama_peraturan . '" dibatalkan oleh Admin Hukum. Catatan: ' . $catatan_pembatalan,
-                'link' => base_url('usulan_raperbup/detail_usulan_raperbup/' . $this->ipost("id_usulan_raperbup"))
             ];
             $this->Notifikasi_model->simpan_notif($data_notif);
             log_message('debug', 'Notif usulan_dibatalkan saved: ' . json_encode($data_notif));
@@ -623,7 +621,6 @@ class Nomor_register extends MY_Controller
                         'id_usulan_raperbup' => $id_usulan_raperbup_decrypted,
                         'tipe_notif' => 'revisi_admin_hukum',
                         'pesan' => 'Usulan "' . $nama_peraturan . '" direvisi oleh Admin Hukum',
-                        'link' => base_url('usulan_raperbup/detail_usulan_raperbup/' . $id_usulan_raperbup)
                     ];
                     $this->Notifikasi_model->simpan_notif($data_notif);
                     log_message('debug', 'Notif revisi_admin_hukum saved: ' . json_encode($data_notif));

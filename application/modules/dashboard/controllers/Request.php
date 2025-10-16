@@ -1,10 +1,13 @@
 <?php
-defined('BASEPATH') OR exit('No direct script access allowed');
+defined('BASEPATH') or exit('No direct script access allowed');
 
-class Request extends MY_Controller {
-	function __construct(){
+class Request extends MY_Controller
+{
+	function __construct()
+	{
 		parent::__construct();
-		
+		$this->is_login();
+
 		// Load model dengan pengecekan keberadaan file
 		$pemilik_usaha_path = APPPATH . 'modules/pemilik_usaha/models/Pemilik_usaha_model.php';
 		$data_usaha_path = APPPATH . 'modules/data_usaha/models/Data_usaha_model.php';
@@ -34,7 +37,7 @@ class Request extends MY_Controller {
 			$this->aset_omset_usaha_model = null;
 		}
 
-		$this->load->model('Notifikasi_model', 'notifikasi_model', true); // Load dari application\models
+		$this->load->model('Notifikasi_model', 'notifikasi_model', true);
 		if (!$this->notifikasi_model) {
 			log_message('error', 'Notifikasi_model not loaded');
 		} else {
@@ -42,7 +45,8 @@ class Request extends MY_Controller {
 		}
 	}
 
-	function get_jumlah_data_pemilik_usaha_masuk(){
+	function get_jumlah_data_pemilik_usaha_masuk()
+	{
 		if (!$this->pemilik_usaha_model) {
 			log_message('error', 'Pemilik_usaha_model not loaded in get_jumlah_data_pemilik_usaha_masuk');
 			$this->output->set_status_header(500)->set_output(json_encode(['error' => 'Pemilik_usaha_model not loaded']));
@@ -50,15 +54,17 @@ class Request extends MY_Controller {
 		}
 		$data = $this->pemilik_usaha_model->get(
 			array(
-				"fields"=>"IFNULL(count(*),0) as jumlah_pemilik_usaha_masuk"
-			),"row"
+				"fields" => "IFNULL(count(*),0) as jumlah_pemilik_usaha_masuk"
+			),
+			"row"
 		);
 		$this->output
 			->set_content_type('application/json')
 			->set_output(json_encode($data));
 	}
-    
-	function get_jumlah_data_usaha_masuk(){
+
+	function get_jumlah_data_usaha_masuk()
+	{
 		if (!$this->data_usaha_model) {
 			log_message('error', 'Data_usaha_model not loaded in get_jumlah_data_usaha_masuk');
 			$this->output->set_status_header(500)->set_output(json_encode(['error' => 'Data_usaha_model not loaded']));
@@ -66,18 +72,20 @@ class Request extends MY_Controller {
 		}
 		$data = $this->data_usaha_model->get(
 			array(
-				"fields"=>"IFNULL(count(*),0) as jumlah_data_usaha_masuk",
-				"join"=>array(
-					"master_pemilik_usaha"=>"id_pemilik_usaha=master_pemilik_usaha_id AND master_pemilik_usaha.deleted_at IS NULL and master_pemilik_usaha.is_verified = 1",
+				"fields" => "IFNULL(count(*),0) as jumlah_data_usaha_masuk",
+				"join" => array(
+					"master_pemilik_usaha" => "id_pemilik_usaha=master_pemilik_usaha_id AND master_pemilik_usaha.deleted_at IS NULL and master_pemilik_usaha.is_verified = 1",
 				),
-			),"row"
+			),
+			"row"
 		);
 		$this->output
 			->set_content_type('application/json')
 			->set_output(json_encode($data));
 	}
 
-	function get_jumlah_data_aset_omset_masuk(){
+	function get_jumlah_data_aset_omset_masuk()
+	{
 		if (!$this->aset_omset_usaha_model) {
 			log_message('error', 'Aset_omset_usaha_model not loaded in get_jumlah_data_aset_omset_masuk');
 			$this->output->set_status_header(500)->set_output(json_encode(['error' => 'Aset_omset_usaha_model not loaded']));
@@ -85,19 +93,21 @@ class Request extends MY_Controller {
 		}
 		$data = $this->aset_omset_usaha_model->get(
 			array(
-				"fields"=>"IFNULL(count(*),0) as jumlah_data_aset_omset_masuk",
-				"join"=>array(
-					"master_data_usaha"=>"id_data_usaha=master_data_usaha_id AND master_data_usaha.deleted_at IS NULL and master_data_usaha.is_verified = 1",
-					"master_pemilik_usaha"=>"id_pemilik_usaha=master_pemilik_usaha_id AND master_pemilik_usaha.deleted_at IS NULL and master_pemilik_usaha.is_verified = 1"
+				"fields" => "IFNULL(count(*),0) as jumlah_data_aset_omset_masuk",
+				"join" => array(
+					"master_data_usaha" => "id_data_usaha=master_data_usaha_id AND master_data_usaha.deleted_at IS NULL and master_data_usaha.is_verified = 1",
+					"master_pemilik_usaha" => "id_pemilik_usaha=master_pemilik_usaha_id AND master_pemilik_usaha.deleted_at IS NULL and master_pemilik_usaha.is_verified = 1"
 				),
-			),"row"
+			),
+			"row"
 		);
 		$this->output
 			->set_content_type('application/json')
 			->set_output(json_encode($data));
 	}
 
-	function get_jumlah_data_pemilik_usaha_belum_terverifikasi(){
+	function get_jumlah_data_pemilik_usaha_belum_terverifikasi()
+	{
 		if (!$this->pemilik_usaha_model) {
 			log_message('error', 'Pemilik_usaha_model not loaded in get_jumlah_data_pemilik_usaha_belum_terverifikasi');
 			$this->output->set_status_header(500)->set_output(json_encode(['error' => 'Pemilik_usaha_model not loaded']));
@@ -105,18 +115,20 @@ class Request extends MY_Controller {
 		}
 		$data = $this->pemilik_usaha_model->get(
 			array(
-				"fields"=>"IFNULL(count(*),0) as jumlah_pemilik_usaha_belum_terverifikasi",
-				"where"=>array(
-					"master_pemilik_usaha.is_verified"=>"0"
+				"fields" => "IFNULL(count(*),0) as jumlah_pemilik_usaha_belum_terverifikasi",
+				"where" => array(
+					"master_pemilik_usaha.is_verified" => "0"
 				)
-			),"row"
+			),
+			"row"
 		);
 		$this->output
 			->set_content_type('application/json')
 			->set_output(json_encode($data));
 	}
-    
-	function get_jumlah_data_usaha_belum_terverifikasi(){
+
+	function get_jumlah_data_usaha_belum_terverifikasi()
+	{
 		if (!$this->data_usaha_model) {
 			log_message('error', 'Data_usaha_model not loaded in get_jumlah_data_usaha_belum_terverifikasi');
 			$this->output->set_status_header(500)->set_output(json_encode(['error' => 'Data_usaha_model not loaded']));
@@ -124,21 +136,23 @@ class Request extends MY_Controller {
 		}
 		$data = $this->data_usaha_model->get(
 			array(
-				"fields"=>"IFNULL(count(*),0) as jumlah_data_usaha_belum_terverifikasi",
-				"join"=>array(
-					"master_pemilik_usaha"=>"id_pemilik_usaha=master_pemilik_usaha_id AND master_pemilik_usaha.deleted_at IS NULL and master_pemilik_usaha.is_verified = 1",
+				"fields" => "IFNULL(count(*),0) as jumlah_data_usaha_belum_terverifikasi",
+				"join" => array(
+					"master_pemilik_usaha" => "id_pemilik_usaha=master_pemilik_usaha_id AND master_pemilik_usaha.deleted_at IS NULL and master_pemilik_usaha.is_verified = 1",
 				),
-				"where"=>array(
-					"master_data_usaha.is_verified"=>"0"
+				"where" => array(
+					"master_data_usaha.is_verified" => "0"
 				)
-			),"row"
+			),
+			"row"
 		);
 		$this->output
 			->set_content_type('application/json')
 			->set_output(json_encode($data));
 	}
 
-	function get_jumlah_data_aset_omset_belum_terverifikasi(){
+	function get_jumlah_data_aset_omset_belum_terverifikasi()
+	{
 		if (!$this->aset_omset_usaha_model) {
 			log_message('error', 'Aset_omset_usaha_model not loaded in get_jumlah_data_aset_omset_belum_terverifikasi');
 			$this->output->set_status_header(500)->set_output(json_encode(['error' => 'Aset_omset_usaha_model not loaded']));
@@ -146,22 +160,24 @@ class Request extends MY_Controller {
 		}
 		$data = $this->aset_omset_usaha_model->get(
 			array(
-				"fields"=>"IFNULL(count(*),0) as jumlah_data_aset_omset_belum_terverifikasi",
-				"join"=>array(
-					"master_data_usaha"=>"id_data_usaha=master_data_usaha_id AND master_data_usaha.deleted_at IS NULL and master_data_usaha.is_verified = 1",
-					"master_pemilik_usaha"=>"id_pemilik_usaha=master_pemilik_usaha_id AND master_pemilik_usaha.deleted_at IS NULL and master_pemilik_usaha.is_verified = 1"
+				"fields" => "IFNULL(count(*),0) as jumlah_data_aset_omset_belum_terverifikasi",
+				"join" => array(
+					"master_data_usaha" => "id_data_usaha=master_data_usaha_id AND master_data_usaha.deleted_at IS NULL and master_data_usaha.is_verified = 1",
+					"master_pemilik_usaha" => "id_pemilik_usaha=master_pemilik_usaha_id AND master_pemilik_usaha.deleted_at IS NULL and master_pemilik_usaha.is_verified = 1"
 				),
-				"where"=>array(
-					"aset_omset_usaha.is_verified"=>"0"
+				"where" => array(
+					"aset_omset_usaha.is_verified" => "0"
 				)
-			),"row"
+			),
+			"row"
 		);
 		$this->output
 			->set_content_type('application/json')
 			->set_output(json_encode($data));
 	}
-    
-	function get_jumlah_data_pemilik_usaha_sudah_terverifikasi(){
+
+	function get_jumlah_data_pemilik_usaha_sudah_terverifikasi()
+	{
 		if (!$this->pemilik_usaha_model) {
 			log_message('error', 'Pemilik_usaha_model not loaded in get_jumlah_data_pemilik_usaha_sudah_terverifikasi');
 			$this->output->set_status_header(500)->set_output(json_encode(['error' => 'Pemilik_usaha_model not loaded']));
@@ -169,18 +185,20 @@ class Request extends MY_Controller {
 		}
 		$data = $this->pemilik_usaha_model->get(
 			array(
-				"fields"=>"IFNULL(count(*),0) as jumlah_pemilik_usaha_sudah_terverifikasi",
-				"where"=>array(
-					"master_pemilik_usaha.is_verified"=>"1"
+				"fields" => "IFNULL(count(*),0) as jumlah_pemilik_usaha_sudah_terverifikasi",
+				"where" => array(
+					"master_pemilik_usaha.is_verified" => "1"
 				)
-			),"row"
+			),
+			"row"
 		);
 		$this->output
 			->set_content_type('application/json')
 			->set_output(json_encode($data));
 	}
-    
-	function get_jumlah_data_usaha_sudah_terverifikasi(){
+
+	function get_jumlah_data_usaha_sudah_terverifikasi()
+	{
 		if (!$this->data_usaha_model) {
 			log_message('error', 'Data_usaha_model not loaded in get_jumlah_data_usaha_sudah_terverifikasi');
 			$this->output->set_status_header(500)->set_output(json_encode(['error' => 'Data_usaha_model not loaded']));
@@ -188,21 +206,23 @@ class Request extends MY_Controller {
 		}
 		$data = $this->data_usaha_model->get(
 			array(
-				"fields"=>"IFNULL(count(*),0) as jumlah_data_usaha_sudah_terverifikasi",
-				"join"=>array(
-					"master_pemilik_usaha"=>"id_pemilik_usaha=master_pemilik_usaha_id AND master_pemilik_usaha.deleted_at IS NULL and master_pemilik_usaha.is_verified = 1",
+				"fields" => "IFNULL(count(*),0) as jumlah_data_usaha_sudah_terverifikasi",
+				"join" => array(
+					"master_pemilik_usaha" => "id_pemilik_usaha=master_pemilik_usaha_id AND master_pemilik_usaha.deleted_at IS NULL and master_pemilik_usaha.is_verified = 1",
 				),
-				"where"=>array(
-					"master_data_usaha.is_verified"=>"1"
+				"where" => array(
+					"master_data_usaha.is_verified" => "1"
 				)
-			),"row"
+			),
+			"row"
 		);
 		$this->output
 			->set_content_type('application/json')
 			->set_output(json_encode($data));
 	}
 
-	function get_jumlah_data_aset_omset_sudah_terverifikasi(){
+	function get_jumlah_data_aset_omset_sudah_terverifikasi()
+	{
 		if (!$this->aset_omset_usaha_model) {
 			log_message('error', 'Aset_omset_usaha_model not loaded in get_jumlah_data_aset_omset_sudah_terverifikasi');
 			$this->output->set_status_header(500)->set_output(json_encode(['error' => 'Aset_omset_usaha_model not loaded']));
@@ -210,93 +230,98 @@ class Request extends MY_Controller {
 		}
 		$data = $this->aset_omset_usaha_model->get(
 			array(
-				"fields"=>"IFNULL(count(*),0) as jumlah_data_aset_omset_sudah_terverifikasi",
-				"join"=>array(
-					"master_data_usaha"=>"id_data_usaha=master_data_usaha_id AND master_data_usaha.deleted_at IS NULL and master_data_usaha.is_verified = 1",
-					"master_pemilik_usaha"=>"id_pemilik_usaha=master_pemilik_usaha_id AND master_pemilik_usaha.deleted_at IS NULL and master_pemilik_usaha.is_verified = 1"
+				"fields" => "IFNULL(count(*),0) as jumlah_data_aset_omset_sudah_terverifikasi",
+				"join" => array(
+					"master_data_usaha" => "id_data_usaha=master_data_usaha_id AND master_data_usaha.deleted_at IS NULL and master_data_usaha.is_verified = 1",
+					"master_pemilik_usaha" => "id_pemilik_usaha=master_pemilik_usaha_id AND master_pemilik_usaha.deleted_at IS NULL and master_pemilik_usaha.is_verified = 1"
 				),
-				"where"=>array(
-					"aset_omset_usaha.is_verified"=>"1"
+				"where" => array(
+					"aset_omset_usaha.is_verified" => "1"
 				)
-			),"row"
+			),
+			"row"
 		);
 		$this->output
 			->set_content_type('application/json')
 			->set_output(json_encode($data));
 	}
 
-	function get_jumlah_unit_usaha(){
+	function get_jumlah_unit_usaha()
+	{
 		if (!$this->data_usaha_model) {
 			log_message('error', 'Data_usaha_model not loaded in get_jumlah_unit_usaha');
 			$this->output->set_status_header(500)->set_output(json_encode(['error' => 'Data_usaha_model not loaded']));
 			return;
 		}
 		$data = $this->data_usaha_model->query("
-			SELECT IFNULL(COUNT(*),0) AS jumlah_unit_usaha
-			FROM master_data_usaha
-			JOIN master_pemilik_usaha ON id_pemilik_usaha=master_pemilik_usaha_id AND master_pemilik_usaha.deleted_at IS NULL AND master_pemilik_usaha.is_verified = 1
-			WHERE DATE_FORMAT(master_data_usaha.created_at,'%Y') = (SELECT DATE_FORMAT(master_data_usaha.created_at,'%Y') AS tahun
-			FROM master_data_usaha
-			WHERE master_data_usaha.deleted_at IS NULL
-			GROUP BY tahun
-			ORDER BY tahun DESC
-			LIMIT 1)
-			AND master_data_usaha.deleted_at IS NULL AND master_data_usaha.is_verified = 1
-		")->row();
+            SELECT IFNULL(COUNT(*),0) AS jumlah_unit_usaha
+            FROM master_data_usaha
+            JOIN master_pemilik_usaha ON id_pemilik_usaha=master_pemilik_usaha_id AND master_pemilik_usaha.deleted_at IS NULL AND master_pemilik_usaha.is_verified = 1
+            WHERE DATE_FORMAT(master_data_usaha.created_at,'%Y') = (SELECT DATE_FORMAT(master_data_usaha.created_at,'%Y') AS tahun
+            FROM master_data_usaha
+            WHERE master_data_usaha.deleted_at IS NULL
+            GROUP BY tahun
+            ORDER BY tahun DESC
+            LIMIT 1)
+            AND master_data_usaha.deleted_at IS NULL AND master_data_usaha.is_verified = 1
+        ")->row();
 		$this->output
 			->set_content_type('application/json')
 			->set_output(json_encode($data));
 	}
-    
-	function get_jumlah_aset_umkm(){
+
+	function get_jumlah_aset_umkm()
+	{
 		if (!$this->aset_omset_usaha_model) {
 			log_message('error', 'Aset_omset_usaha_model not loaded in get_jumlah_aset_umkm');
 			$this->output->set_status_header(500)->set_output(json_encode(['error' => 'Aset_omset_usaha_model not loaded']));
 			return;
 		}
 		$data = $this->aset_omset_usaha_model->query("
-			SELECT IFNULL(SUM(jumlah_aset), 0) AS jumlah_aset_umkm 
-			FROM aset_omset_usaha 
-			JOIN master_data_usaha ON id_data_usaha=master_data_usaha_id AND master_data_usaha.deleted_at IS NULL AND master_data_usaha.is_verified = 1 
-			JOIN master_pemilik_usaha ON id_pemilik_usaha=master_pemilik_usaha_id AND master_pemilik_usaha.deleted_at IS NULL AND master_pemilik_usaha.is_verified = 1 
-			WHERE aset_omset_usaha.is_verified = '1' AND aset_omset_usaha.deleted_at IS NULL
-			AND tahun_berkenaan = (SELECT tahun_berkenaan AS tahun
-			FROM aset_omset_usaha
-			WHERE aset_omset_usaha.deleted_at IS NULL
-			GROUP BY tahun
-			ORDER BY tahun DESC
-			LIMIT 1)
-		")->row();
+            SELECT IFNULL(SUM(jumlah_aset), 0) AS jumlah_aset_umkm 
+            FROM aset_omset_usaha 
+            JOIN master_data_usaha ON id_data_usaha=master_data_usaha_id AND master_data_usaha.deleted_at IS NULL AND master_data_usaha.is_verified = 1 
+            JOIN master_pemilik_usaha ON id_pemilik_usaha=master_pemilik_usaha_id AND master_pemilik_usaha.deleted_at IS NULL AND master_pemilik_usaha.is_verified = 1 
+            WHERE aset_omset_usaha.is_verified = '1' AND aset_omset_usaha.deleted_at IS NULL
+            AND tahun_berkenaan = (SELECT tahun_berkenaan AS tahun
+            FROM aset_omset_usaha
+            WHERE aset_omset_usaha.deleted_at IS NULL
+            GROUP BY tahun
+            ORDER BY tahun DESC
+            LIMIT 1)
+        ")->row();
 		$this->output
 			->set_content_type('application/json')
 			->set_output(json_encode($data));
 	}
-    
-	function get_jumlah_omset_umkm(){
+
+	function get_jumlah_omset_umkm()
+	{
 		if (!$this->aset_omset_usaha_model) {
 			log_message('error', 'Aset_omset_usaha_model not loaded in get_jumlah_omset_umkm');
 			$this->output->set_status_header(500)->set_output(json_encode(['error' => 'Aset_omset_usaha_model not loaded']));
 			return;
 		}
 		$data = $this->aset_omset_usaha_model->query("
-			SELECT IFNULL(SUM(jumlah_omset_per_tahun), 0) AS jumlah_omset_umkm 
-			FROM aset_omset_usaha 
-			JOIN master_data_usaha ON id_data_usaha=master_data_usaha_id AND master_data_usaha.deleted_at IS NULL AND master_data_usaha.is_verified = 1 
-			JOIN master_pemilik_usaha ON id_pemilik_usaha=master_pemilik_usaha_id AND master_pemilik_usaha.deleted_at IS NULL AND master_pemilik_usaha.is_verified = 1 
-			WHERE aset_omset_usaha.is_verified = '1' AND aset_omset_usaha.deleted_at IS NULL
-			AND tahun_berkenaan = (SELECT tahun_berkenaan AS tahun
-			FROM aset_omset_usaha
-			WHERE aset_omset_usaha.deleted_at IS NULL
-			GROUP BY tahun
-			ORDER BY tahun DESC
-			LIMIT 1)
-		")->row();
+            SELECT IFNULL(SUM(jumlah_omset_per_tahun), 0) AS jumlah_omset_umkm 
+            FROM aset_omset_usaha 
+            JOIN master_data_usaha ON id_data_usaha=master_data_usaha_id AND master_data_usaha.deleted_at IS NULL AND master_data_usaha.is_verified = 1 
+            JOIN master_pemilik_usaha ON id_pemilik_usaha=master_pemilik_usaha_id AND master_pemilik_usaha.deleted_at IS NULL AND master_pemilik_usaha.is_verified = 1 
+            WHERE aset_omset_usaha.is_verified = '1' AND aset_omset_usaha.deleted_at IS NULL
+            AND tahun_berkenaan = (SELECT tahun_berkenaan AS tahun
+            FROM aset_omset_usaha
+            WHERE aset_omset_usaha.deleted_at IS NULL
+            GROUP BY tahun
+            ORDER BY tahun DESC
+            LIMIT 1)
+        ")->row();
 		$this->output
 			->set_content_type('application/json')
 			->set_output(json_encode($data));
 	}
 
-	function get_notifikasi(){
+	function get_notifikasi()
+	{
 		$user_id = $this->session->userdata('id_user');
 		if (!$user_id) {
 			log_message('error', 'No user ID in session for get_notifikasi');
@@ -307,7 +332,7 @@ class Request extends MY_Controller {
 		try {
 			$data = $this->notifikasi_model->get(
 				array(
-					"fields" => "notifikasi.id_notifikasi, notifikasi.id_user_tujuan, notifikasi.id_usulan_raperbup, notifikasi.tipe_notif, notifikasi.pesan, notifikasi.link, notifikasi.dibaca, notifikasi.created_at, IFNULL(usulan_raperbup.nama_peraturan, 'Usulan Tanpa Nama') as nama_peraturan, IFNULL(user.nama_lengkap, 'Unknown') as nama_pengguna",
+					"fields" => "notifikasi.id_notifikasi, notifikasi.id_user_tujuan, notifikasi.id_usulan_raperbup, notifikasi.tipe_notif, notifikasi.pesan, notifikasi.dibaca, notifikasi.created_at, IFNULL(usulan_raperbup.nama_peraturan, 'Usulan Tanpa Nama') as nama_peraturan, IFNULL(user.nama_lengkap, 'Unknown') as nama_pengguna, user.level_user_id, usulan_raperbup.nomor_register, usulan_raperbup.kategori_usulan_id",
 					"join" => array(
 						"usulan_raperbup" => "notifikasi.id_usulan_raperbup = usulan_raperbup.id_usulan_raperbup AND usulan_raperbup.deleted_at IS NULL",
 						"user" => "usulan_raperbup.id_user_created = user.id_user AND user.deleted_at IS NULL"
@@ -347,7 +372,8 @@ class Request extends MY_Controller {
 		}
 	}
 
-	function tandai_dibaca(){
+	function tandai_dibaca()
+	{
 		$user_id = $this->session->userdata('id_user');
 		if (!$user_id) {
 			log_message('error', 'No user ID in session for tandai_dibaca');
@@ -371,6 +397,31 @@ class Request extends MY_Controller {
 				->set_output(json_encode($status));
 		} catch (Exception $e) {
 			log_message('error', 'Exception in tandai_dibaca: ' . $e->getMessage());
+			$this->output
+				->set_status_header(500)
+				->set_output(json_encode(['error' => 'Internal server error: ' . $e->getMessage()]));
+		}
+	}
+
+	function tandai_semua_dibaca()
+	{
+		$user_id = $this->session->userdata('id_user');
+		if (!$user_id) {
+			log_message('error', 'No user ID in session for tandai_semua_dibaca');
+			$this->output->set_status_header(401)->set_output(json_encode(['error' => 'User not logged in']));
+			return;
+		}
+
+		try {
+			$this->db->where('id_user_tujuan', $user_id)->update('notifikasi', ['dibaca' => 1]);
+			$status = $this->db->affected_rows() >= 0;
+			log_message('debug', 'All notifications for user ' . $user_id . ' marked as read: ' . ($status ? 'success' : 'failed'));
+
+			$this->output
+				->set_content_type('application/json')
+				->set_output(json_encode(['status' => $status, 'message' => $status ? 'Pesan telah ditandai semua telah dibaca!' : 'Gagal menandai semua notifikasi.']));
+		} catch (Exception $e) {
+			log_message('error', 'Exception in tandai_semua_dibaca: ' . $e->getMessage());
 			$this->output
 				->set_status_header(500)
 				->set_output(json_encode(['error' => 'Internal server error: ' . $e->getMessage()]));

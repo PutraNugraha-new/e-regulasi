@@ -23,41 +23,51 @@ class Monitoring_raperbup extends MY_Controller
                 )
             )
         );
+        $data['kategori_usulan'] = $this->kategori_usulan_model->get(
+            array(
+                "order_by" => array(
+                    "nama_kategori" => "ASC"
+                )
+            )
+        );
+
+        // Ambil parameter dari URL
+        $data['selected_usulan_id'] = $this->input->get('usulan_id', TRUE);
 
         $data['breadcrumb'] = ["header_content" => "Monitoring Usulan", "breadcrumb_link" => [['link' => false, 'content' => 'Monitoring Usulan', 'is_active' => true]]];
 
-        if ($this->session->userdata("level_user_id") == "6") {
-            $this->execute('index_kabag', $data);
-        } else if ($this->session->userdata("level_user_id") == "7") {
-            $this->execute('index_kasubbag', $data);
-        } else if ($this->session->userdata("level_user_id") == "8") {
-            $this->execute('index_asisten', $data);
-        } else if ($this->session->userdata("level_user_id") == "9") {
-            $this->execute('index_sekda', $data);
-        } else if ($this->session->userdata("level_user_id") == "10") {
-            $this->execute('index_wabup', $data);
-        } else if ($this->session->userdata("level_user_id") == "11") {
-            $this->execute('index_bupati', $data);
-        } else if ($this->session->userdata("level_user_id") == "4") {
-            $data['kategori_usulan'] = $this->kategori_usulan_model->get(
-                array(
-                    "order_by" => array(
-                        "nama_kategori" => "ASC"
-                    )
-                )
-            );
-            $this->execute('index_admin', $data);
-        } else if ($this->session->userdata("level_user_id") == "12") {
-            $this->execute('index_kalteng', $data);
-        } else if ($this->session->userdata("level_user_id") == "13") {
-            $data['kategori_usulan'] = $this->kategori_usulan_model->get(
-                array(
-                    "order_by" => array(
-                        "nama_kategori" => "ASC"
-                    )
-                )
-            );
-            $this->execute('index_admin_diskominfo', $data);
+        // Render view berdasarkan level_user_id
+        switch ($this->session->userdata("level_user_id")) {
+            case '6':
+                $this->execute('index_kabag', $data);
+                break;
+            case '7':
+                $this->execute('index_kasubbag', $data);
+                break;
+            case '8':
+                $this->execute('index_asisten', $data);
+                break;
+            case '9':
+                $this->execute('index_sekda', $data);
+                break;
+            case '10':
+                $this->execute('index_wabup', $data);
+                break;
+            case '11':
+                $this->execute('index_bupati', $data);
+                break;
+            case '12':
+                $this->execute('index_kalteng', $data);
+                break;
+            case '13':
+                $this->execute('index_admin_diskominfo', $data);
+                break;
+            case '4':
+                $this->execute('index_admin', $data);
+                break;
+            default:
+                log_message('error', 'Unknown level_user_id: ' . $this->session->userdata("level_user_id"));
+                show_error('Unauthorized access', 403);
         }
     }
 
@@ -102,21 +112,21 @@ class Monitoring_raperbup extends MY_Controller
         $status = $this->trx_raperbup_model->save($data_trx);
 
         if ($status) {
-            $id_usulan_raperbup_decrypted = decrypt_data($id_usulan_raperbup);
+            $id_usulan_raperbup_decrypted = decrypt_data($this->ipost("id_usulan_raperbup"));
             $nama_peraturan = $this->usulan_raperbup_model->get_by($id_usulan_raperbup_decrypted)->nama_peraturan ?: 'Usulan Tanpa Nama';
 
-            // Notif ke Kasubbag (id_user_kasubbag)
+            // Notif ke Kasubbag
             $data_notif = [
-                'id_user_tujuan' => decrypt_data($id_kasubbag),
+                'id_user_tujuan' => decrypt_data($this->ipost("id_kasubbag")),
                 'id_usulan_raperbup' => $id_usulan_raperbup_decrypted,
                 'tipe_notif' => 'disposisi',
-                'pesan' => 'Usulan diteruskan oleh Admin Hukum untuk koreksi: ' . $nama_peraturan . ($catatan_disposisi ? ' (Catatan: ' . $catatan_disposisi . ')' : ''),
-                'link' => base_url('usulan_raperbup/detail_usulan_raperbup/' . $id_usulan_raperbup)
+                'pesan' => 'Usulan diteruskan oleh Admin Hukum untuk koreksi: ' . $nama_peraturan . ($this->ipost("catatan_disposisi") ? ' (Catatan: ' . $this->ipost("catatan_disposisi") . ')' : ''),
+                'created_at' => $this->datetime()
             ];
             $this->Notifikasi_model->simpan_notif($data_notif);
             log_message('debug', 'Notif disposisi saved for Kasubbag: ' . json_encode($data_notif));
 
-            // Notif ke Admin PD (pengaju)
+            // Notif ke Admin PD
             $id_pengaju = $this->db->select('id_user_created')
                 ->where('id_usulan_raperbup', $id_usulan_raperbup_decrypted)
                 ->get('usulan_raperbup')
@@ -125,8 +135,8 @@ class Monitoring_raperbup extends MY_Controller
                 'id_user_tujuan' => $id_pengaju,
                 'id_usulan_raperbup' => $id_usulan_raperbup_decrypted,
                 'tipe_notif' => 'disposisi',
-                'pesan' => 'Usulan Anda diteruskan ke Kasubbag oleh Admin Hukum: ' . $nama_peraturan . ($catatan_disposisi ? ' (Catatan: ' . $catatan_disposisi . ')' : ''),
-                'link' => base_url('usulan_raperbup/detail_usulan_raperbup/' . $id_usulan_raperbup)
+                'pesan' => 'Usulan Anda diteruskan ke Kasubbag oleh Admin Hukum: ' . $nama_peraturan . ($this->ipost("catatan_disposisi") ? ' (Catatan: ' . $this->ipost("catatan_disposisi") . ')' : ''),
+                'created_at' => $this->datetime()
             ];
             $this->Notifikasi_model->simpan_notif($data_notif);
             log_message('debug', 'Notif disposisi saved for Admin PD: ' . json_encode($data_notif));
@@ -180,7 +190,6 @@ class Monitoring_raperbup extends MY_Controller
                         'id_usulan_raperbup' => $id_peraturan,
                         'tipe_notif' => 'setuju_kasubbag',
                         'pesan' => 'Usulan disetujui oleh Kasubbag untuk review Kabag: ' . $nama_peraturan,
-                        'link' => base_url('usulan_raperbup/detail_usulan_raperbup/' . encrypt_data($id_peraturan))
                     ];
                     $this->Notifikasi_model->simpan_notif($data_notif);
                     log_message('debug', 'Notif setuju_kasubbag saved: ' . json_encode($data_notif));
@@ -283,7 +292,6 @@ class Monitoring_raperbup extends MY_Controller
                     'id_usulan_raperbup' => $id_usulan_raperbup_decrypted,
                     'tipe_notif' => 'tolak_kasubbag',
                     'pesan' => 'Usulan ditolak oleh Kasubbag: ' . $nama_peraturan . ($catatan ? ' (Catatan: ' . $catatan . ')' : ''),
-                    'link' => base_url('usulan_raperbup/detail_usulan_raperbup/' . $id_usulan_raperbup)
                 ];
                 $this->Notifikasi_model->simpan_notif($data_notif);
                 log_message('debug', 'Notif tolak_kasubbag saved: ' . json_encode($data_notif));
@@ -349,7 +357,7 @@ class Monitoring_raperbup extends MY_Controller
                             'id_usulan_raperbup' => $id_usulan_raperbup,
                             'tipe_notif' => 'setuju_kabag',
                             'pesan' => 'Usulan disetujui oleh Kabag Hukum untuk review Provinsi: ' . $nama_peraturan,
-                            'link' => base_url('usulan_raperbup/detail_usulan_raperbup/' . encrypt_data($id_usulan_raperbup))
+
                         ];
                         $this->Notifikasi_model->simpan_notif($data_notif);
                         log_message('debug', 'Notif setuju_kabag saved for Provinsi: ' . json_encode($data_notif));
@@ -362,7 +370,7 @@ class Monitoring_raperbup extends MY_Controller
                             'id_usulan_raperbup' => $id_usulan_raperbup,
                             'tipe_notif' => 'setuju_kabag',
                             'pesan' => 'Usulan disetujui oleh Kabag Hukum untuk review Asisten: ' . $nama_peraturan,
-                            'link' => base_url('usulan_raperbup/detail_usulan_raperbup/' . encrypt_data($id_usulan_raperbup))
+
                         ];
                         $this->Notifikasi_model->simpan_notif($data_notif);
                         log_message('debug', 'Notif setuju_kabag saved for Asisten: ' . json_encode($data_notif));
@@ -379,7 +387,6 @@ class Monitoring_raperbup extends MY_Controller
                     'id_usulan_raperbup' => $id_usulan_raperbup,
                     'tipe_notif' => 'tolak_kabag',
                     'pesan' => 'Usulan ditolak oleh Kabag Hukum: ' . $nama_peraturan . ($catatan ? ' (Catatan: ' . $catatan . ')' : ''),
-                    'link' => base_url('usulan_raperbup/detail_usulan_raperbup/' . encrypt_data($id_usulan_raperbup))
                 ];
                 $this->Notifikasi_model->simpan_notif($data_notif);
                 log_message('debug', 'Notif tolak_kabag saved: ' . json_encode($data_notif));
@@ -441,7 +448,7 @@ class Monitoring_raperbup extends MY_Controller
                         'id_usulan_raperbup' => $id_peraturan,
                         'tipe_notif' => 'setuju_asisten',
                         'pesan' => 'Usulan disetujui oleh Asisten untuk review Sekda: ' . $nama_peraturan,
-                        'link' => base_url('usulan_raperbup/detail_usulan_raperbup/' . encrypt_data($id_peraturan))
+
                     ];
                     $this->Notifikasi_model->simpan_notif($data_notif);
                     log_message('debug', 'Notif setuju_asisten saved: ' . json_encode($data_notif));
@@ -536,7 +543,7 @@ class Monitoring_raperbup extends MY_Controller
                     'id_usulan_raperbup' => $id_raperbup,
                     'tipe_notif' => 'tolak_asisten',
                     'pesan' => 'Usulan ditolak oleh Asisten: ' . $nama_peraturan . ($catatan ? ' (Catatan: ' . $catatan . ')' : ''),
-                    'link' => base_url('usulan_raperbup/detail_usulan_raperbup/' . encrypt_data($id_raperbup))
+
                 ];
                 $this->Notifikasi_model->simpan_notif($data_notif);
                 log_message('debug', 'Notif tolak_asisten saved: ' . json_encode($data_notif));
@@ -602,7 +609,7 @@ class Monitoring_raperbup extends MY_Controller
                         'id_usulan_raperbup' => $id_raperbup,
                         'tipe_notif' => 'setuju_provinsi',
                         'pesan' => 'Usulan disetujui oleh Admin Provinsi: ' . $nama_peraturan,
-                        'link' => base_url('usulan_raperbup/detail_usulan_raperbup/' . encrypt_data($id_raperbup))
+
                     ];
                     $this->Notifikasi_model->simpan_notif($data_notif);
                     log_message('debug', 'Notif setuju_provinsi saved: ' . json_encode($data_notif));
@@ -696,7 +703,7 @@ class Monitoring_raperbup extends MY_Controller
                     'id_usulan_raperbup' => $id_raperbup,
                     'tipe_notif' => 'tolak_provinsi',
                     'pesan' => 'Usulan ditolak oleh Admin Provinsi: ' . $nama_peraturan . ($catatan ? ' (Catatan: ' . $catatan . ')' : ''),
-                    'link' => base_url('usulan_raperbup/detail_usulan_raperbup/' . encrypt_data($id_raperbup))
+
                 ];
                 $this->Notifikasi_model->simpan_notif($data_notif);
                 log_message('debug', 'Notif tolak_provinsi saved: ' . json_encode($data_notif));
@@ -759,7 +766,7 @@ class Monitoring_raperbup extends MY_Controller
                         'id_usulan_raperbup' => $id_peraturan,
                         'tipe_notif' => 'setuju_sekda',
                         'pesan' => 'Usulan disetujui oleh Sekda untuk review Wakil Bupati: ' . $nama_peraturan,
-                        'link' => base_url('usulan_raperbup/detail_usulan_raperbup/' . encrypt_data($id_peraturan))
+
                     ];
                     $this->Notifikasi_model->simpan_notif($data_notif);
                     log_message('debug', 'Notif setuju_sekda saved: ' . json_encode($data_notif));
@@ -856,7 +863,7 @@ class Monitoring_raperbup extends MY_Controller
                     'id_usulan_raperbup' => $id_raperbup,
                     'tipe_notif' => 'tolak_sekda',
                     'pesan' => 'Usulan ditolak oleh Sekda: ' . $nama_peraturan . ($catatan ? ' (Catatan: ' . $catatan . ')' : ''),
-                    'link' => base_url('usulan_raperbup/detail_usulan_raperbup/' . encrypt_data($id_raperbup))
+
                 ];
                 $this->Notifikasi_model->simpan_notif($data_notif);
                 log_message('debug', 'Notif tolak_sekda saved: ' . json_encode($data_notif));
@@ -920,7 +927,7 @@ class Monitoring_raperbup extends MY_Controller
                         'id_usulan_raperbup' => $id_peraturan,
                         'tipe_notif' => 'setuju_wabup',
                         'pesan' => 'Usulan disetujui oleh Wakil Bupati untuk review Bupati: ' . $nama_peraturan,
-                        'link' => base_url('usulan_raperbup/detail_usulan_raperbup/' . encrypt_data($id_peraturan))
+
                     ];
                     $this->Notifikasi_model->simpan_notif($data_notif);
                     log_message('debug', 'Notif setuju_wabup saved: ' . json_encode($data_notif));
@@ -1019,7 +1026,7 @@ class Monitoring_raperbup extends MY_Controller
                     'id_usulan_raperbup' => $id_raperbup,
                     'tipe_notif' => 'tolak_wabup',
                     'pesan' => 'Usulan ditolak oleh Wakil Bupati: ' . $nama_peraturan . ($catatan ? ' (Catatan: ' . $catatan . ')' : ''),
-                    'link' => base_url('usulan_raperbup/detail_usulan_raperbup/' . encrypt_data($id_raperbup))
+
                 ];
                 $this->Notifikasi_model->simpan_notif($data_notif);
                 log_message('debug', 'Notif tolak_wabup saved: ' . json_encode($data_notif));
@@ -1086,7 +1093,7 @@ class Monitoring_raperbup extends MY_Controller
                         'id_usulan_raperbup' => $id_peraturan,
                         'tipe_notif' => 'setuju_bupati',
                         'pesan' => 'Usulan disetujui oleh Bupati: ' . $nama_peraturan,
-                        'link' => base_url('usulan_raperbup/detail_usulan_raperbup/' . encrypt_data($id_peraturan))
+
                     ];
                     $this->Notifikasi_model->simpan_notif($data_notif);
                     log_message('debug', 'Notif setuju_bupati saved: ' . json_encode($data_notif));
@@ -1185,7 +1192,7 @@ class Monitoring_raperbup extends MY_Controller
                     'id_usulan_raperbup' => $id_raperbup,
                     'tipe_notif' => 'tolak_bupati',
                     'pesan' => 'Usulan ditolak oleh Bupati: ' . $nama_peraturan . ($catatan ? ' (Catatan: ' . $catatan . ')' : ''),
-                    'link' => base_url('usulan_raperbup/detail_usulan_raperbup/' . encrypt_data($id_raperbup))
+
                 ];
                 $this->Notifikasi_model->simpan_notif($data_notif);
                 log_message('debug', 'Notif tolak_bupati saved: ' . json_encode($data_notif));
@@ -1320,7 +1327,7 @@ class Monitoring_raperbup extends MY_Controller
                             'id_usulan_raperbup' => $id_usulan,
                             'tipe_notif' => 'usulan_dipublish',
                             'pesan' => 'Usulan "' . $nama_peraturan . '" telah dipublish',
-                            'link' => base_url('usulan_raperbup/detail_usulan_raperbup/' . encrypt_data($id_usulan))
+
                         ];
                         $this->Notifikasi_model->simpan_notif($data_notif);
                         log_message('debug', 'Notif usulan_dipublish saved: ' . json_encode($data_notif));
@@ -1392,7 +1399,7 @@ class Monitoring_raperbup extends MY_Controller
                             'id_usulan_raperbup' => $id_usulan_raperbup,
                             'tipe_notif' => 'usulan_provinsi',
                             'pesan' => 'Usulan dikirim ke Provinsi untuk review: ' . $nama_peraturan,
-                            'link' => base_url('usulan_raperbup/detail_usulan_raperbup/' . encrypt_data($id_usulan_raperbup))
+
                         ];
                         $this->Notifikasi_model->simpan_notif($data_notif);
                         log_message('debug', 'Notif usulan_provinsi saved: ' . json_encode($data_notif));
@@ -1438,7 +1445,7 @@ class Monitoring_raperbup extends MY_Controller
                 'id_usulan_raperbup' => $trx_data->usulan_raperbup_id,
                 'tipe_notif' => 'ubah_tanggal_transaksi',
                 'pesan' => 'Tanggal transaksi usulan "' . $nama_peraturan . '" telah diubah menjadi ' . $new_tanggal,
-                'link' => base_url('usulan_raperbup/detail_usulan_raperbup/' . encrypt_data($trx_data->usulan_raperbup_id))
+
             ];
             $this->Notifikasi_model->simpan_notif($data_notif);
             log_message('debug', 'Notif ubah_tanggal_transaksi saved: ' . json_encode($data_notif));
