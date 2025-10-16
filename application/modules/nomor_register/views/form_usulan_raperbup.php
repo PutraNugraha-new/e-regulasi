@@ -173,6 +173,14 @@
         <div class="content">
             <div class="card">
                 <div class="card-body">
+                    <div class="mb-2">
+                        <?php if (!empty($user_updated) && !empty($last_updated_at)): ?>
+                            <small class="text-muted">
+                                Terakhir diupdate oleh: <strong><?php echo $user_updated; ?></strong>
+                                pada <strong><?php echo strftime('%d %B %Y %H:%M', strtotime($last_updated_at)); ?></strong>
+                            </small>
+                        <?php endif; ?>
+                    </div>
                     <?php echo form_open_multipart('', ['id' => 'form-usulan']); ?>
                     <?php
                     if (!empty($this->session->flashdata('message'))) {

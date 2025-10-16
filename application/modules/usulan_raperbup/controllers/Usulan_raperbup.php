@@ -12,6 +12,7 @@ class Usulan_raperbup extends MY_Controller
         $this->load->model('monitoring_raperbup/trx_raperbup_model', 'trx_raperbup_model');
         $this->load->library('mpdf_library'); // Memuat library mPDF
         $this->load->model('Notifikasi_model');
+        $this->load->model('Usulan_revisi_model');
     }
 
     public function index()
@@ -536,9 +537,25 @@ class Usulan_raperbup extends MY_Controller
                 )
             )
         );
+        $user_updated = $this->db->select('nama_lengkap')
+            ->from('user')
+            ->where('id_user', $data_master[0]->id_user_updated)
+            ->get()
+            ->row();
+        $last_updated_at = $data_master[0]->updated_at ? date('d-m-Y H:i:s', strtotime($data_master[0]->updated_at)) : '-';
 
-        var_dump($data_master);
-        die;
+        $data['user_updated'] = $user_updated ? $user_updated->nama_lengkap : null;
+        $data['last_updated_at'] = $last_updated_at;
+
+        $level_user = $this->db->select('id_level_user')
+            ->from('level_user')
+            ->where('id_level_user', $this->session->userdata("level_user_id"))
+            ->get()
+            ->row();
+        $data['level_user'] = $level_user ? $level_user->id_level_user : null;
+
+        $data_revisi = $this->Usulan_revisi_model->get_all_revisi(decrypt_data($id_usulan_raperbup));
+        $data['data_revisi'] = $data_revisi;
 
         if (!$data_master) {
             $this->page_error();

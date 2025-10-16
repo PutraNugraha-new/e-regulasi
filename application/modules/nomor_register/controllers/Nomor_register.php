@@ -533,6 +533,18 @@ class Nomor_register extends MY_Controller
             )
         );
 
+        $user_updated = $this->db->select('nama_lengkap')
+            ->from('user')
+            ->where('id_user', $data_master[0]->id_user_updated)
+            ->get()
+            ->row();
+        $last_updated_at = $data_master[0]->updated_at ? date('d-m-Y H:i:s', strtotime($data_master[0]->updated_at)) : '-';
+
+        $data['user_updated'] = $user_updated ? $user_updated->nama_lengkap : null;
+        $data['last_updated_at'] = $last_updated_at;
+
+        $user_name_login = $this->session->userdata("nama_lengkap");
+
         $level_user = $this->db->select('id_level_user')
             ->from('level_user')
             ->where('id_level_user', $this->session->userdata("level_user_id"))
@@ -605,14 +617,14 @@ class Nomor_register extends MY_Controller
                     if (count($data_master) > 1) {
                         $this->session->set_flashdata('message', 'Data tidak bisa diubah');
                         $this->session->set_flashdata('type-alert', 'danger');
-                        redirect('usulan_raperbup');
+                        redirect('nomor_register');
                     } else {
                         $input_name = "file_upload";
                         $upload_file = $this->upload_file($input_name, $this->config->item('file_usulan'), "", "doc");
                         if (isset($upload_file['error'])) {
                             $this->session->set_flashdata('message', $upload_file['error']);
                             $this->session->set_flashdata('type-alert', 'danger');
-                            redirect('usulan_raperbup/edit_usulan_raperbup/' . $id_usulan_raperbup);
+                            redirect('nomor_register/edit_usulan_raperbup/' . $id_usulan_raperbup);
                         }
 
                         $nama_file_usulan = $upload_file['data']['file_name'];
@@ -629,7 +641,7 @@ class Nomor_register extends MY_Controller
                         if (isset($upload_file_lampiran['error'])) {
                             $this->session->set_flashdata('message', $upload_file_lampiran['error']);
                             $this->session->set_flashdata('type-alert', 'danger');
-                            redirect('usulan_raperbup/edit_usulan_raperbup/' . $id_usulan_raperbup);
+                            redirect('nomor_register/edit_usulan_raperbup/' . $id_usulan_raperbup);
                         }
 
                         $nama_file_lampiran = $upload_file_lampiran['data']['file_name'];
@@ -642,7 +654,7 @@ class Nomor_register extends MY_Controller
                         if (isset($upload_file_lampiran_sk_tim['error'])) {
                             $this->session->set_flashdata('message', $upload_file_lampiran_sk_tim['error']);
                             $this->session->set_flashdata('type-alert', 'danger');
-                            redirect('usulan_raperbup/edit_usulan_raperbup/' . $id_usulan_raperbup);
+                            redirect('nomor_register/edit_usulan_raperbup/' . $id_usulan_raperbup);
                         }
 
                         $nama_file_lampiran_sk_tim = $upload_file_lampiran_sk_tim['data']['file_name'];
@@ -655,7 +667,7 @@ class Nomor_register extends MY_Controller
                         if (isset($upload_file_lampiran_daftar_hadir['error'])) {
                             $this->session->set_flashdata('message', $upload_file_lampiran_daftar_hadir['error']);
                             $this->session->set_flashdata('type-alert', 'danger');
-                            redirect('usulan_raperbup/edit_usulan_raperbup/' . $id_usulan_raperbup);
+                            redirect('nomor_register/edit_usulan_raperbup/' . $id_usulan_raperbup);
                         }
 
                         $nama_file_lampiran_daftar_hadir = $upload_file_lampiran_daftar_hadir['data']['file_name'];
@@ -708,7 +720,7 @@ class Nomor_register extends MY_Controller
                         if (isset($upload_file_lampiran['error'])) {
                             $this->session->set_flashdata('message', $upload_file_lampiran['error']);
                             $this->session->set_flashdata('type-alert', 'danger');
-                            redirect('usulan_raperbup/edit_usulan_raperbup/' . $id_usulan_raperbup);
+                            redirect('nomor_register/edit_usulan_raperbup/' . $id_usulan_raperbup);
                         }
 
                         $nama_file_lampiran = $upload_file_lampiran['data']['file_name'];
@@ -721,7 +733,7 @@ class Nomor_register extends MY_Controller
                         if (isset($upload_file_lampiran_usulan['error'])) {
                             $this->session->set_flashdata('message', $upload_file_lampiran_usulan['error']);
                             $this->session->set_flashdata('type-alert', 'danger');
-                            redirect('usulan_raperbup/edit_usulan_raperbup/' . $id_usulan_raperbup);
+                            redirect('nomor_register/edit_usulan_raperbup/' . $id_usulan_raperbup);
                         }
 
                         $nama_file_lampiran_usulan = $upload_file_lampiran_usulan['data']['file_name'];
@@ -769,18 +781,18 @@ class Nomor_register extends MY_Controller
                         'id_user_tujuan' => $id_pengaju,
                         'id_usulan_raperbup' => $id_usulan_raperbup_decrypted,
                         'tipe_notif' => 'revisi_admin_hukum',
-                        'pesan' => 'Usulan "' . $nama_peraturan . '" direvisi oleh Admin Hukum',
+                        'pesan' => 'Usulan "' . $nama_peraturan . '" direvisi oleh ' . $user_name_login,
                     ];
                     $this->Notifikasi_model->simpan_notif($data_notif);
                     log_message('debug', 'Notif revisi_admin_hukum saved: ' . json_encode($data_notif));
 
                     $this->session->set_flashdata('message', 'Data berhasil diubah');
                     $this->session->set_flashdata('type-alert', 'success');
-                    redirect('usulan_raperbup');
+                    redirect('nomor_register');
                 } else {
                     $this->session->set_flashdata('message', 'Data gagal diubah');
                     $this->session->set_flashdata('type-alert', 'danger');
-                    redirect('usulan_raperbup');
+                    redirect('nomor_register');
                 }
             }
         }
@@ -794,7 +806,7 @@ class Nomor_register extends MY_Controller
             ->where('id_level_user', $this->session->userdata("level_user_id"))
             ->get()
             ->row();
-        if ($level_user->id_level_user != 6) {
+        if (!in_array($level_user->id_level_user, [4, 6, 7])) {
             echo json_encode([
                 'status' => 'error',
                 'message' => 'Anda tidak memiliki akses untuk mengupdate catatan revisi'
@@ -826,6 +838,20 @@ class Nomor_register extends MY_Controller
             'updated_at' => date('Y-m-d H:i:s')
         ];
 
+        $id_pengaju = $this->db->select('id_user_created')
+            ->where('id_usulan_raperbup', $id_usulan_raperbup)
+            ->get('usulan_raperbup')
+            ->row()->id_user_created;
+
+        $data_notif = [
+            'id_user_tujuan' => $id_pengaju,
+            'id_usulan_raperbup' => $id_usulan_raperbup,
+            'tipe_notif' => 'Catatan revisi_admin_hukum',
+            'pesan' => $catatan_revisi,
+        ];
+
+        $this->Notifikasi_model->simpan_notif($data_notif);
+
         $insert_id = $this->Usulan_revisi_model->insert($data);
 
         if ($insert_id) {
@@ -853,7 +879,7 @@ class Nomor_register extends MY_Controller
             ->where('id_level_user', $this->session->userdata("level_user_id"))
             ->get()
             ->row();
-        if ($level_user->id_level_user != 6) {
+        if (!in_array($level_user->id_level_user, [4, 6, 7])) {
             echo json_encode([
                 'status' => 'error',
                 'message' => 'Anda tidak memiliki akses untuk mengupdate catatan revisi'
@@ -914,7 +940,7 @@ class Nomor_register extends MY_Controller
             ->where('id_level_user', $this->session->userdata("level_user_id"))
             ->get()
             ->row();
-        if ($level_user->id_level_user != 6) {
+        if (!in_array($level_user->id_level_user, [4, 6, 7])) {
             echo json_encode([
                 'status' => 'error',
                 'message' => 'Anda tidak memiliki akses untuk mengupdate catatan revisi'
