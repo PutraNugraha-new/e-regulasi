@@ -13,9 +13,11 @@
                                         <option value="">-- PILIH SKPD --</option>
                                         <?php
                                         foreach ($skpd as $key => $value) {
-                                        ?>
-                                            <option value="<?php echo $value->id_master_satker; ?>"><?php echo $value->nama; ?></option>
-                                        <?php
+                                            ?>
+                                            <option value="<?php echo $value->id_master_satker; ?>">
+                                                <?php echo $value->nama; ?>
+                                            </option>
+                                            <?php
                                         }
                                         ?>
                                     </select>
@@ -26,16 +28,22 @@
                                 <div class="col-lg-10">
                                     <div class="selectgroup selectgroup-pills">
                                         <label class="selectgroup-item">
-                                            <input type="radio" name="filter" value="all" class="selectgroup-input" onclick="get_data_peraturan()">
-                                            <span class="selectgroup-button selectgroup-button-icon"><i class="fas fa-sun"></i> All</span>
+                                            <input type="radio" name="filter" value="all" class="selectgroup-input"
+                                                onclick="get_data_peraturan()">
+                                            <span class="selectgroup-button selectgroup-button-icon"><i
+                                                    class="fas fa-sun"></i> All</span>
                                         </label>
                                         <label class="selectgroup-item">
-                                            <input type="radio" name="filter" value="belum" class="selectgroup-input" checked="" onclick="get_data_peraturan()">
-                                            <span class="selectgroup-button selectgroup-button-icon"><i class="fas fa-times"></i> Belum Diperiksa</span>
+                                            <input type="radio" name="filter" value="belum" class="selectgroup-input"
+                                                checked="" onclick="get_data_peraturan()">
+                                            <span class="selectgroup-button selectgroup-button-icon"><i
+                                                    class="fas fa-times"></i> Belum Diperiksa</span>
                                         </label>
                                         <label class="selectgroup-item">
-                                            <input type="radio" name="filter" value="sudah" class="selectgroup-input" onclick="get_data_peraturan()">
-                                            <span class="selectgroup-button selectgroup-button-icon"><i class="fas fa-clipboard-check"></i> Sudah Diperiksa</span>
+                                            <input type="radio" name="filter" value="sudah" class="selectgroup-input"
+                                                onclick="get_data_peraturan()">
+                                            <span class="selectgroup-button selectgroup-button-icon"><i
+                                                    class="fas fa-clipboard-check"></i> Sudah Diperiksa</span>
                                         </label>
                                     </div>
                                 </div>
@@ -64,7 +72,8 @@
                             <h4><span class='last_file'></span></h4>
                             <div class="card-header-action">
                                 <a href="#disetujui" onclick="change_status('1')" class="btn btn-info">Disetujui</a>
-                                <a href="#tidakDisetujui" onclick="change_status('2')" class="btn btn-info">Tidak Disetujui</a>
+                                <a href="#tidakDisetujui" onclick="change_status('2')" class="btn btn-info">Tidak
+                                    Disetujui</a>
                             </div>
                         </div>
                         <div class="card-body" style="background-color: #f4f6f9;">
@@ -98,7 +107,8 @@
                 <div class="form-group row">
                     <label class="col-form-label col-lg-2">File</label>
                     <div class="col-lg-10">
-                        <input type="file" class="form-control" name="file_upload" accept="application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document">
+                        <input type="file" class="form-control" name="file_upload"
+                            accept="application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document">
                         <small class="form-text text-muted">
                             Max. Upload Size : 2 MB
                         </small>
@@ -154,12 +164,12 @@
                     id_peraturan: id_peraturan
                 },
                 type: 'GET',
-                beforeSend: function() {
+                beforeSend: function () {
                     HoldOn.open(optionsHoldOn);
                 },
-                success: function(response) {
+                success: function (response) {
                     let html = "";
-                    $.each(response, function(index, value) {
+                    $.each(response, function (index, value) {
                         html += "<div class='activity'>" +
                             "<div class='activity-icon " + value.class_color + " text-white shadow-dark'>" +
                             "<i class='fas fa-user-alt'></i>" +
@@ -179,50 +189,69 @@
 
                     $(".list-activites").html(html);
                 },
-                complete: function() {
+                complete: function () {
                     HoldOn.close();
                 }
             });
         }
     }
 
-    function get_data_peraturan() {
-        $(".list-activites").html("");
-        $(".list-peraturan").html("<li>Belum Ada Peraturan</li>");
-        $("a[href$='#disetujui']").hide();
-        $("a[href$='#tidakDisetujui']").hide();
-        $(".last_file").html("");
-        let skpd = $("select[name='skpd']").val();
-        let filter = $("input[name='filter']:checked").val();
+    var selectedUsulanId = '<?php echo isset($selected_usulan_id) ? $selected_usulan_id : ''; ?>';
+    var selectedKategoriUsulan = '<?php echo isset($selected_kategori_usulan) ? $selected_kategori_usulan : ''; ?>';
 
-        if (skpd) {
-            $.ajax({
-                url: base_url + 'monitoring_raperbup/request/get_data_peraturan',
-                data: {
-                    skpd: skpd,
-                    filter: filter,
-                },
-                type: 'GET',
-                beforeSend: function() {
-                    HoldOn.open(optionsHoldOn);
-                },
-                success: function(response) {
-                    let list_peraturan = "";
-                    if (response.length != 0) {
-                        $.each(response, function(index, value) {
-                            list_peraturan += "<li class='nav-item hr-bottom'><a href='#' class='nav-link list-peraturan-active' onclick=\"show_detail_peraturan('" + value.id_encrypt + "',this)\">" + value.nama_peraturan + "</a></li>"
-                        });
-                        $(".list-peraturan").html(list_peraturan);
-                    }
-                },
-                complete: function() {
-                    HoldOn.close();
-                }
-            });
-        } else {
-            $(".list-peraturan").html("<li>Belum Ada Peraturan</li>");
-            $(".list-activites").html("");
+    $(document).ready(function () {
+        if (selectedKategoriUsulan) {
+            $("input[name='kategori_usulan'][value='" + selectedKategoriUsulan + "']").prop('checked', true);
         }
+        get_data_peraturan();
+    });
+
+    function get_data_peraturan() {
+        $("a[href$='#disposisi']").hide();
+        $("a[href$='#kirimFileKeProvinsi']").hide();
+        $(".list-activites").html("");
+        $(".last_file").html("");
+        $(".list-peraturan").html("<li>Belum Ada Peraturan</li>");
+        let kategori_usulan = $("input[name='kategori_usulan']:checked").val();
+
+        var data = {
+            kategori_usulan: kategori_usulan
+        };
+        if (selectedUsulanId) {
+            data.usulan_id = atob(selectedUsulanId); // Decode base64
+        }
+
+        $.ajax({
+            url: base_url + 'monitoring_raperbup/request/get_data_peraturan',
+            data: data,
+            type: 'GET',
+            beforeSend: function () {
+                HoldOn.open(optionsHoldOn);
+            },
+            success: function (response) {
+                let list_peraturan = "";
+                if (response.length != 0) {
+                    $.each(response, function (index, value) {
+                        list_peraturan += "<li class='nav-item hr-bottom'><a href='#' class='nav-link list-peraturan-active' onclick=\"show_detail_peraturan('" + value.id_encrypt + "',this)\">" + value.nama_peraturan + "</a></li>";
+                    });
+                    $(".list-peraturan").html(list_peraturan);
+                    if (selectedUsulanId) {
+                        let decodedUsulanId = atob(selectedUsulanId);
+                        let targetLink = $(".list-peraturan a[onclick*='" + decodedUsulanId + "']");
+                        if (targetLink.length > 0) {
+                            targetLink[0].click();
+                        }
+                    }
+                }
+            },
+            complete: function () {
+                HoldOn.close();
+            },
+            error: function (xhr, status, error) {
+                console.log('Error loading peraturan:', xhr.responseText);
+                swal('Error', 'Gagal mengambil data: ' + (xhr.responseJSON ? xhr.responseJSON.error : 'Server error'), 'error');
+            }
+        });
     }
 
     function change_status(status) {
@@ -231,11 +260,11 @@
             $("#showPanelDitolak").modal("show");
         } else {
             swal({
-                    title: 'Apakah anda yakin mengubah menyetujui usulan ini?',
-                    icon: 'warning',
-                    buttons: true,
-                    dangerMode: true,
-                })
+                title: 'Apakah anda yakin mengubah menyetujui usulan ini?',
+                icon: 'warning',
+                buttons: true,
+                dangerMode: true,
+            })
                 .then((willDelete) => {
                     if (willDelete) {
                         $.ajax({
@@ -245,10 +274,10 @@
                                 status: status
                             },
                             type: 'POST',
-                            beforeSend: function() {
+                            beforeSend: function () {
                                 HoldOn.open(optionsHoldOn);
                             },
-                            success: function(response) {
+                            success: function (response) {
                                 get_data_peraturan();
                                 if (response) {
                                     $("input[name='usulan_peraturan']").val("");
@@ -257,12 +286,12 @@
                                     swal('Gagal', 'Status tidak bisa diubah', 'error');
                                 }
                             },
-                            complete: function(response) {
+                            complete: function (response) {
                                 HoldOn.close();
                             }
                         });
                     } else {
-                        swal('Batal', 'Data masih tersimpan!', 'error').then(function(results) {
+                        swal('Batal', 'Data masih tersimpan!', 'error').then(function (results) {
                             HoldOn.close();
                             if (result.results) {
                                 show_detail_peraturan(id_peraturan);
@@ -283,10 +312,10 @@
                 id_peraturan: id_peraturan
             },
             type: 'GET',
-            beforeSend: function() {
+            beforeSend: function () {
                 HoldOn.open(optionsHoldOn);
             },
-            success: function(response) {
+            success: function (response) {
                 if (response) {
                     $("a[href$='#disetujui']").show();
                     $("a[href$='#tidakDisetujui']").show();
@@ -295,7 +324,7 @@
                     $("a[href$='#tidakDisetujui']").hide();
                 }
             },
-            complete: function() {
+            complete: function () {
                 HoldOn.close();
             }
         });
@@ -319,10 +348,10 @@
                 contentType: false,
                 processData: false,
                 type: 'POST',
-                beforeSend: function() {
+                beforeSend: function () {
                     HoldOn.open(optionsHoldOn);
                 },
-                success: function(response) {
+                success: function (response) {
                     $("#showPanelDitolak").modal("toggle");
                     $("textarea[name='catatan']").val("");
                     $("input[name='file_upload']").val("");
@@ -334,7 +363,7 @@
                         swal('Gagal', 'Status tidak bisa diubah', 'error');
                     }
                 },
-                complete: function() {
+                complete: function () {
                     HoldOn.close();
                 }
             });
@@ -344,11 +373,11 @@
     function confirm_delete(id_trx_raperbup) {
         let id_usulan_raperbup = $("input[name='usulan_peraturan']").val();
         swal({
-                title: 'Apakah anda yakin menghapus data ini?',
-                icon: 'warning',
-                buttons: true,
-                dangerMode: true,
-            })
+            title: 'Apakah anda yakin menghapus data ini?',
+            icon: 'warning',
+            buttons: true,
+            dangerMode: true,
+        })
             .then((willDelete) => {
                 if (willDelete) {
                     $.ajax({
@@ -357,10 +386,10 @@
                             id_trx_raperbup: id_trx_raperbup
                         },
                         type: 'GET',
-                        beforeSend: function() {
+                        beforeSend: function () {
                             HoldOn.open(optionsHoldOn);
                         },
-                        success: function(response) {
+                        success: function (response) {
                             get_data_peraturan();
                             if (response) {
                                 $("input[name='usulan_peraturan']").val("");
@@ -369,12 +398,12 @@
                                 swal('Gagal', 'Data tidak bisa dihapus', 'error');
                             }
                         },
-                        complete: function(response) {
+                        complete: function (response) {
                             HoldOn.close();
                         }
                     });
                 } else {
-                    swal('Batal', 'Data masih tersimpan!', 'error').then(function(results) {
+                    swal('Batal', 'Data masih tersimpan!', 'error').then(function (results) {
                         HoldOn.close();
                         if (result.results) {
                             show_detail_peraturan(id_usulan_raperbup);
@@ -392,10 +421,10 @@
                 id_peraturan: id_peraturan
             },
             type: 'GET',
-            beforeSend: function() {
+            beforeSend: function () {
                 HoldOn.open(optionsHoldOn);
             },
-            success: function(response) {
+            success: function (response) {
                 let html = "<table>";
                 html += "<tr><td>File Usulan</td><td style='padding:5px;'>:</td><td>" + response.usulan + "</td></tr>";
                 if (response.lampiran_group) {
@@ -404,7 +433,7 @@
                 html += "</table>";
                 $(".last_file").html(html);
             },
-            complete: function(response) {
+            complete: function (response) {
                 HoldOn.close();
             }
         });

@@ -1,18 +1,19 @@
 <?php
-defined('BASEPATH') OR exit('No direct script access allowed');
+defined('BASEPATH') or exit('No direct script access allowed');
 
-class Notifikasi_model extends CI_Model {
+class Notifikasi_model extends CI_Model
+{
     private $table = 'notifikasi';
 
-    public function simpan_notif($data) {
-        $result = $this->db->insert($this->table, $data);
-        if (!$result) {
-            log_message('error', 'Failed to insert notification: ' . json_encode($data) . ' | Error: ' . json_encode($this->db->error()));
-        }
-        return $result;
+    public function simpan_notif($data)
+    {
+        // Hapus validasi link karena kolom sudah dihapus
+        $this->db->insert('notifikasi', $data);
+        return $this->db->insert_id();
     }
 
-    public function get($params = array(), $type = 'result') {
+    public function get($params = array(), $type = 'result')
+    {
         try {
             if (isset($params['fields'])) {
                 $this->db->select($params['fields']);
@@ -48,12 +49,13 @@ class Notifikasi_model extends CI_Model {
 
             return $type == 'row' ? $query->row() : $query->result();
         } catch (Exception $e) {
-            log_message('error', 'Exception in get notifikasi: ' . $e->getMessage());
+            log_message('error', 'Exception in get notifikasi: perspective: ' . $e->getMessage());
             return [];
         }
     }
 
-    public function edit($id, $data) {
+    public function edit($id, $data)
+    {
         try {
             $this->db->where('id_notifikasi', $id);
             $result = $this->db->update($this->table, $data);

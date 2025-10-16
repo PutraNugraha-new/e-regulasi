@@ -1,39 +1,42 @@
-<?php  if ( ! defined('BASEPATH')) exit('No direct script access allowed');
-      
-    if ( ! function_exists('encrypt_data'))
-    {
-        function encrypt_data($value)
-        {
-            $CI =& get_instance();
-            $CI->load->library('encryption');
-            $res = $CI->encryption->encrypt($value);
-            $res = strtr(
-                $res,
-                array(
-                    '+' => '.',
-                    '=' => '-',
-                    '/' => '@'
-                )
-            );
+<?php if (!defined('BASEPATH'))
+    exit('No direct script access allowed');
 
-            return $res;
-        }
-    }
-
-    if ( ! function_exists('decrypt_data'))
+if (!function_exists('encrypt_data')) {
+    function encrypt_data($value)
     {
-        function decrypt_data($value)
-        {
-            $CI =& get_instance();
-            $CI->load->library('encryption');
-            $res = strtr(
-                $value,
-                array(
-                    '.' => '+',
-                    '-' => '=',
-                    '@' => '/'
-                )
-            );
-            return $CI->encryption->decrypt($res);
+        $CI =& get_instance();
+        $CI->load->library('encryption');
+        $res = $CI->encryption->encrypt($value);
+        $res = strtr(
+            $res,
+            array(
+                '+' => '.',
+                '=' => '-',
+                '/' => '@'
+            )
+        );
+        // Validasi hasil enkripsi
+        if (!preg_match('/^[a-zA-Z0-9.@\-]+$/', $res)) {
+            log_message('error', 'Invalid encryption output for value: ' . $value . ', result: ' . $res);
+            return false;
         }
+        return $res;
     }
+}
+
+if (!function_exists('decrypt_data')) {
+    function decrypt_data($value)
+    {
+        $CI =& get_instance();
+        $CI->load->library('encryption');
+        $res = strtr(
+            $value,
+            array(
+                '.' => '+',
+                '-' => '=',
+                '@' => '/'
+            )
+        );
+        return $CI->encryption->decrypt($res);
+    }
+}
