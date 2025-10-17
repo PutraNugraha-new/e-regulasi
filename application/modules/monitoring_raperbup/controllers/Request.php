@@ -234,6 +234,7 @@ class Request extends MY_Controller
     {
         $filter = $this->iget("filter");
         $usulan_id = $this->iget("usulan_id");
+        $skpd = $this->iget("skpd");
         if ($this->iget("kategori_usulan")) {
             $kategori_usulan = $this->iget("kategori_usulan");
         } else {
@@ -247,6 +248,9 @@ class Request extends MY_Controller
         if ($kategori_usulan != "all") {
             $wh["kategori_usulan_id"] = $kategori_usulan; // Gunakan ID mentah
         }
+        if ($skpd) {
+            $wh["user.master_satker_id"] = $skpd; // Filter by user's master_satker_id
+        }
 
         // Kasubbag
         if ($this->session->userdata("level_user_id") == '7') {
@@ -255,7 +259,7 @@ class Request extends MY_Controller
             $data_usulan = $this->usulan_raperbup_model->get(
                 array(
                     "join" => array(
-                        "user" => "id_user=id_user_created"
+                        "user" => "usulan_raperbup.id_user_created = user.id_user"
                     ),
                     "where" => $wh,
                     "where_false" => "nomor_register IS NOT NULL",
@@ -269,7 +273,7 @@ class Request extends MY_Controller
             $data_usulan = $this->usulan_raperbup_model->get(
                 array(
                     "join" => array(
-                        "user" => "id_user=id_user_created"
+                        "user" => "usulan_raperbup.id_user_created = user.id_user"
                     ),
                     "where" => $wh,
                     "where_false" => "nomor_register IS NOT NULL",
@@ -328,7 +332,7 @@ class Request extends MY_Controller
             foreach ($row as $keys => $rows) {
                 $templist[$key][$keys] = $rows;
             }
-            $templist[$key]['id_encrypt'] = $row->id_usulan_raperbup; // Gunakan ID mentah
+            $templist[$key]['id_encrypt'] = encrypt_data($row->id_usulan_raperbup);
         }
 
         $data = $templist;

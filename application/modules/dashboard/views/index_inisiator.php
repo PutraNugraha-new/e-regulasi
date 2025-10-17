@@ -71,24 +71,25 @@
                             var formattedDate = date.toLocaleDateString('id-ID', {
                                 weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'
                             });
-                            // Gunakan ID mentah tanpa enkripsi
                             var usulan_id = item.id_usulan_raperbup || '';
+                            var kategori_usulan_id = item.kategori_usulan_id || '';
+                            var master_satker_id = item.master_satker_id || ''; // Use master_satker_id from user
                             var link = '';
                             if (item.nomor_register === null || item.nomor_register === '') {
-                                link = base_url + 'nomor_register/index?usulan_id=' + usulan_id;
+                                link = base_url + 'nomor_register/index?usulan_id=' + usulan_id + '&kategori_usulan_id=' + kategori_usulan_id + '&skpd_id=' + master_satker_id;
                             } else {
-                                link = base_url + 'monitoring_raperbup/index?usulan_id=' + usulan_id;
+                                link = base_url + 'monitoring_raperbup/index?usulan_id=' + usulan_id + '&kategori_usulan_id=' + kategori_usulan_id + '&skpd_id=' + master_satker_id;
                             }
                             html += `
-                                <li class="media">
-                                    <img class="mr-3 rounded-circle" width="50" src="${base_url}assets/img/avatar/avatar-1.png" alt="avatar">
-                                    <div class="media-body">
-                                        <div class="media-title">${item.nama_pengguna}</div>
-                                        <span class="text-small text-muted">${item.pesan}</span>
-                                        <div class="text-small text-muted">${formattedDate}</div>
-                                        <a href="${link}" onclick="return tandaiDibaca(${item.id_notifikasi}, '${link}')" class="btn btn-sm btn-primary mt-2">Lihat Detail</a>
-                                    </div>
-                                </li>`;
+                        <li class="media">
+                            <img class="mr-3 rounded-circle" width="50" src="${base_url}assets/img/avatar/avatar-1.png" alt="avatar">
+                            <div class="media-body">
+                                <div class="media-title">${item.nama_pengguna}</div>
+                                <span class="text-small text-muted">${item.pesan}</span>
+                                <div class="text-small text-muted">${formattedDate}</div>
+                                <a href="${link}" onclick="return tandaiDibaca(${item.id_notifikasi}, '${link}')" class="btn btn-sm btn-primary mt-2">Lihat Detail</a>
+                            </div>
+                        </li>`;
                         });
                     } else {
                         html = '<li class="media text-center">Tidak ada pemberitahuan baru</li>';

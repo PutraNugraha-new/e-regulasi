@@ -175,8 +175,14 @@
 
     var selectedUsulanId = '<?php echo isset($selected_usulan_id) ? $selected_usulan_id : ''; ?>';
     var selectedKategoriUsulan = '<?php echo isset($selected_kategori_usulan) ? $selected_kategori_usulan : ''; ?>';
+    var selectedSkpdId = '<?php echo isset($selected_skpd_id) ? $selected_skpd_id : ''; ?>';
 
     $(document).ready(function () {
+        // Set filter SKPD
+        if (selectedSkpdId) {
+            $("select[name='skpd']").val(selectedSkpdId);
+        }
+        // Set filter kategori usulan
         if (selectedKategoriUsulan) {
             $("input[name='kategori_usulan'][value='" + selectedKategoriUsulan + "']").prop('checked', true);
         }
@@ -190,9 +196,11 @@
         $(".last_file").html("");
         $(".list-peraturan").html("<li>Belum Ada Peraturan</li>");
         let kategori_usulan = $("input[name='kategori_usulan']:checked").val();
+        let skpd = $("select[name='skpd']").val();
 
         var data = {
-            kategori_usulan: kategori_usulan
+            kategori_usulan: kategori_usulan,
+            skpd: skpd
         };
         if (selectedUsulanId) {
             data.usulan_id = atob(selectedUsulanId); // Decode base64
@@ -207,16 +215,24 @@
             },
             success: function (response) {
                 let list_peraturan = "";
+                let selectedIdEncrypt = null;
                 if (response.length != 0) {
                     $.each(response, function (index, value) {
                         list_peraturan += "<li class='nav-item hr-bottom'><a href='#' class='nav-link list-peraturan-active' onclick=\"show_detail_peraturan('" + value.id_encrypt + "',this)\">" + value.nama_peraturan + "</a></li>";
+                        // Find the id_encrypt for the selected usulan_id
+                        if (selectedUsulanId && value.id_usulan_raperbup == atob(selectedUsulanId)) {
+                            selectedIdEncrypt = value.id_encrypt;
+                        }
                     });
                     $(".list-peraturan").html(list_peraturan);
-                    if (selectedUsulanId) {
-                        let decodedUsulanId = atob(selectedUsulanId);
-                        let targetLink = $(".list-peraturan a[onclick*='" + decodedUsulanId + "']");
+                    // Highlight the selected peraturan
+                    if (selectedIdEncrypt) {
+                        let targetLink = $(".list-peraturan a[onclick*='" + selectedIdEncrypt + "']");
                         if (targetLink.length > 0) {
-                            targetLink[0].click();
+                            $(".list-peraturan-active").removeClass("active");
+                            targetLink.addClass("active");
+                            // Directly call show_detail_peraturan
+                            show_detail_peraturan(selectedIdEncrypt);
                         }
                     }
                 }
@@ -270,7 +286,7 @@
                             "</div>" +
                             "<p>" + value.status_terakhir + "</p>" +
                             "</div>" +
-                            "</div>"
+                            "</div>";
                     });
 
                     $(".list-activites").html(html);

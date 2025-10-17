@@ -332,7 +332,7 @@ class Request extends MY_Controller
 		try {
 			$data = $this->notifikasi_model->get(
 				array(
-					"fields" => "notifikasi.id_notifikasi, notifikasi.id_user_tujuan, notifikasi.id_usulan_raperbup, notifikasi.tipe_notif, notifikasi.pesan, notifikasi.dibaca, notifikasi.created_at, IFNULL(usulan_raperbup.nama_peraturan, 'Usulan Tanpa Nama') as nama_peraturan, IFNULL(user.nama_lengkap, 'Unknown') as nama_pengguna, user.level_user_id, usulan_raperbup.nomor_register, usulan_raperbup.kategori_usulan_id",
+					"fields" => "notifikasi.id_notifikasi, notifikasi.id_user_tujuan, notifikasi.id_usulan_raperbup, notifikasi.tipe_notif, notifikasi.pesan, notifikasi.dibaca, notifikasi.created_at, IFNULL(usulan_raperbup.nama_peraturan, 'Usulan Tanpa Nama') as nama_peraturan, IFNULL(user.nama_lengkap, 'Unknown') as nama_pengguna, user.level_user_id, usulan_raperbup.nomor_register, usulan_raperbup.kategori_usulan_id, user.master_satker_id",
 					"join" => array(
 						"usulan_raperbup" => "notifikasi.id_usulan_raperbup = usulan_raperbup.id_usulan_raperbup AND usulan_raperbup.deleted_at IS NULL",
 						"user" => "usulan_raperbup.id_user_created = user.id_user AND user.deleted_at IS NULL"

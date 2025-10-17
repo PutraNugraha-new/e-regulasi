@@ -33,6 +33,31 @@ class Monitoring_raperbup extends MY_Controller
 
         // Ambil parameter dari URL
         $data['selected_usulan_id'] = $this->input->get('usulan_id', TRUE);
+        $data['selected_kategori_usulan'] = $this->input->get('kategori_usulan_id', TRUE);
+        $data['selected_skpd_id'] = $this->input->get('skpd_id', TRUE);
+
+        // Validasi parameter
+        if ($data['selected_usulan_id']) {
+            $usulan = $this->usulan_raperbup_model->get_by(decrypt_data($data['selected_usulan_id']));
+            if (!$usulan) {
+                log_message('error', 'Invalid usulan_id: ' . $data['selected_usulan_id']);
+                $data['selected_usulan_id'] = '';
+            }
+        }
+        if ($data['selected_kategori_usulan']) {
+            $kategori = $this->kategori_usulan_model->get_by(decrypt_data($data['selected_kategori_usulan']));
+            if (!$kategori) {
+                log_message('error', 'Invalid kategori_usulan_id: ' . $data['selected_kategori_usulan']);
+                $data['selected_kategori_usulan'] = 'all';
+            }
+        }
+        if ($data['selected_skpd_id']) {
+            $skpd = $this->master_satker_model->get_by($data['selected_skpd_id']);
+            if (!$skpd) {
+                log_message('error', 'Invalid skpd_id: ' . $data['selected_skpd_id']);
+                $data['selected_skpd_id'] = '';
+            }
+        }
 
         $data['breadcrumb'] = ["header_content" => "Monitoring Usulan", "breadcrumb_link" => [['link' => false, 'content' => 'Monitoring Usulan', 'is_active' => true]]];
 
@@ -256,7 +281,6 @@ class Monitoring_raperbup extends MY_Controller
                         'id_usulan_raperbup' => $id_usulan_raperbup_decrypted,
                         'tipe_notif' => 'tolak_kasubbag',
                         'pesan' => 'Usulan ditolak oleh Kasubbag: ' . $nama_peraturan . ($catatan ? ' (Catatan: ' . $catatan . ')' : ''),
-                        'link' => base_url('usulan_raperbup/detail_usulan_raperbup/' . $id_usulan_raperbup)
                     ];
                     $this->Notifikasi_model->simpan_notif($data_notif);
                     log_message('debug', 'Notif tolak_kasubbag saved: ' . json_encode($data_notif));
@@ -1252,7 +1276,6 @@ class Monitoring_raperbup extends MY_Controller
                     'id_usulan_raperbup' => $data_master->usulan_raperbup_id,
                     'tipe_notif' => 'disposisi_dibatalkan',
                     'pesan' => 'Disposisi usulan "' . $nama_peraturan . '" dibatalkan oleh Admin Hukum',
-                    'link' => base_url('usulan_raperbup/detail_usulan_raperbup/' . encrypt_data($data_master->usulan_raperbup_id))
                 ];
                 $this->Notifikasi_model->simpan_notif($data_notif);
                 log_message('debug', 'Notif disposisi_dibatalkan saved: ' . json_encode($data_notif));
