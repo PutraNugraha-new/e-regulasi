@@ -183,6 +183,9 @@
                     </div>
                     <?php echo form_open_multipart('', ['id' => 'form-usulan']); ?>
                     <?php
+                    $is_edit_mode = !empty($content) && !empty($content->id_usulan_raperbup);
+                    ?>
+                    <?php
                     if (!empty($this->session->flashdata('message'))) {
                         echo "<div class='alert " . ($this->session->flashdata('type-alert') == 'success' ? 'alert-success' : 'alert-danger') . " alert-dismissible show fade'>
                                 <div class='alert-body'>
@@ -223,7 +226,9 @@
                                 <div class="form-main-content">
                                     <textarea name="menimbang" id="menimbang"><?php echo !empty($content) ? htmlspecialchars($content->menimbang) : "<ol type='a'><li>.....</li><li>.....</li></ol>"; ?></textarea>
                                 </div>
-                                <div class="revisi-container" id="revisi-menimbang"></div>
+                                <?php if ($is_edit_mode): ?>
+                                    <div class="revisi-container" id="revisi-menimbang"></div>
+                                <?php endif; ?>
                             </div>
                         </div>
                     </div>
@@ -234,7 +239,9 @@
                                 <div class="form-main-content">
                                     <textarea name="mengingat" id="mengingat"><?php echo !empty($content) ? htmlspecialchars($content->mengingat) : "<ol><li>.....</li><li>.....</li></ol>"; ?></textarea>
                                 </div>
-                                <div class="revisi-container" id="revisi-mengingat"></div>
+                                <?php if ($is_edit_mode): ?>
+                                    <div class="revisi-container" id="revisi-mengingat"></div>
+                                <?php endif; ?>
                             </div>
                         </div>
                     </div>
@@ -245,7 +252,9 @@
                                 <div class="form-main-content">
                                     <textarea name="menetapkan" id="menetapkan"><?php echo !empty($content) ? htmlspecialchars($content->menetapkan) : "<ol><li>.....</li><li>.....</li></ol>"; ?></textarea>
                                 </div>
-                                <div class="revisi-container" id="revisi-menetapkan"></div>
+                                <?php if ($is_edit_mode): ?>
+                                    <div class="revisi-container" id="revisi-menetapkan"></div>
+                                <?php endif; ?>
                             </div>
                         </div>
                     </div>
@@ -497,7 +506,9 @@
                                         <div class="form-main-content">
                                             <textarea name="penjelasan" id="penjelasan"><?php echo !empty($content) ? htmlspecialchars($content->penjelasan) : ''; ?></textarea>
                                         </div>
-                                        <div class="revisi-container" id="revisi-penjelasan"></div>
+                                        <?php if ($is_edit_mode): ?>
+                                            <div class="revisi-container" id="revisi-penjelasan"></div>
+                                        <?php endif; ?>
                                     </div>
                                 </div>
                             </div>
@@ -530,7 +541,9 @@
                                             <div class="form-main-content">
                                                 <textarea id="<?php echo $textarea_id; ?>" name="keputusan[<?php echo $keputusan_number; ?>]" class="form-control" rows="3" placeholder="Masukkan isi keputusan <?php echo strtolower($keputusan_name); ?>..." required><?php echo !empty($keputusan) ? htmlspecialchars($keputusan) : ''; ?></textarea>
                                             </div>
-                                            <div class="revisi-container" id="revisi-memutuskan-<?php echo $keputusan_number; ?>"></div>
+                                            <?php if ($is_edit_mode): ?>
+                                                <div class="revisi-container" id="revisi-memutuskan-<?php echo $keputusan_number; ?>"></div>
+                                            <?php endif; ?>
                                         </div>
                                     </div>
                                 <?php
@@ -666,7 +679,7 @@
     let babCounter = <?php echo count($bab_data); ?>;
 
     // Data revisi dari controller
-    const dataRevisi = <?php echo json_encode($data_revisi); ?>;
+    const dataRevisi = <?php echo !empty($data_revisi) ? json_encode($data_revisi) : '[]'; ?>;
 
     // Fungsi untuk memformat tanggal ke format Indonesia
     function formatTanggalIndonesia(tanggal) {
@@ -681,6 +694,7 @@
         return date.toLocaleDateString('id-ID', options).replace('pukul', 'pkl.');
     }
 
+    var isEditMode = <?php echo $is_edit_mode ? 'true' : 'false'; ?>;
     var currentUserId = <?php echo $this->session->userdata('id_user') ? $this->session->userdata('id_user') : 0; ?>;
     var currentUserLevel = <?php echo isset($level_user) ? $level_user : 0; ?>;
     var canManageRevisi = [4, 6, 7].includes(Number(currentUserLevel));
@@ -1576,28 +1590,34 @@
     function addKeputusanField(number) {
         const keputusanName = keputusanNames[number] || `KE-${number}`;
         const textareaId = `keputusan_${number}`;
+
+        // Revisi container hanya muncul jika edit mode
+        const revisiContainerHtml = isEditMode ? `<div class="revisi-container" id="revisi-memutuskan-${number}"></div>` : '';
+
         const newField = `
-            <div class="keputusan-field" data-number="${number}">
-                <div class="field-header">
-                    <span class="field-number">${keputusanName}</span>
-                    <button type="button" class="btn btn-sm btn-remove-field remove-keputusan" data-number="${number}">
-                        <i class="fas fa-trash"></i> Hapus
-                    </button>
-                </div>
-                <div class="form-with-revisi">
-                    <div class="form-main-content">
-                        <textarea id="${textareaId}" name="keputusan[${number}]" class="form-control" rows="3" placeholder="Masukkan isi keputusan ${keputusanName.toLowerCase()}..." required></textarea>
-                    </div>
-                    <div class="revisi-container" id="revisi-memutuskan-${number}"></div>
-                </div>
+        <div class="keputusan-field" data-number="${number}">
+            <div class="field-header">
+                <span class="field-number">${keputusanName}</span>
+                <button type="button" class="btn btn-sm btn-remove-field remove-keputusan" data-number="${number}">
+                    <i class="fas fa-trash"></i> Hapus
+                </button>
             </div>
-        `;
+            <div class="form-with-revisi">
+                <div class="form-main-content">
+                    <textarea id="${textareaId}" name="keputusan[${number}]" class="form-control" rows="3" placeholder="Masukkan isi keputusan ${keputusanName.toLowerCase()}..." required></textarea>
+                </div>
+                ${revisiContainerHtml}
+            </div>
+        </div>
+    `;
 
         $('#keputusan-container').append(newField);
 
         setTimeout(function() {
             initCKEditor(textareaId);
-            tampilkanRevisi(); // Inisialisasi revisi untuk field baru
+            if (isEditMode) {
+                tampilkanRevisi(); // Inisialisasi revisi untuk field baru hanya di edit mode
+            }
             setFormAccess(); // Apply form access untuk field baru
         }, 100);
 
