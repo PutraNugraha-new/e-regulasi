@@ -12,6 +12,7 @@ class Usulan_raperbup extends MY_Controller
         $this->load->model('monitoring_raperbup/trx_raperbup_model', 'trx_raperbup_model');
         $this->load->library('mpdf_library'); // Memuat library mPDF
         $this->load->model('Notifikasi_model');
+        $this->load->model('Usulan_revisi_model');
     }
 
     public function index()
@@ -94,6 +95,18 @@ class Usulan_raperbup extends MY_Controller
                             );
 
                             $status = $this->usulan_raperbup_model->save($data);
+                            $admin_hukum_users = $this->db->select('id_user')->where('level_user_id', 4)->get('user')->result();
+                            foreach ($admin_hukum_users as $admin) {
+                                $data_notif = [
+                                    'id_user_tujuan' => $admin->id_user,
+                                    'id_usulan_raperbup' => $status,  // Gunakan ini untuk tracking
+                                    'tipe_notif' => 'usulan_baru',
+                                    'pesan' => 'Usulan baru dari Admin Perangkat Daerah: ' . $this->ipost("nama_peraturan"),
+                                    'created_at' => $this->datetime()
+                                ];
+                                $this->Notifikasi_model->simpan_notif($data_notif);
+                            }
+
                             if ($status) {
                                 $data_trx = array(
                                     "usulan_raperbup_id" => $status,
@@ -536,9 +549,26 @@ class Usulan_raperbup extends MY_Controller
                 )
             )
         );
+        $nomor_register = $data_master[0]->nomor_register;
+        $user_updated = $this->db->select('nama_lengkap')
+            ->from('user')
+            ->where('id_user', $data_master[0]->id_user_updated)
+            ->get()
+            ->row();
+        $last_updated_at = $data_master[0]->updated_at ? date('d-m-Y H:i:s', strtotime($data_master[0]->updated_at)) : '-';
 
-        var_dump($data_master);
-        die;
+        $data['user_updated'] = $user_updated ? $user_updated->nama_lengkap : null;
+        $data['last_updated_at'] = $last_updated_at;
+
+        $level_user = $this->db->select('id_level_user')
+            ->from('level_user')
+            ->where('id_level_user', $this->session->userdata("level_user_id"))
+            ->get()
+            ->row();
+        $data['level_user'] = $level_user ? $level_user->id_level_user : null;
+
+        $data_revisi = $this->Usulan_revisi_model->get_all_revisi(decrypt_data($id_usulan_raperbup));
+        $data['data_revisi'] = $data_revisi;
 
         if (!$data_master) {
             $this->page_error();
@@ -763,15 +793,30 @@ class Usulan_raperbup extends MY_Controller
                     // Regenerate PDF setelah edit
                     $this->generate_pdf_raperbup(decrypt_data($id_usulan_raperbup), $data_master[0]->id_trx_raperbup, 'F');
 
-                    $korektor_users = $this->db->select('id_user')->where('level_user_id', 7)->get('user')->result();
-                    foreach ($korektor_users as $korektor) {
-                        $data_notif = [
-                            'id_user_tujuan' => $korektor->id_user,
-                            'id_usulan_raperbup' => decrypt_data($id_usulan_raperbup),
-                            'tipe_notif' => 'revisi',
-                            'pesan' => 'Usulan direvisi oleh Admin Perangkat Daerah: ' . $this->ipost("nama_peraturan"),
-                        ];
-                        $this->Notifikasi_model->simpan_notif($data_notif);
+                    if ($nomor_register === null) {
+                        // Jika nomor register null, kirim ke admin hukum (level 4)
+                        $admin_hukum_users = $this->db->select('id_user')->where('level_user_id', 4)->get('user')->result();
+                        foreach ($admin_hukum_users as $admin) {
+                            $data_notif = [
+                                'id_user_tujuan' => $admin->id_user,
+                                'id_usulan_raperbup' => decrypt_data($id_usulan_raperbup),
+                                'tipe_notif' => 'revisi',
+                                'pesan' => 'Usulan direvisi oleh Admin Perangkat Daerah: ' . $this->ipost("nama_peraturan"),
+                            ];
+                            $this->Notifikasi_model->simpan_notif($data_notif);
+                        }
+                    } else {
+                        // Jika ada nomor register, kirim ke korektor (level 7) 
+                        $korektor_users = $this->db->select('id_user')->where('level_user_id', 7)->get('user')->result();
+                        foreach ($korektor_users as $korektor) {
+                            $data_notif = [
+                                'id_user_tujuan' => $korektor->id_user,
+                                'id_usulan_raperbup' => decrypt_data($id_usulan_raperbup),
+                                'tipe_notif' => 'revisi',
+                                'pesan' => 'Usulan direvisi oleh Admin Perangkat Daerah: ' . $this->ipost("nama_peraturan"),
+                            ];
+                            $this->Notifikasi_model->simpan_notif($data_notif);
+                        }
                     }
 
                     $this->session->set_flashdata('message', 'Data berhasil diubah');

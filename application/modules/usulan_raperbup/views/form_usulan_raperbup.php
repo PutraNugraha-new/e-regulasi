@@ -119,6 +119,53 @@
         border-left: 2px solid #ffc107;
         padding-left: 15px;
     }
+
+    .form-readonly-level6,
+    .form-readonly-level6:focus {
+        background-color: #f5f5f5 !important;
+        cursor: not-allowed !important;
+        opacity: 0.75;
+        border-color: #ddd !important;
+    }
+
+    .select-readonly-level6 {
+        background-color: #f5f5f5 !important;
+        cursor: not-allowed !important;
+        opacity: 0.75;
+        pointer-events: none !important;
+    }
+
+    .btn-disabled-level6 {
+        opacity: 0.5;
+        cursor: not-allowed !important;
+        pointer-events: none !important;
+    }
+
+    .alert-level6-notice {
+        border-left: 4px solid #ff9800;
+        background-color: #fff3e0;
+        color: #fff;
+    }
+
+    .alert-level6-notice i {
+        font-size: 1.2em;
+        margin-right: 8px;
+    }
+
+    /* CKEditor readonly styling */
+    .cke_readonly {
+        background-color: #f5f5f5 !important;
+        opacity: 0.75;
+    }
+
+    .cke_readonly .cke_contents {
+        background-color: #f5f5f5 !important;
+    }
+
+    /* Hide file input group untuk level 6 */
+    body.user-level-6 .form-group.row:has(input[type="file"]) {
+        display: none !important;
+    }
 </style>
 <div class="main-content">
     <section class="section">
@@ -126,7 +173,18 @@
         <div class="content">
             <div class="card">
                 <div class="card-body">
+                    <div class="mb-2">
+                        <?php if (!empty($user_updated) && !empty($last_updated_at)): ?>
+                            <small class="text-muted">
+                                Terakhir diupdate oleh: <strong><?php echo $user_updated; ?></strong>
+                                pada <strong><?php echo strftime('%d %B %Y %H:%M', strtotime($last_updated_at)); ?></strong>
+                            </small>
+                        <?php endif; ?>
+                    </div>
                     <?php echo form_open_multipart('', ['id' => 'form-usulan']); ?>
+                    <?php
+                    $is_edit_mode = !empty($content) && !empty($content->id_usulan_raperbup);
+                    ?>
                     <?php
                     if (!empty($this->session->flashdata('message'))) {
                         echo "<div class='alert " . ($this->session->flashdata('type-alert') == 'success' ? 'alert-success' : 'alert-danger') . " alert-dismissible show fade'>
@@ -164,22 +222,42 @@
                     <div class="form-group row">
                         <label class="col-form-label col-lg-2">Menimbang <span class="text-danger">*</span></label>
                         <div class="col-lg-10">
-                            <textarea name="menimbang" id="menimbang"><?php echo !empty($content) ? htmlspecialchars($content->menimbang) : "<ol type='a'><li>.....</li><li>.....</li></ol>"; ?></textarea>
+                            <div class="form-with-revisi">
+                                <div class="form-main-content">
+                                    <textarea name="menimbang" id="menimbang"><?php echo !empty($content) ? htmlspecialchars($content->menimbang) : "<ol type='a'><li>.....</li><li>.....</li></ol>"; ?></textarea>
+                                </div>
+                                <?php if ($is_edit_mode): ?>
+                                    <div class="revisi-container" id="revisi-menimbang"></div>
+                                <?php endif; ?>
+                            </div>
                         </div>
                     </div>
                     <div class="form-group row">
                         <label class="col-form-label col-lg-2">Mengingat <span class="text-danger">*</span></label>
                         <div class="col-lg-10">
-                            <textarea name="mengingat" id="mengingat"><?php echo !empty($content) ? htmlspecialchars($content->mengingat) : "<ol><li>.....</li><li>.....</li></ol>"; ?></textarea>
+                            <div class="form-with-revisi">
+                                <div class="form-main-content">
+                                    <textarea name="mengingat" id="mengingat"><?php echo !empty($content) ? htmlspecialchars($content->mengingat) : "<ol><li>.....</li><li>.....</li></ol>"; ?></textarea>
+                                </div>
+                                <?php if ($is_edit_mode): ?>
+                                    <div class="revisi-container" id="revisi-mengingat"></div>
+                                <?php endif; ?>
+                            </div>
                         </div>
                     </div>
                     <div class="form-group row">
                         <label class="col-form-label col-lg-2">Menetapkan <span class="text-danger">*</span></label>
                         <div class="col-lg-10">
-                            <textarea name="menetapkan" id="menetapkan"><?php echo !empty($content) ? htmlspecialchars($content->menetapkan) : "<ol><li>.....</li><li>.....</li></ol>"; ?></textarea>
+                            <div class="form-with-revisi">
+                                <div class="form-main-content">
+                                    <textarea name="menetapkan" id="menetapkan"><?php echo !empty($content) ? htmlspecialchars($content->menetapkan) : "<ol><li>.....</li><li>.....</li></ol>"; ?></textarea>
+                                </div>
+                                <?php if ($is_edit_mode): ?>
+                                    <div class="revisi-container" id="revisi-menetapkan"></div>
+                                <?php endif; ?>
+                            </div>
                         </div>
                     </div>
-
                     <!-- Peraturan Bupati -->
                     <div class="card card-primary" id="peraturan-bupati-section">
                         <div class="card-body">
@@ -347,6 +425,7 @@
                                             <?php
                                                 }
                                             }
+
                                             ?>
 
                                             <!-- Tombol Tambah Bagian -->
@@ -423,7 +502,14 @@
                             <div class="form-group row" id="penjelasan-section">
                                 <label class="col-form-label col-lg-2">Penjelasan <span class="text-danger">*</span></label>
                                 <div class="col-lg-10">
-                                    <textarea name="penjelasan" id="penjelasan"><?php echo !empty($content) ? htmlspecialchars($content->penjelasan) : ''; ?></textarea>
+                                    <div class="form-with-revisi">
+                                        <div class="form-main-content">
+                                            <textarea name="penjelasan" id="penjelasan"><?php echo !empty($content) ? htmlspecialchars($content->penjelasan) : ''; ?></textarea>
+                                        </div>
+                                        <?php if ($is_edit_mode): ?>
+                                            <div class="revisi-container" id="revisi-penjelasan"></div>
+                                        <?php endif; ?>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -451,7 +537,14 @@
                                                 <i class="fas fa-trash"></i> Hapus
                                             </button>
                                         </div>
-                                        <textarea id="<?php echo $textarea_id; ?>" name="keputusan[<?php echo $keputusan_number; ?>]" class="form-control" rows="3" placeholder="Masukkan isi keputusan <?php echo strtolower($keputusan_name); ?>..." required><?php echo !empty($keputusan) ? htmlspecialchars($keputusan) : ''; ?></textarea>
+                                        <div class="form-with-revisi">
+                                            <div class="form-main-content">
+                                                <textarea id="<?php echo $textarea_id; ?>" name="keputusan[<?php echo $keputusan_number; ?>]" class="form-control" rows="3" placeholder="Masukkan isi keputusan <?php echo strtolower($keputusan_name); ?>..." required><?php echo !empty($keputusan) ? htmlspecialchars($keputusan) : ''; ?></textarea>
+                                            </div>
+                                            <?php if ($is_edit_mode): ?>
+                                                <div class="revisi-container" id="revisi-memutuskan-<?php echo $keputusan_number; ?>"></div>
+                                            <?php endif; ?>
+                                        </div>
                                     </div>
                                 <?php
                                 }
@@ -469,7 +562,9 @@
                     <div class="form-group row" id="tembusan-section">
                         <label class="col-form-label col-lg-2">Tembusan <span class="text-danger">*</span></label>
                         <div class="col-lg-10">
-                            <textarea name="tembusan" id="tembusan"><?php echo !empty($content) ? htmlspecialchars($content->tembusan) : "Tembusan :<ol><li>.....</li><li>.....</li></ol>"; ?></textarea>
+                            <div class="form-main-content">
+                                <textarea name="tembusan" id="tembusan"><?php echo !empty($content) ? htmlspecialchars($content->tembusan) : "Tembusan :<ol><li>.....</li><li>.....</li></ol>"; ?></textarea>
+                            </div>
                         </div>
                     </div>
                     <!-- end Keputusan Bupati -->
@@ -583,6 +678,454 @@
     let keputusanCounter = <?php echo $keputusan_counter ?? 0; ?>;
     let babCounter = <?php echo count($bab_data); ?>;
 
+    // Data revisi dari controller
+    const dataRevisi = <?php echo !empty($data_revisi) ? json_encode($data_revisi) : '[]'; ?>;
+
+    // Fungsi untuk memformat tanggal ke format Indonesia
+    function formatTanggalIndonesia(tanggal) {
+        const options = {
+            day: 'numeric',
+            month: 'long',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+        };
+        const date = new Date(tanggal);
+        return date.toLocaleDateString('id-ID', options).replace('pukul', 'pkl.');
+    }
+
+    var isEditMode = <?php echo $is_edit_mode ? 'true' : 'false'; ?>;
+    var currentUserId = <?php echo $this->session->userdata('id_user') ? $this->session->userdata('id_user') : 0; ?>;
+    var currentUserLevel = <?php echo isset($level_user) ? $level_user : 0; ?>;
+    var canManageRevisi = [4, 6, 7].includes(Number(currentUserLevel));
+    console.log("Current User ID:", currentUserId, "Level:", currentUserLevel, "Can Manage Revisi:", canManageRevisi);
+
+    // Fungsi untuk menampilkan revisi
+    function tampilkanRevisi() {
+
+        // Definisikan SEMUA kolom yang memiliki revisi (wajib ada)
+        const kolomDenganRevisi = [
+            'menimbang',
+            'mengingat',
+            'menetapkan',
+            'penjelasan'
+        ];
+
+        // Grouping revisi berdasarkan kolom_tujuan
+        const revisiMap = {};
+
+        // Inisialisasi SEMUA kolom dengan array kosong dulu
+        kolomDenganRevisi.forEach(kolom => {
+            revisiMap[kolom] = [];
+        });
+
+        // Tambahkan data revisi yang ada dari database
+        dataRevisi.forEach(revisi => {
+            let key = revisi.kolom_tujuan;
+
+            // Untuk memutuskan, tambahkan nomor keputusan jika ada
+            if (revisi.kolom_tujuan === 'memutuskan' && revisi.nomor_keputusan) {
+                key = `memutuskan-${revisi.nomor_keputusan}`;
+            }
+
+            if (!revisiMap[key]) {
+                revisiMap[key] = [];
+            }
+            revisiMap[key].push(revisi);
+        });
+
+        // Render revisi untuk SEMUA kolom (baik ada data atau tidak)
+        Object.keys(revisiMap).forEach(key => {
+            const revisiList = revisiMap[key];
+            const containerId = `revisi-${key}`;
+            const container = $(`#${containerId}`);
+
+            // console.log(`Processing ${containerId}:`, container.length, 'Revisi count:', revisiList.length);
+
+            if (container.length === 0) {
+                console.warn(`Container ${containerId} not found`);
+                return;
+            }
+
+            renderRevisiContainer(container, key, revisiList);
+        });
+
+        // Render revisi untuk keputusan yang dinamis
+        $('.keputusan-field').each(function() {
+            const keputusanNumber = $(this).data('number');
+            const key = `memutuskan-${keputusanNumber}`;
+            const containerId = `revisi-${key}`;
+            const container = $(`#${containerId}`);
+
+            if (container.length === 0) {
+                console.warn(`Container ${containerId} not found`);
+                return;
+            }
+
+            const revisiList = revisiMap[key] || [];
+            renderRevisiContainer(container, key, revisiList);
+        });
+    }
+
+    // Fungsi helper untuk render container revisi
+    function renderRevisiContainer(container, key, revisiList) {
+        let html = `
+            <div class="revisi-header">
+                <i class="fas fa-comments"></i> Catatan Revisi (${revisiList.length})
+            </div>
+        `;
+
+        // Tampilkan list revisi jika ada
+        if (revisiList.length > 0) {
+            html += `<div class="revisi-accordion" id="accordion-${key}">`;
+
+            revisiList.forEach((revisi, index) => {
+                const isOwner = parseInt(revisi.id_user) === parseInt(currentUserId);
+                const canEdit = canManageRevisi && isOwner;
+                const namaUser = revisi.nama_user || `User ${revisi.id_user}`;
+                const tanggalUpdate = formatTanggalIndonesia(revisi.updated_at);
+                const collapseId = `collapse-${key}-${index}`;
+                const isExpanded = index === 0 ? 'show' : '';
+
+                html += `
+                <div class="card">
+                    <div class="card-header" data-toggle="collapse" data-target="#${collapseId}">
+                        <h6>
+                            <span>
+                                <i class="fas fa-user-circle"></i> ${namaUser}
+                                ${isOwner ? '<span class="badge badge-primary badge-user ml-2">Anda</span>' : ''}
+                            </span>
+                            <i class="fas fa-chevron-down"></i>
+                        </h6>
+                    </div>
+                    <div id="${collapseId}" class="collapse ${isExpanded}" data-parent="#accordion-${key}">
+                        <div class="card-body">
+                            <div class="revisi-content" id="revisi-content-${revisi.id_revisi}">
+                                ${escapeHtml(revisi.catatan_revisi)}
+                            </div>
+                            <div class="revisi-info">
+                                <i class="far fa-clock"></i> ${tanggalUpdate}
+                            </div>
+                            ${canEdit ? `
+                            <div class="revisi-actions">
+                                <button type="button" class="btn btn-sm btn-warning btn-edit-revisi" 
+                                        data-id="${revisi.id_revisi}" 
+                                        data-kolom="${revisi.kolom_tujuan}"
+                                        data-catatan="${escapeHtml(revisi.catatan_revisi)}">
+                                    <i class="fas fa-edit"></i> Edit
+                                </button>
+                                <button type="button" class="btn btn-sm btn-danger btn-delete-revisi" 
+                                        data-id="${revisi.id_revisi}" 
+                                        data-kolom="${revisi.kolom_tujuan}">
+                                    <i class="fas fa-trash"></i> Hapus
+                                </button>
+                            </div>
+                            ` : ''}
+                        </div>
+                    </div>
+                </div>
+            `;
+            });
+
+            html += `</div>`;
+        } else {
+            // Tampilkan pesan jika belum ada revisi
+            html += `<div class="no-revisi">Belum ada catatan revisi</div>`;
+        }
+
+        // PENTING: Form tambah revisi SELALU ditampilkan untuk level 6 (tidak peduli ada data atau tidak)
+        if (canManageRevisi) {
+            html += `
+            <div class="form-add-revisi">
+                <textarea class="form-control input-revisi" 
+                          data-kolom="${key}" 
+                          placeholder="Tulis catatan revisi..."
+                          rows="3"></textarea>
+                <button type="button" class="btn btn-sm btn-success btn-block btn-simpan-revisi" 
+                        data-kolom="${key}">
+                    <i class="fas fa-save"></i> Simpan Catatan Revisi
+                </button>
+            </div>
+        `;
+        } else {
+            // Tampilkan info untuk user yang tidak punya akses
+            html += `
+            <div class="alert alert-info alert-info-revisi">
+                <i class="fas fa-info-circle"></i> Anda hanya dapat melihat catatan revisi.
+            </div>
+        `;
+        }
+
+        container.html(html);
+        console.log(`Rendered container: ${key}, Has form: ${canManageRevisi}`);
+    }
+
+
+    // Fungsi untuk escape HTML
+    function escapeHtml(text) {
+        const map = {
+            '&': '&amp;',
+            '<': '&lt;',
+            '>': '&gt;',
+            '"': '&quot;',
+            "'": '&#039;'
+        };
+        return text.replace(/[&<>"']/g, m => map[m]);
+    }
+
+    $(document).on('click', '.btn-simpan-revisi', function() {
+        // Double check level user
+        if (!canManageRevisi) {
+            alert('Anda tidak memiliki akses untuk menambah catatan revisi!');
+            return;
+        }
+
+        const kolom = $(this).data('kolom');
+        const catatan = $(`.input-revisi[data-kolom="${kolom}"]`).val().trim();
+
+        if (!catatan) {
+            alert('Catatan revisi tidak boleh kosong!');
+            return;
+        }
+
+        // Ambil id_usulan_raperbup dari form atau hidden input
+        const idUsulanRaperbup = '<?php echo !empty($content) ? $content->id_usulan_raperbup : ""; ?>';
+
+        if (!idUsulanRaperbup) {
+            alert('ID Usulan tidak ditemukan. Silakan simpan usulan terlebih dahulu.');
+            return;
+        }
+
+        $.ajax({
+            url: '<?= base_url("usulan_raperbup/simpan_revisi") ?>',
+            type: 'POST',
+            dataType: 'json',
+            data: {
+                id_usulan_raperbup: idUsulanRaperbup,
+                kolom_tujuan: kolom,
+                catatan_revisi: catatan
+            },
+            beforeSend: function() {
+                $(`.btn-simpan-revisi[data-kolom="${kolom}"]`).prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Menyimpan...');
+            },
+            success: function(response) {
+                if (response.status === 'success') {
+                    // Tambahkan revisi baru ke dataRevisi
+                    dataRevisi.push(response.data);
+
+                    // Refresh tampilan revisi
+                    tampilkanRevisi();
+
+                    // Kosongkan textarea
+                    $(`.input-revisi[data-kolom="${kolom}"]`).val('');
+
+                    // Notifikasi sukses
+                    alert('Catatan revisi berhasil disimpan!');
+                } else {
+                    alert(response.message || 'Gagal menyimpan revisi!');
+                }
+            },
+            error: function(xhr, status, error) {
+                console.error('Error:', error);
+                alert('Terjadi kesalahan saat menyimpan revisi!');
+            },
+            complete: function() {
+                $(`.btn-simpan-revisi[data-kolom="${kolom}"]`).prop('disabled', false).html('<i class="fas fa-save"></i> Simpan Catatan Revisi');
+            }
+        });
+    });
+
+    // Event: Edit revisi - HANYA untuk level 6 DAN owner
+    $(document).on('click', '.btn-edit-revisi', function() {
+        // Double check level user
+        if (!canManageRevisi) {
+            alert('Anda tidak memiliki akses untuk mengedit catatan revisi!');
+            return;
+        }
+
+        const idRevisi = $(this).data('id');
+        const kolom = $(this).data('kolom');
+        const catatanLama = $(this).data('catatan');
+
+        const catatanBaru = prompt('Edit catatan revisi:', catatanLama);
+
+        if (catatanBaru === null) return; // User cancel
+
+        if (!catatanBaru.trim()) {
+            alert('Catatan revisi tidak boleh kosong!');
+            return;
+        }
+
+        $.ajax({
+            url: '<?= base_url("usulan_raperbup/update_revisi") ?>',
+            type: 'POST',
+            dataType: 'json',
+            data: {
+                id_revisi: idRevisi,
+                catatan_revisi: catatanBaru
+            },
+            success: function(response) {
+                if (response.status === 'success') {
+                    // Update dataRevisi
+                    const index = dataRevisi.findIndex(r => r.id_revisi == idRevisi);
+                    if (index !== -1) {
+                        dataRevisi[index].catatan_revisi = catatanBaru;
+                        dataRevisi[index].updated_at = response.data.updated_at;
+                    }
+
+                    // Refresh tampilan
+                    tampilkanRevisi();
+
+                    alert('Catatan revisi berhasil diupdate!');
+                } else {
+                    alert(response.message || 'Gagal mengupdate revisi!');
+                }
+            },
+            error: function(xhr, status, error) {
+                console.error('Error:', error);
+                alert('Terjadi kesalahan saat mengupdate revisi!');
+            }
+        });
+    });
+
+    // Event: Hapus revisi - HANYA untuk level 6 DAN owner
+    $(document).on('click', '.btn-delete-revisi', function() {
+        // Double check level user
+        if (!canManageRevisi) {
+            alert('Anda tidak memiliki akses untuk menghapus catatan revisi!');
+            return;
+        }
+
+        if (!confirm('Apakah Anda yakin ingin menghapus catatan revisi ini?')) {
+            return;
+        }
+
+        const idRevisi = $(this).data('id');
+        const kolom = $(this).data('kolom');
+
+        $.ajax({
+            url: '<?= base_url("usulan_raperbup/hapus_revisi") ?>',
+            type: 'POST',
+            dataType: 'json',
+            data: {
+                id_revisi: idRevisi
+            },
+            success: function(response) {
+                if (response.status === 'success') {
+                    // Hapus dari dataRevisi
+                    const index = dataRevisi.findIndex(r => r.id_revisi == idRevisi);
+                    if (index !== -1) {
+                        dataRevisi.splice(index, 1);
+                    }
+
+                    // Refresh tampilan
+                    tampilkanRevisi();
+
+                    alert('Catatan revisi berhasil dihapus!');
+                } else {
+                    alert(response.message || 'Gagal menghapus revisi!');
+                }
+            },
+            error: function(xhr, status, error) {
+                console.error('Error:', error);
+                alert('Terjadi kesalahan saat menghapus revisi!');
+            }
+        });
+    });
+
+    function setFormAccess() {
+        console.log('Setting form access for level:', currentUserLevel);
+
+        if (currentUserLevel == 6) {
+            console.log('Setting readonly mode for level 6');
+
+            // Untuk INPUT dan TEXTAREA - gunakan readonly instead of disabled
+            $('#form-usulan').find('input:not(.input-revisi), textarea:not(.input-revisi)').each(function() {
+                // Jangan readonly yang ada di dalam revisi-container
+                if ($(this).closest('.revisi-container').length === 0 &&
+                    $(this).closest('.form-add-revisi').length === 0) {
+
+                    // Gunakan readonly untuk input text, textarea
+                    if ($(this).is('input[type="text"], input[type="hidden"], textarea')) {
+                        $(this).prop('readonly', true);
+                        $(this).addClass('form-readonly-level6');
+
+                        // Prevent mouse events untuk feel disabled
+                        $(this).on('mousedown', function(e) {
+                            e.preventDefault();
+                            return false;
+                        });
+                    }
+
+                    // Untuk input file, hidden agar tidak bisa diubah
+                    if ($(this).is('input[type="file"]')) {
+                        $(this).prop('disabled', true);
+                        $(this).closest('.form-group').hide(); // Hide file upload untuk level 6
+                    }
+                }
+            });
+
+            // Untuk SELECT - gunakan pointer-events dan styling
+            $('#form-usulan').find('select').each(function() {
+                if ($(this).closest('.revisi-container').length === 0) {
+                    $(this).addClass('select-readonly-level6');
+                    $(this).css('pointer-events', 'none');
+
+                    // Prevent change
+                    $(this).on('change', function(e) {
+                        e.preventDefault();
+                        return false;
+                    });
+                }
+            });
+
+            // Disable semua tombol KECUALI preview dan revisi
+            $('#form-usulan').find('button').each(function() {
+                if (!$(this).hasClass('btn-simpan-revisi') &&
+                    !$(this).hasClass('btn-edit-revisi') &&
+                    !$(this).hasClass('btn-delete-revisi') &&
+                    !$(this).is('#preview-btn') &&
+                    !$(this).hasClass('close') && // Untuk modal close button
+                    !$(this).attr('data-dismiss')) { // Untuk modal dismiss button
+
+                    $(this).prop('disabled', true).addClass('btn-disabled-level6');
+                    $(this).css('pointer-events', 'none');
+                }
+            });
+
+            // Set CKEditor readonly
+            for (var instance in CKEDITOR.instances) {
+                CKEDITOR.instances[instance].setReadOnly(true);
+            }
+
+            // Tambahkan notice di atas form
+            const notice = `
+            <div class="alert alert-warning alert-level6-notice" style="margin-bottom: 20px;">
+                <i class="fas fa-info-circle"></i> 
+                <strong>Mode Reviewer:</strong> Anda hanya dapat melihat dan memberikan catatan revisi. 
+                Form tidak dapat diedit.
+            </div>
+        `;
+
+            if ($('.alert-level6-notice').length === 0) {
+                $('#form-usulan').prepend(notice);
+            }
+
+            // Hide tombol submit
+            $('#form-usulan button[type="submit"]').hide();
+
+            // Prevent form submission
+            $('#form-usulan').on('submit', function(e) {
+                e.preventDefault();
+                alert('Anda tidak memiliki akses untuk menyimpan form ini.');
+                return false;
+            });
+
+        } else {
+            console.log('Form editable for level:', currentUserLevel);
+        }
+    }
+
     // Inisialisasi CKEditor saat dokumen siap
     $(document).ready(function() {
         initCKEditor('menimbang');
@@ -594,7 +1137,6 @@
 
         <?php
         foreach ($bab_data as $bab_number => $bab) {
-            // Inisialisasi CKEditor untuk pasal dalam bagian
             if (!empty($bab['bagian']) && is_array($bab['bagian'])) {
                 foreach ($bab['bagian'] as $bagian_number => $bagian) {
                     if (!empty($bagian['pasal']) && is_array($bagian['pasal'])) {
@@ -605,8 +1147,6 @@
                     }
                 }
             }
-
-            // Inisialisasi CKEditor untuk pasal tanpa bagian
             if (!empty($bab['pasal']) && is_array($bab['pasal'])) {
                 foreach ($bab['pasal'] as $pasal_number => $pasal) {
                     $textarea_id = "isi_pasal_$pasal_number";
@@ -631,6 +1171,11 @@
         $('#tembusan-section').hide();
 
         check_lampiran();
+        tampilkanRevisi();
+
+        setTimeout(function() {
+            setFormAccess();
+        }, 500);
 
         // Event handler untuk tombol Preview
         $('#preview-btn').on('click', function() {
@@ -670,6 +1215,7 @@
             }
 
             var formData = new FormData($('#form-usulan')[0]);
+            console.log('Form Data prepared for preview:', formData);
 
             $.ajax({
                 url: '<?= base_url('usulan_raperbup/preview_pdf_raperbup') ?>',
@@ -712,6 +1258,7 @@
         // Reorganisasi setelah tambah
         setTimeout(function() {
             reorganizePasalFields();
+            tampilkanRevisi(); // Perbarui revisi setelah menambah pasal
         }, 300);
     });
 
@@ -734,6 +1281,7 @@
         pasalField.fadeOut(300, function() {
             $(this).remove();
             reorganizePasalFields();
+            tampilkanRevisi(); // Perbarui revisi setelah menghapus pasal
         });
     });
 
@@ -747,6 +1295,7 @@
         setTimeout(function() {
             reorganizeBagianFields();
             reorganizePasalFields();
+            tampilkanRevisi(); // Perbarui revisi setelah menambah bagian
         }, 300);
     });
 
@@ -767,6 +1316,7 @@
             $(this).remove();
             reorganizeBagianFields();
             reorganizePasalFields();
+            tampilkanRevisi(); // Perbarui revisi setelah menghapus bagian
         });
     });
 
@@ -779,45 +1329,46 @@
         const bagianName = bagianNames[bagianNumber] || `Ke-${bagianNumber}`;
 
         const newBagianField = `
-        <div class="bagian-field" data-bab="${babNumber}" data-bagian="${bagianNumber}">
-            <div class="field-header">
-                <span class="bagian-number">Bagian ${bagianName}</span>
-                <button type="button" class="btn btn-sm btn-remove-field remove-bagian" data-bagian="${bagianNumber}">
-                    <i class="fas fa-trash"></i> Hapus
-                </button>
-            </div>
-            <div class="form-group">
-                <input type="text" class="form-control" name="judul_bagian[${babNumber}][${bagianNumber}]" placeholder="Masukkan Judul Bagian ${bagianName}" required>
-            </div>
-            <div class="pasal-container" data-bab="${babNumber}" data-bagian="${bagianNumber}">
-                <div class="pasal-field" data-bab="${babNumber}" data-pasal="${firstPasalNumber}" data-bagian="${bagianNumber}">
-                    <div class="field-header">
-                        <span class="pasal-number">Pasal ${firstPasalNumber}</span>
-                        <button type="button" class="btn btn-sm btn-remove-field remove-pasal" data-pasal="${firstPasalNumber}" style="display: none;">
-                            <i class="fas fa-trash"></i> Hapus
-                        </button>
-                    </div>
-                    <div class="form-group">
-                        <textarea name="isi_pasal[${firstPasalNumber}]" id="${pasalTextareaId}" class="form-control" rows="3" placeholder="Masukkan isi Pasal ${firstPasalNumber}..." required></textarea>
-                        <input type="hidden" name="pasal_bab_mapping[${firstPasalNumber}]" value="${babNumber}">
-                        <input type="hidden" name="pasal_bagian_mapping[${firstPasalNumber}]" value="${bagianNumber}">
-                    </div>
-                </div>
-                <div class="add-pasal-container">
-                    <button type="button" class="btn btn-sm btn-add-pasal add-pasal-btn" data-bab="${babNumber}" data-bagian="${bagianNumber}">
-                        <i class="fas fa-plus"></i> Tambah Pasal
+            <div class="bagian-field" data-bab="${babNumber}" data-bagian="${bagianNumber}">
+                <div class="field-header">
+                    <span class="bagian-number">Bagian ${bagianName}</span>
+                    <button type="button" class="btn btn-sm btn-remove-field remove-bagian" data-bagian="${bagianNumber}">
+                        <i class="fas fa-trash"></i> Hapus
                     </button>
-                    <br>
-                    <small class="text-muted mt-2 d-block">Klik untuk menambah pasal baru dalam bagian ini</small>
+                </div>
+                <div class="form-group">
+                    <input type="text" class="form-control" name="judul_bagian[${babNumber}][${bagianNumber}]" placeholder="Masukkan Judul Bagian ${bagianName}" required>
+                </div>
+                <div class="pasal-container" data-bab="${babNumber}" data-bagian="${bagianNumber}">
+                    <div class="pasal-field" data-bab="${babNumber}" data-pasal="${firstPasalNumber}" data-bagian="${bagianNumber}">
+                        <div class="field-header">
+                            <span class="pasal-number">Pasal ${firstPasalNumber}</span>
+                            <button type="button" class="btn btn-sm btn-remove-field remove-pasal" data-pasal="${firstPasalNumber}" style="display: none;">
+                                <i class="fas fa-trash"></i> Hapus
+                            </button>
+                        </div>
+                        <div class="form-group">
+                            <textarea name="isi_pasal[${firstPasalNumber}]" id="${pasalTextareaId}" class="form-control" rows="3" placeholder="Masukkan isi Pasal ${firstPasalNumber}..." required></textarea>
+                            <input type="hidden" name="pasal_bab_mapping[${firstPasalNumber}]" value="${babNumber}">
+                            <input type="hidden" name="pasal_bagian_mapping[${firstPasalNumber}]" value="${bagianNumber}">
+                        </div>
+                    </div>
+                    <div class="add-pasal-container">
+                        <button type="button" class="btn btn-sm btn-add-pasal add-pasal-btn" data-bab="${babNumber}" data-bagian="${bagianNumber}">
+                            <i class="fas fa-plus"></i> Tambah Pasal
+                        </button>
+                        <br>
+                        <small class="text-muted mt-2 d-block">Klik untuk menambah pasal baru dalam bagian ini</small>
+                    </div>
                 </div>
             </div>
-        </div>
-    `;
+        `;
 
         $(`.bagian-container[data-bab="${babNumber}"] .add-bagian-container`).before(newBagianField);
 
         setTimeout(function() {
             initCKEditor(pasalTextareaId);
+            setFormAccess(); // Apply form access untuk field baru
         }, 100);
 
         $('html, body').animate({
@@ -851,20 +1402,20 @@
         const textareaId = `isi_pasal_${pasalNumber}`;
 
         const newPasalField = `
-        <div class="pasal-field" data-bab="${babNumber}" data-pasal="${pasalNumber}" data-bagian="${bagianNumber}">
-            <div class="field-header">
-                <span class="pasal-number">Pasal ${pasalNumber}</span>
-                <button type="button" class="btn btn-sm btn-remove-field remove-pasal" data-pasal="${pasalNumber}">
-                    <i class="fas fa-trash"></i> Hapus
-                </button>
+            <div class="pasal-field" data-bab="${babNumber}" data-pasal="${pasalNumber}" data-bagian="${bagianNumber}">
+                <div class="field-header">
+                    <span class="pasal-number">Pasal ${pasalNumber}</span>
+                    <button type="button" class="btn btn-sm btn-remove-field remove-pasal" data-pasal="${pasalNumber}">
+                        <i class="fas fa-trash"></i> Hapus
+                    </button>
+                </div>
+                <div class="form-group">
+                    <textarea name="isi_pasal[${pasalNumber}]" id="${textareaId}" class="form-control" rows="3" placeholder="Masukkan isi Pasal ${pasalNumber}..." required></textarea>
+                    <input type="hidden" name="pasal_bab_mapping[${pasalNumber}]" value="${babNumber}">
+                    <input type="hidden" name="pasal_bagian_mapping[${pasalNumber}]" value="${bagianNumber}">
+                </div>
             </div>
-            <div class="form-group">
-                <textarea name="isi_pasal[${pasalNumber}]" id="${textareaId}" class="form-control" rows="3" placeholder="Masukkan isi Pasal ${pasalNumber}..." required></textarea>
-                <input type="hidden" name="pasal_bab_mapping[${pasalNumber}]" value="${babNumber}">
-                <input type="hidden" name="pasal_bagian_mapping[${pasalNumber}]" value="${bagianNumber}">
-            </div>
-        </div>
-    `;
+        `;
 
         const containerSelector = bagianNumber === 0 ?
             `.pasal-container[data-bab="${babNumber}"][data-bagian="0"]` :
@@ -874,6 +1425,7 @@
 
         setTimeout(function() {
             initCKEditor(textareaId);
+            setFormAccess(); // Apply form access untuk field baru
         }, 100);
 
         $('html, body').animate({
@@ -904,21 +1456,17 @@
 
     // Fungsi untuk reorganisasi penomoran pasal
     function reorganizePasalFields() {
-        // Kumpulkan semua pasal berdasarkan urutan di DOM
         const allPasalFields = [];
 
-        // Loop setiap bab sesuai urutan
         $('.bab-field').each(function() {
             const babNumber = $(this).data('number');
 
-            // 1. Ambil pasal dalam bagian (urut per bagian)
             $(this).find('.bagian-field').each(function() {
                 $(this).find('.pasal-field').each(function() {
                     allPasalFields.push(this);
                 });
             });
 
-            // 2. Ambil pasal tanpa bagian (data-bagian="0")
             $(this).find('.pasal-container[data-bagian="0"] > .pasal-field').each(function() {
                 allPasalFields.push(this);
             });
@@ -926,7 +1474,6 @@
 
         let newPasalCounter = 0;
 
-        // Renomor semua pasal sesuai urutan di array
         allPasalFields.forEach(function(field) {
             newPasalCounter++;
             const oldPasalNumber = $(field).data('pasal');
@@ -960,7 +1507,6 @@
             const removeBtn = $(field).find('.remove-pasal');
             removeBtn.attr('data-pasal', newPasalCounter);
 
-            // Cek jumlah pasal dalam container yang sama
             const pasalCountInContainer = $(field).closest('.pasal-container').find('.pasal-field').length;
             if (pasalCountInContainer === 1) {
                 removeBtn.hide();
@@ -977,6 +1523,7 @@
         });
 
         globalPasalCounter = newPasalCounter;
+        tampilkanRevisi(); // Perbarui revisi setelah reorganisasi
     }
 
     // Fungsi untuk reorganisasi penomoran bagian
@@ -1009,13 +1556,13 @@
                 const removeBtn = $(this).find('.remove-bagian');
                 removeBtn.attr('data-bagian', newBagianCounter);
 
-                // Update data-bagian pada semua pasal dalam bagian ini
                 $(this).find('.pasal-field').each(function() {
                     $(this).attr('data-bagian', newBagianCounter);
                     $(this).find('input[name^="pasal_bagian_mapping"]').val(newBagianCounter);
                 });
             });
         });
+        tampilkanRevisi(); // Perbarui revisi setelah reorganisasi
     }
 
     // Array untuk nama keputusan
@@ -1043,22 +1590,35 @@
     function addKeputusanField(number) {
         const keputusanName = keputusanNames[number] || `KE-${number}`;
         const textareaId = `keputusan_${number}`;
+
+        // Revisi container hanya muncul jika edit mode
+        const revisiContainerHtml = isEditMode ? `<div class="revisi-container" id="revisi-memutuskan-${number}"></div>` : '';
+
         const newField = `
-            <div class="keputusan-field" data-number="${number}">
-                <div class="field-header">
-                    <span class="field-number">${keputusanName}</span>
-                    <button type="button" class="btn btn-sm btn-remove-field remove-keputusan" data-number="${number}">
-                        <i class="fas fa-trash"></i> Hapus
-                    </button>
-                </div>
-                <textarea id="${textareaId}" name="keputusan[${number}]" class="form-control" rows="3" placeholder="Masukkan isi keputusan ${keputusanName.toLowerCase()}..." required></textarea>
+        <div class="keputusan-field" data-number="${number}">
+            <div class="field-header">
+                <span class="field-number">${keputusanName}</span>
+                <button type="button" class="btn btn-sm btn-remove-field remove-keputusan" data-number="${number}">
+                    <i class="fas fa-trash"></i> Hapus
+                </button>
             </div>
-        `;
+            <div class="form-with-revisi">
+                <div class="form-main-content">
+                    <textarea id="${textareaId}" name="keputusan[${number}]" class="form-control" rows="3" placeholder="Masukkan isi keputusan ${keputusanName.toLowerCase()}..." required></textarea>
+                </div>
+                ${revisiContainerHtml}
+            </div>
+        </div>
+    `;
 
         $('#keputusan-container').append(newField);
 
         setTimeout(function() {
             initCKEditor(textareaId);
+            if (isEditMode) {
+                tampilkanRevisi(); // Inisialisasi revisi untuk field baru hanya di edit mode
+            }
+            setFormAccess(); // Apply form access untuk field baru
         }, 100);
 
         $('html, body').animate({
@@ -1127,6 +1687,7 @@
         });
 
         keputusanCounter = tempKeputusanCounter;
+        tampilkanRevisi(); // Perbarui revisi setelah reorganisasi
     }
 
     $(document).on('click', '#add-bab', function() {
@@ -1172,42 +1733,46 @@
 
     function addBabField(number) {
         const newField = `
-        <div class="bab-field" data-number="${number}">
-            <div class="field-header">
-                <span class="field-number">BAB ${number}</span>
-                <button type="button" class="btn btn-sm btn-remove-field remove-bab" data-number="${number}">
-                    <i class="fas fa-trash"></i> Hapus
-                </button>
-            </div>
-            <div class="form-group row">
-                <label class="col-form-label col-lg-2">Judul Bab <span class="text-danger">*</span></label>
-                <div class="col-lg-10">
-                    <input type="text" class="form-control" name="judul_bab[${number}]" placeholder="Masukkan Judul Bab ${number}" required>
-                </div>
-            </div>
-            <div class="bagian-container" data-bab="${number}">
-                <div class="add-bagian-container">
-                    <button type="button" class="btn btn-sm btn-add-bagian add-bagian-btn" data-bab="${number}">
-                        <i class="fas fa-plus"></i> Tambah Bagian
+            <div class="bab-field" data-number="${number}">
+                <div class="field-header">
+                    <span class="field-number">BAB ${number}</span>
+                    <button type="button" class="btn btn-sm btn-remove-field remove-bab" data-number="${number}">
+                        <i class="fas fa-trash"></i> Hapus
                     </button>
-                    <br>
-                    <small class="text-muted mt-2 d-block">Klik untuk menambah bagian baru dalam bab ini</small>
                 </div>
-                <div class="pasal-container" data-bab="${number}" data-bagian="0">
-                    <div class="add-pasal-container">
-                        <button type="button" class="btn btn-sm btn-add-pasal add-pasal-btn" data-bab="${number}" data-bagian="0">
-                            <i class="fas fa-plus"></i> Tambah Pasal
-                        </button>
-                        <br>
-                        <small class="text-muted mt-2 d-block">Klik untuk menambah pasal baru tanpa bagian</small>
+                <div class="form-group row">
+                    <label class="col-form-label col-lg-2">Judul Bab <span class="text-danger">*</span></label>
+                    <div class="col-lg-10">
+                        <input type="text" class="form-control" name="judul_bab[${number}]" placeholder="Masukkan Judul Bab ${number}" required>
                     </div>
                 </div>
+                <div class="bagian-container" data-bab="${number}">
+                    <div class="add-bagian-container">
+                        <button type="button" class="btn btn-sm btn-add-bagian add-bagian-btn" data-bab="${number}">
+                            <i class="fas fa-plus"></i> Tambah Bagian
+                        </button>
+                        <br>
+                        <small class="text-muted mt-2 d-block">Klik untuk menambah bagian baru dalam bab ini</small>
+                    </div>
+                    <div class="pasal-container" data-bab="${number}" data-bagian="0">
+                        <div class="add-pasal-container">
+                            <button type="button" class="btn btn-sm btn-add-pasal add-pasal-btn" data-bab="${number}" data-bagian="0">
+                                <i class="fas fa-plus"></i> Tambah Pasal
+                            </button>
+                            <br>
+                            <small class="text-muted mt-2 d-block">Klik untuk menambah pasal baru tanpa bagian</small>
+                        </div>
+                    </div>
+                </div>
+                <hr>
             </div>
-            <hr>
-        </div>
-    `;
+        `;
 
         $('#bab-container .add-field-container').before(newField);
+
+        setTimeout(function() {
+            setFormAccess(); // Apply form access untuk field baru
+        }, 100);
 
         $('html, body').animate({
             scrollTop: $(`.bab-field[data-number="${number}"]`).offset().top - 100
@@ -1251,12 +1816,10 @@
             $(field).find('.bagian-container').attr('data-bab', newNumber);
             $(field).find('.add-bagian-btn').attr('data-bab', newNumber);
 
-            // Update semua pasal-container dalam bab ini
             $(field).find('.pasal-container').each(function() {
                 $(this).attr('data-bab', newNumber);
             });
 
-            // Update semua add-pasal-btn dalam bab ini
             $(field).find('.add-pasal-btn').attr('data-bab', newNumber);
 
             const judulInput = $(field).find('input[name^="judul_bab"]').first();
@@ -1271,13 +1834,11 @@
                 removeBtn.show();
             }
 
-            // Update data-bab pada semua pasal dalam bab ini
             $(field).find('.pasal-field').each(function() {
                 $(this).attr('data-bab', newNumber);
                 $(this).find('input[name^="pasal_bab_mapping"]').val(newNumber);
             });
 
-            // Update data-bab pada semua bagian dalam bab ini
             $(field).find('.bagian-field').each(function() {
                 $(this).attr('data-bab', newNumber);
                 $(this).find('input[name^="judul_bagian"]').each(function() {
@@ -1288,6 +1849,7 @@
         });
 
         babCounter = tempBabCounter;
+        tampilkanRevisi(); // Perbarui revisi setelah reorganisasi
     }
 
     $('form').on('submit', function() {
@@ -1388,3 +1950,202 @@
         }
     }
 </script>
+<style>
+    /* Layout untuk form dengan revisi */
+    .form-with-revisi {
+        display: flex;
+        gap: 15px;
+        align-items: flex-start;
+    }
+
+    .form-main-content {
+        flex: 1;
+        min-width: 0;
+        /* Penting untuk flex item dengan overflow */
+    }
+
+    .revisi-container {
+        flex-shrink: 0;
+        /* Tidak mengecil */
+        width: 380px;
+        min-width: 380px;
+        max-width: 380px;
+        max-height: 700px;
+        overflow-y: auto;
+        padding: 15px;
+        background-color: #f8f9fa;
+        /* border-left: 4px solid #007bff;
+        border-radius: 8px; */
+        position: sticky;
+        top: 20px;
+        /* Sticky saat scroll */
+    }
+
+    /* Scrollbar custom untuk revisi container */
+    .revisi-container::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    .revisi-container::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        border-radius: 10px;
+    }
+
+    .revisi-container::-webkit-scrollbar-thumb {
+        background: #888;
+        border-radius: 10px;
+    }
+
+    .revisi-container::-webkit-scrollbar-thumb:hover {
+        background: #555;
+    }
+
+    .revisi-header {
+        font-weight: bold;
+        color: #495057;
+        margin-bottom: 15px;
+        font-size: 0.95em;
+        border-bottom: 2px solid #007bff;
+        padding-bottom: 8px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .revisi-accordion .card {
+        margin-bottom: 8px;
+        border: 1px solid #dee2e6;
+        border-radius: 6px;
+    }
+
+    .revisi-accordion .card-header {
+        padding: 8px 12px;
+        background-color: #e9ecef;
+        cursor: pointer;
+        border-radius: 6px 6px 0 0;
+        transition: background-color 0.2s;
+    }
+
+    .revisi-accordion .card-header:hover {
+        background-color: #dee2e6;
+    }
+
+    .revisi-accordion .card-header h6 {
+        margin: 0;
+        font-size: 0.85em;
+        color: #495057;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .revisi-accordion .card-body {
+        padding: 10px;
+        font-size: 0.85em;
+        background-color: #fff;
+    }
+
+    .revisi-content {
+        line-height: 1.6;
+        word-wrap: break-word;
+    }
+
+    .revisi-info {
+        font-size: 0.75em;
+        color: #6c757d;
+        margin-top: 8px;
+        padding-top: 8px;
+        border-top: 1px solid #e9ecef;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+    }
+
+    .revisi-actions {
+        margin-top: 8px;
+        text-align: right;
+        display: flex;
+        gap: 5px;
+        justify-content: flex-end;
+    }
+
+    .revisi-actions button {
+        font-size: 0.75em;
+        padding: 4px 10px;
+    }
+
+    .form-add-revisi {
+        background-color: #fff;
+        padding: 12px;
+        border-radius: 6px;
+        border: 2px dashed #28a745;
+        margin-top: 15px;
+    }
+
+    .form-add-revisi textarea {
+        font-size: 0.85em;
+        resize: vertical;
+        min-height: 80px;
+    }
+
+    .form-add-revisi button {
+        font-size: 0.85em;
+        margin-top: 8px;
+        width: 100%;
+    }
+
+    .badge-user {
+        font-size: 0.75em;
+        padding: 3px 8px;
+    }
+
+    .no-revisi {
+        color: #6c757d;
+        font-size: 0.85em;
+        font-style: italic;
+        text-align: center;
+        padding: 20px;
+        background-color: #fff;
+        border-radius: 6px;
+    }
+
+    .alert-info-revisi {
+        font-size: 0.85em;
+        margin-top: 15px;
+        padding: 10px;
+        background-color: #d1ecf1;
+        border: 1px solid #bee5eb;
+        border-radius: 6px;
+        color: #0c5460;
+        text-align: center;
+    }
+
+    .alert-info-revisi i {
+        margin-right: 5px;
+    }
+
+    /* Responsive untuk tablet */
+    @media (max-width: 1200px) {
+        .revisi-container {
+            width: 320px;
+            min-width: 320px;
+            max-width: 320px;
+        }
+    }
+
+    /* Responsive untuk mobile - stack vertical */
+    @media (max-width: 768px) {
+        .form-with-revisi {
+            flex-direction: column;
+        }
+
+        .revisi-container {
+            width: 100%;
+            min-width: 100%;
+            max-width: 100%;
+            position: relative;
+            top: 0;
+            margin-top: 15px;
+        }
+    }
+</style>

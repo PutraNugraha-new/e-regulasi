@@ -188,6 +188,7 @@
 </div>
 
 <script>
+    const level_user = <?php echo $level_user ? $level_user : 0; ?>;
     let datatableUsulanRaperbup = $("#datatableUsulanRaperbup").DataTable({
         "columns": [{
                 "width": "20%"
@@ -239,9 +240,11 @@
                 }
                 $.each(response, function(index, value) {
                     let actions = "<a class='btn btn-danger btn-icon' onClick=\"show_panel_nomor_register('" + value.id_encrypt + "')\" href='#'>Teruskan</a>";
-                    actions += "<a class='btn btn-info btn-icon my-2' href='" + base_url + "Nomor_register/edit_usulan_raperbup/" + value.id_encrypt + "'>Revisi</a>";
+                    if (level_user !== 6) {
+                        actions += "<a class='btn btn-info btn-icon my-2' href='" + base_url + "Nomor_register/edit_usulan_raperbup/" + value.id_encrypt + "'>Revisi</a>";
+                    }
                     if (value.status_terakhir.indexOf('Dibatalkan') === -1 && value.status_terakhir.indexOf('Sudah Di Publish') === -1) {
-                        actions += "<a class='btn btn-warning btn-icon' onClick=\"show_panel_cancel_usulan('" + value.id_encrypt + "')\" href='#'>Batalkan</a>";
+                        actions += "<a class='btn btn-warning btn-icon mt-2' onClick=\"show_panel_cancel_usulan('" + value.id_encrypt + "')\" href='#'>Batalkan</a>";
                     }
                     datatableUsulanRaperbup.row.add([
                         value.nama || '-',

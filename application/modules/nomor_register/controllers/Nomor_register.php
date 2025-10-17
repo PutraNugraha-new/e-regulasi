@@ -25,6 +25,13 @@ class Nomor_register extends MY_Controller
             )
         );
 
+        $leve_user = $this->db->select('id_level_user')
+            ->from('level_user')
+            ->where('id_level_user', $this->session->userdata("level_user_id"))
+            ->get()
+            ->row();
+        $data['level_user'] = $leve_user ? $leve_user->id_level_user : null;
+
         $data['kategori_usulan'] = $this->kategori_usulan_model->get_all();
         $data['tahun'] = $this->usulan_raperbup_model->get_tahun_unik();
 
@@ -210,6 +217,141 @@ class Nomor_register extends MY_Controller
             ->set_output(json_encode(['status' => $status, 'message' => $status ? 'Usulan berhasil dibatalkan' : 'Gagal membatalkan usulan']));
     }
 
+    public function preview_pdf_raperbup()
+    {
+        // Ambil data dari form dengan sanitasi
+        $nama_peraturan = $this->input->post('nama_peraturan', TRUE);
+        $menimbang = $this->input->post('menimbang');
+        $mengingat = $this->input->post('mengingat');
+        $menetapkan = $this->input->post('menetapkan');
+        $keputusan = $this->input->post('keputusan');
+        $tembusan = $this->input->post('tembusan');
+        $kategori_usulan_id = decrypt_data($this->input->post('kategori_usulan', TRUE));
+        $judul_bab = $this->input->post('judul_bab');
+        $judul_bagian = $this->input->post('judul_bagian');
+        $isi_pasal = $this->input->post('isi_pasal');
+        $pasal_bab_mapping = $this->input->post('pasal_bab_mapping');
+        $pasal_bagian_mapping = $this->input->post('pasal_bagian_mapping');
+        $penjelasan = $this->input->post('penjelasan');
+
+        // Validasi field wajib berdasarkan kategori
+        if ($kategori_usulan_id == 3) { // Kepbup
+            if (empty($nama_peraturan) || empty($menimbang) || empty($mengingat) || empty($menetapkan) || empty($keputusan) || empty($tembusan)) {
+                header('Content-Type: application/json');
+                echo json_encode(['error' => 'Field wajib (Nama Peraturan, Menimbang, Mengingat, Menetapkan, Keputusan, Tembusan) harus diisi']);
+                return;
+            }
+        } else if ($kategori_usulan_id == 1 || $kategori_usulan_id == 2) { // Perda & Perbup
+            if (empty($nama_peraturan) || empty($menimbang) || empty($mengingat) || empty($judul_bab) || empty($isi_pasal)) {
+                header('Content-Type: application/json');
+                echo json_encode(['error' => 'Field wajib (Nama Peraturan, Menimbang, Mengingat, Judul Bab, Isi Pasal) harus diisi']);
+                return;
+            }
+        } else {
+            header('Content-Type: application/json');
+            echo json_encode(['error' => 'Kategori usulan tidak valid']);
+            return;
+        }
+
+        // Proses data berdasarkan kategori
+        if ($kategori_usulan_id == 1 || $kategori_usulan_id == 2) {
+            // Buat struktur bab-bagian-pasal untuk Peraturan Bupati
+            $bab_pasal_data = array();
+
+            if (!empty($judul_bab)) {
+                // Inisialisasi struktur bab
+                foreach ($judul_bab as $bab_number => $judul) {
+                    $bab_pasal_data[$bab_number] = array(
+                        'judul' => $judul,
+                        'pasal' => array()
+                    );
+                }
+
+                // Distribusikan pasal ke bab dan bagian yang sesuai berdasarkan mapping
+                if (!empty($isi_pasal) && !empty($pasal_bab_mapping)) {
+                    foreach ($isi_pasal as $pasal_number => $isi) {
+                        $bab_number = isset($pasal_bab_mapping[$pasal_number]) ? $pasal_bab_mapping[$pasal_number] : null;
+                        $bagian_number = isset($pasal_bagian_mapping[$pasal_number]) ? $pasal_bagian_mapping[$pasal_number] : 0;
+                        if ($bab_number && isset($bab_pasal_data[$bab_number])) {
+                            $bab_pasal_data[$bab_number]['pasal'][$pasal_number] = array(
+                                'isi' => $isi,
+                                'bagian' => $bagian_number
+                            );
+                        }
+                    }
+                }
+            }
+
+            // Data untuk template Peraturan Bupati
+            $data = array(
+                'nama_peraturan' => $nama_peraturan,
+                'menimbang' => $menimbang,
+                'mengingat' => $mengingat,
+                'menetapkan' => $menetapkan,
+                'bab_pasal_data' => $bab_pasal_data,
+                'judul_bagian' => $judul_bagian,
+                'pasal_bab_mapping' => $pasal_bab_mapping,
+                'pasal_bagian_mapping' => $pasal_bagian_mapping,
+                'penjelasan' => $penjelasan,
+                'nomor' => '123', // Nomor sementara untuk preview
+                'tanggal' => date('d F Y', strtotime($this->datetime())),
+                'lampiran' => '' // Kosong karena hanya preview
+            );
+        } else {
+            // Proses keputusan sebagai array untuk Keputusan Bupati
+            $keputusan_data = is_array($keputusan) ? $keputusan : [$keputusan];
+
+            // Data untuk template Keputusan Bupati
+            $data = array(
+                'nama_peraturan' => $nama_peraturan,
+                'menimbang' => $menimbang,
+                'mengingat' => $mengingat,
+                'menetapkan' => $menetapkan,
+                'memutuskan' => $keputusan_data,
+                'tembusan' => $tembusan,
+                'nomor' => '123', // Nomor sementara untuk preview
+                'tanggal' => date('d F Y', strtotime($this->datetime())),
+                'lampiran' => '' // Kosong karena hanya preview
+            );
+        }
+
+
+        // Pilih template berdasarkan kategori usulan
+        $template = ($kategori_usulan_id == 1) ? 'template/perda' : (($kategori_usulan_id == 2) ? 'template/perbup' : 'template/kepbup');
+        $html = $this->load->view($template, $data, TRUE);
+
+        // Konfigurasi mPDF
+        $this->mpdf_library->mpdf->SetTitle('Preview Peraturan Bupati Katingan');
+        if ($kategori_usulan_id == 1 || $kategori_usulan_id == 2) {
+            // Atur header dengan nomor halaman untuk halaman genap dan ganjil
+            $header_html = '- {PAGENO} -';
+            $this->mpdf_library->mpdf->SetHTMLHeader($header_html, 'E', true);
+            $this->mpdf_library->mpdf->SetHTMLHeader($header_html, 'O', true);
+
+            // Paksa header di halaman pertama menjadi kosong
+            $this->mpdf_library->mpdf->SetHTMLHeader('', 'first');
+
+            // Tambahkan konten utama
+            $this->mpdf_library->mpdf->WriteHTML($html);
+        } else {
+            $this->mpdf_library->mpdf->WriteHTML($html);
+        }
+
+        // Nama file PDF sementara untuk preview
+        $pdf_file_name = 'Preview_Peraturan_Bupati_' . time() . '.pdf';
+
+        // Bersihkan output buffer sebelum mengirim header PDF
+        ob_clean();
+
+        // Output PDF untuk preview (inline)
+        header('Content-Type: application/pdf');
+        header('Content-Disposition: inline; filename="' . $pdf_file_name . '"');
+        header('Content-Transfer-Encoding: binary');
+        header('Accept-Ranges: bytes');
+        $this->mpdf_library->mpdf->Output($pdf_file_name, 'I');
+        exit; // Pastikan tidak ada kode lain yang dieksekusi setelah ini
+    }
+
     public function generate_pdf_raperbup($id_usulan_raperbup, $trx_id, $output_mode = 'F')
     {
         // Ambil data usulan berdasarkan ID
@@ -391,6 +533,25 @@ class Nomor_register extends MY_Controller
             )
         );
 
+        $user_updated = $this->db->select('nama_lengkap')
+            ->from('user')
+            ->where('id_user', $data_master[0]->id_user_updated)
+            ->get()
+            ->row();
+        $last_updated_at = $data_master[0]->updated_at ? date('d-m-Y H:i:s', strtotime($data_master[0]->updated_at)) : '-';
+
+        $data['user_updated'] = $user_updated ? $user_updated->nama_lengkap : null;
+        $data['last_updated_at'] = $last_updated_at;
+
+        $user_name_login = $this->session->userdata("nama_lengkap");
+
+        $level_user = $this->db->select('id_level_user')
+            ->from('level_user')
+            ->where('id_level_user', $this->session->userdata("level_user_id"))
+            ->get()
+            ->row();
+        $data['level_user'] = $level_user ? $level_user->id_level_user : null;
+
         $data_revisi = $this->Usulan_revisi_model->get_all_revisi(decrypt_data($id_usulan_raperbup));
         $data['data_revisi'] = $data_revisi;
 
@@ -456,14 +617,14 @@ class Nomor_register extends MY_Controller
                     if (count($data_master) > 1) {
                         $this->session->set_flashdata('message', 'Data tidak bisa diubah');
                         $this->session->set_flashdata('type-alert', 'danger');
-                        redirect('usulan_raperbup');
+                        redirect('nomor_register');
                     } else {
                         $input_name = "file_upload";
                         $upload_file = $this->upload_file($input_name, $this->config->item('file_usulan'), "", "doc");
                         if (isset($upload_file['error'])) {
                             $this->session->set_flashdata('message', $upload_file['error']);
                             $this->session->set_flashdata('type-alert', 'danger');
-                            redirect('usulan_raperbup/edit_usulan_raperbup/' . $id_usulan_raperbup);
+                            redirect('nomor_register/edit_usulan_raperbup/' . $id_usulan_raperbup);
                         }
 
                         $nama_file_usulan = $upload_file['data']['file_name'];
@@ -480,7 +641,7 @@ class Nomor_register extends MY_Controller
                         if (isset($upload_file_lampiran['error'])) {
                             $this->session->set_flashdata('message', $upload_file_lampiran['error']);
                             $this->session->set_flashdata('type-alert', 'danger');
-                            redirect('usulan_raperbup/edit_usulan_raperbup/' . $id_usulan_raperbup);
+                            redirect('nomor_register/edit_usulan_raperbup/' . $id_usulan_raperbup);
                         }
 
                         $nama_file_lampiran = $upload_file_lampiran['data']['file_name'];
@@ -493,7 +654,7 @@ class Nomor_register extends MY_Controller
                         if (isset($upload_file_lampiran_sk_tim['error'])) {
                             $this->session->set_flashdata('message', $upload_file_lampiran_sk_tim['error']);
                             $this->session->set_flashdata('type-alert', 'danger');
-                            redirect('usulan_raperbup/edit_usulan_raperbup/' . $id_usulan_raperbup);
+                            redirect('nomor_register/edit_usulan_raperbup/' . $id_usulan_raperbup);
                         }
 
                         $nama_file_lampiran_sk_tim = $upload_file_lampiran_sk_tim['data']['file_name'];
@@ -506,7 +667,7 @@ class Nomor_register extends MY_Controller
                         if (isset($upload_file_lampiran_daftar_hadir['error'])) {
                             $this->session->set_flashdata('message', $upload_file_lampiran_daftar_hadir['error']);
                             $this->session->set_flashdata('type-alert', 'danger');
-                            redirect('usulan_raperbup/edit_usulan_raperbup/' . $id_usulan_raperbup);
+                            redirect('nomor_register/edit_usulan_raperbup/' . $id_usulan_raperbup);
                         }
 
                         $nama_file_lampiran_daftar_hadir = $upload_file_lampiran_daftar_hadir['data']['file_name'];
@@ -559,7 +720,7 @@ class Nomor_register extends MY_Controller
                         if (isset($upload_file_lampiran['error'])) {
                             $this->session->set_flashdata('message', $upload_file_lampiran['error']);
                             $this->session->set_flashdata('type-alert', 'danger');
-                            redirect('usulan_raperbup/edit_usulan_raperbup/' . $id_usulan_raperbup);
+                            redirect('nomor_register/edit_usulan_raperbup/' . $id_usulan_raperbup);
                         }
 
                         $nama_file_lampiran = $upload_file_lampiran['data']['file_name'];
@@ -572,7 +733,7 @@ class Nomor_register extends MY_Controller
                         if (isset($upload_file_lampiran_usulan['error'])) {
                             $this->session->set_flashdata('message', $upload_file_lampiran_usulan['error']);
                             $this->session->set_flashdata('type-alert', 'danger');
-                            redirect('usulan_raperbup/edit_usulan_raperbup/' . $id_usulan_raperbup);
+                            redirect('nomor_register/edit_usulan_raperbup/' . $id_usulan_raperbup);
                         }
 
                         $nama_file_lampiran_usulan = $upload_file_lampiran_usulan['data']['file_name'];
@@ -620,20 +781,209 @@ class Nomor_register extends MY_Controller
                         'id_user_tujuan' => $id_pengaju,
                         'id_usulan_raperbup' => $id_usulan_raperbup_decrypted,
                         'tipe_notif' => 'revisi_admin_hukum',
-                        'pesan' => 'Usulan "' . $nama_peraturan . '" direvisi oleh Admin Hukum',
+                        'pesan' => 'Usulan "' . $nama_peraturan . '" direvisi oleh ' . $user_name_login,
                     ];
                     $this->Notifikasi_model->simpan_notif($data_notif);
                     log_message('debug', 'Notif revisi_admin_hukum saved: ' . json_encode($data_notif));
 
                     $this->session->set_flashdata('message', 'Data berhasil diubah');
                     $this->session->set_flashdata('type-alert', 'success');
-                    redirect('usulan_raperbup');
+                    redirect('nomor_register');
                 } else {
                     $this->session->set_flashdata('message', 'Data gagal diubah');
                     $this->session->set_flashdata('type-alert', 'danger');
-                    redirect('usulan_raperbup');
+                    redirect('nomor_register');
                 }
             }
+        }
+    }
+
+    public function simpan_revisi()
+    {
+        // Validasi level user
+        $level_user = $this->db->select('id_level_user')
+            ->from('level_user')
+            ->where('id_level_user', $this->session->userdata("level_user_id"))
+            ->get()
+            ->row();
+        if (!in_array($level_user->id_level_user, [4, 6, 7])) {
+            echo json_encode([
+                'status' => 'error',
+                'message' => 'Anda tidak memiliki akses untuk mengupdate catatan revisi'
+            ]);
+            return;
+        }
+
+        $this->load->model('Usulan_revisi_model');
+
+        $id_usulan_raperbup = $this->input->post('id_usulan_raperbup');
+        $kolom_tujuan = $this->input->post('kolom_tujuan');
+        $catatan_revisi = $this->input->post('catatan_revisi');
+        $id_user = $this->session->userdata('id_user');
+
+        if (!$id_usulan_raperbup || !$kolom_tujuan || !$catatan_revisi) {
+            echo json_encode([
+                'status' => 'error',
+                'message' => 'Data tidak lengkap'
+            ]);
+            return;
+        }
+
+        $data = [
+            'id_usulan_raperbup' => $id_usulan_raperbup,
+            'id_user' => $id_user,
+            'kolom_tujuan' => $kolom_tujuan,
+            'catatan_revisi' => $catatan_revisi,
+            'created_at' => date('Y-m-d H:i:s'),
+            'updated_at' => date('Y-m-d H:i:s')
+        ];
+
+        $id_pengaju = $this->db->select('id_user_created')
+            ->where('id_usulan_raperbup', $id_usulan_raperbup)
+            ->get('usulan_raperbup')
+            ->row()->id_user_created;
+
+        $data_notif = [
+            'id_user_tujuan' => $id_pengaju,
+            'id_usulan_raperbup' => $id_usulan_raperbup,
+            'tipe_notif' => 'Catatan revisi_admin_hukum',
+            'pesan' => $catatan_revisi,
+        ];
+
+        $this->Notifikasi_model->simpan_notif($data_notif);
+
+        $insert_id = $this->Usulan_revisi_model->insert($data);
+
+        if ($insert_id) {
+            // Ambil data lengkap dengan nama user
+            $revisi = $this->Usulan_revisi_model->get_by_id($insert_id);
+
+            echo json_encode([
+                'status' => 'success',
+                'message' => 'Revisi berhasil disimpan',
+                'data' => $revisi
+            ]);
+        } else {
+            echo json_encode([
+                'status' => 'error',
+                'message' => 'Gagal menyimpan revisi'
+            ]);
+        }
+    }
+
+    public function update_revisi()
+    {
+        // Validasi level user
+        $level_user = $this->db->select('id_level_user')
+            ->from('level_user')
+            ->where('id_level_user', $this->session->userdata("level_user_id"))
+            ->get()
+            ->row();
+        if (!in_array($level_user->id_level_user, [4, 6, 7])) {
+            echo json_encode([
+                'status' => 'error',
+                'message' => 'Anda tidak memiliki akses untuk mengupdate catatan revisi'
+            ]);
+            return;
+        }
+
+        $this->load->model('Usulan_revisi_model');
+
+        $id_revisi = $this->input->post('id_revisi');
+        $catatan_revisi = $this->input->post('catatan_revisi');
+        $id_user = $this->session->userdata('id_user');
+
+        if (!$id_revisi || !$catatan_revisi) {
+            echo json_encode([
+                'status' => 'error',
+                'message' => 'Data tidak lengkap'
+            ]);
+            return;
+        }
+
+        // Cek apakah revisi milik user yang login
+        $revisi = $this->Usulan_revisi_model->get_by_id($id_revisi);
+        if (!$revisi || $revisi->id_user != $id_user) {
+            echo json_encode([
+                'status' => 'error',
+                'message' => 'Anda tidak memiliki akses untuk mengupdate revisi ini'
+            ]);
+            return;
+        }
+
+        $data = [
+            'catatan_revisi' => $catatan_revisi,
+            'updated_at' => date('Y-m-d H:i:s')
+        ];
+
+        $update = $this->Usulan_revisi_model->update($id_revisi, $data);
+
+        if ($update) {
+            echo json_encode([
+                'status' => 'success',
+                'message' => 'Revisi berhasil diupdate',
+                'data' => ['updated_at' => date('Y-m-d H:i:s')]
+            ]);
+        } else {
+            echo json_encode([
+                'status' => 'error',
+                'message' => 'Gagal mengupdate revisi'
+            ]);
+        }
+    }
+
+    public function hapus_revisi()
+    {
+        // Validasi level user
+        $level_user = $this->db->select('id_level_user')
+            ->from('level_user')
+            ->where('id_level_user', $this->session->userdata("level_user_id"))
+            ->get()
+            ->row();
+        if (!in_array($level_user->id_level_user, [4, 6, 7])) {
+            echo json_encode([
+                'status' => 'error',
+                'message' => 'Anda tidak memiliki akses untuk mengupdate catatan revisi'
+            ]);
+            return;
+        }
+
+        $this->load->model('Usulan_revisi_model');
+
+        $id_revisi = $this->input->post('id_revisi');
+        $id_user = $this->session->userdata('id_user');
+
+
+        if (!$id_revisi) {
+            echo json_encode([
+                'status' => 'error',
+                'message' => 'ID revisi tidak valid'
+            ]);
+            return;
+        }
+
+        // Cek apakah revisi milik user yang login
+        $revisi = $this->Usulan_revisi_model->get_by_id($id_revisi);
+        if (!$revisi || $revisi->id_user != $id_user) {
+            echo json_encode([
+                'status' => 'error',
+                'message' => 'Anda tidak memiliki akses untuk menghapus revisi ini'
+            ]);
+            return;
+        }
+
+        $delete = $this->Usulan_revisi_model->delete($id_revisi);
+
+        if ($delete) {
+            echo json_encode([
+                'status' => 'success',
+                'message' => 'Revisi berhasil dihapus'
+            ]);
+        } else {
+            echo json_encode([
+                'status' => 'error',
+                'message' => 'Gagal menghapus revisi'
+            ]);
         }
     }
 }
