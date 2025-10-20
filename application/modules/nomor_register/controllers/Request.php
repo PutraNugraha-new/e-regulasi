@@ -15,6 +15,7 @@ class Request extends MY_Controller
     {
         try {
             $skpd = $this->iget("skpd");
+            $has_nomor_register = $this->iget("has_nomor_register");
             $sort_order = $this->iget("sort_order") ? strtoupper($this->iget("sort_order")) : 'DESC';
             $status = $this->iget("status");
             $tahun = $this->iget("tahun");
@@ -29,6 +30,13 @@ class Request extends MY_Controller
             }
             if ($tahun) {
                 $wh["YEAR(usulan_raperbup.created_at)"] = $tahun;
+            }
+            if ($has_nomor_register !== '') {
+                if ($has_nomor_register == '1') {
+                    $wh["usulan_raperbup.nomor_register IS NOT NULL"] = NULL;
+                } elseif ($has_nomor_register == '0') {
+                    $wh["usulan_raperbup.nomor_register IS NULL"] = NULL;
+                }
             }
 
             // Subquery untuk status terakhir
