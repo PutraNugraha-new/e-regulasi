@@ -45,7 +45,6 @@ class MY_Controller extends CI_Controller
                     ),
                     "row"
                 );
-
                 if ($check_privilege->view_content != 1) {
                     $this->page_error();
                 }
@@ -66,6 +65,9 @@ class MY_Controller extends CI_Controller
     {
         $str = "";
         $master = $this->menu_model->query("SELECT id_menu,nama_menu,nama_module,nama_class,class_icon,IFNULL(a.jml_child,0) AS jml_child FROM `menu` LEFT JOIN (SELECT COUNT(*) AS jml_child, id_parent_menu FROM menu WHERE `menu`.`deleted_at` IS NULL GROUP BY id_parent_menu) AS a ON a.id_parent_menu=id_menu WHERE menu.`id_parent_menu` = " . $parent_id . " AND `menu`.`deleted_at` IS NULL AND id_menu IN (SELECT menu_id FROM privilege_level_menu WHERE level_user_id  = " . $level_user_id . " AND view_content = 1 AND deleted_at IS NULL) ORDER BY order_menu")->result_array();
+
+        // var_dump($master);
+        // die;
 
         for ($i = 0; $i < count($master); $i++) {
             $child = "";

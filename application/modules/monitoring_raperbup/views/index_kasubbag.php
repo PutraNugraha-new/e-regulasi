@@ -13,11 +13,11 @@
                                         <option value="">-- PILIH SKPD --</option>
                                         <?php
                                         foreach ($skpd as $key => $value) {
-                                            ?>
+                                        ?>
                                             <option value="<?php echo $value->id_master_satker; ?>">
                                                 <?php echo $value->nama; ?>
                                             </option>
-                                            <?php
+                                        <?php
                                         }
                                         ?>
                                     </select>
@@ -146,60 +146,66 @@
     $("a[href$='#disetujui']").hide();
     $("a[href$='#tidakDisetujui']").hide();
 
-        function show_detail_peraturan(id_peraturan, e) {
-            if (e != undefined) {
-                $(".list-peraturan-active").removeClass("active");
-                $(e).addClass("active");
-            }
-            $("a[href$='#disetujui']").hide();
-            $("a[href$='#tidakDisetujui']").hide();
-            $("input[name='usulan_peraturan']").val("");
-            if (id_peraturan) {
-                $("input[name='usulan_peraturan']").val(id_peraturan);
-                check_disetujui_tidak_disetujui_kasubbag();
-                get_last_file();
-                $.ajax({
-                    url: base_url + 'monitoring_raperbup/request/get_detail_peraturan',
-                    data: {
-                        id_peraturan: id_peraturan
-                    },
-                    type: 'GET',
-                    beforeSend: function () {
-                        HoldOn.open(optionsHoldOn);
-                    },
-                    success: function (response) {
-                        let html = "";
-                        $.each(response, function (index, value) {
-                            html += "<div class='activity'>" +
-                                "<div class='activity-icon " + value.class_color + " text-white shadow-dark'>" +
-                                "<i class='fas fa-user-alt'></i>" +
-                                "</div>" +
-                                "<div class='activity-detail'>" +
-                                "<div class='mb-2'>" +
-                                "<span class='text-job'>" + value.tanggal_custom + "</span>" +
-                                (value.file ? "<span class='bullet'></span>" + value.file : "") +
-                                "<div class='ml-4 float-right dropdown'>" +
-                                value.action_delete +
-                                "</div>" +
-                                "</div>" +
-                                "<p>" + value.status_terakhir + "</p>" +
-                                "</div>" +
-                                "</div>"
-                        });
-
-                        $(".list-activites").html(html);
-                    },
-                    complete: function () {
-                        HoldOn.close();
-                    }
-                });
-            }
+    function show_detail_peraturan(id_peraturan, e) {
+        if (e != undefined) {
+            $(".list-peraturan-active").removeClass("active");
+            $(e).addClass("active");
         }
+        $("a[href$='#disetujui']").hide();
+        $("a[href$='#tidakDisetujui']").hide();
+        $("input[name='usulan_peraturan']").val("");
+        if (id_peraturan) {
+            $("input[name='usulan_peraturan']").val(id_peraturan);
+            check_disetujui_tidak_disetujui_kasubbag();
+            get_last_file();
+            $.ajax({
+                url: base_url + 'monitoring_raperbup/request/get_detail_peraturan',
+                data: {
+                    id_peraturan: id_peraturan
+                },
+                type: 'GET',
+                beforeSend: function() {
+                    HoldOn.open(optionsHoldOn);
+                },
+                success: function(response) {
+                    let html = "";
+                    $.each(response, function(index, value) {
+                        html += "<div class='activity'>" +
+                            "<div class='activity-icon " + value.class_color + " text-white shadow-dark'>" +
+                            "<i class='fas fa-user-alt'></i>" +
+                            "</div>" +
+                            "<div class='activity-detail'>" +
+                            "<div class='mb-2'>" +
+                            "<span class='text-job'>" + value.tanggal_custom + "</span>" +
+                            (value.file ? "<span class='bullet'></span>" + value.file : "") +
+                            "<div class='ml-4 float-right dropdown'>" +
+                            value.action_delete +
+                            "</div>" +
+                            "</div>" +
+                            "<p>" + value.status_terakhir + "</p>";
+
+                        // Tampilkan tombol Revisi hanya jika ada catatan_ditolak
+                        if (value.catatan_ditolak) {
+                            html += "<a class='btn btn-warning btn-sm' href='" + base_url + "monitoring_raperbup/edit_usulan_raperbup/" + id_peraturan + "'>Revisi</a>";
+                        }
+
+                        html += "</div>" +
+                            "</div>";
+                    });
+
+                    $(".list-activites").html(html);
+                },
+                complete: function() {
+                    HoldOn.close();
+                }
+            });
+        }
+    }
 
     var selectedUsulanId = '<?php echo isset($selected_usulan_id) ? $selected_usulan_id : ''; ?>';
     var selectedSkpdId = '<?php echo isset($selected_skpd_id) ? $selected_skpd_id : ''; ?>';
 
-    $(document).ready(function () {
+    $(document).ready(function() {
         // Set filter SKPD
         if (selectedSkpdId) {
             $("select[name='skpd']").val(selectedSkpdId);
@@ -230,14 +236,15 @@
             url: base_url + 'monitoring_raperbup/request/get_data_peraturan',
             data: data,
             type: 'GET',
-            beforeSend: function () {
+            beforeSend: function() {
                 HoldOn.open(optionsHoldOn);
             },
-            success: function (response) {
+            success: function(response) {
+                let id_encrypt = "";
                 let list_peraturan = "";
                 let selectedIdEncrypt = null;
                 if (response.length != 0) {
-                    $.each(response, function (index, value) {
+                    $.each(response, function(index, value) {
                         list_peraturan += "<li class='nav-item hr-bottom'><a href='#' class='nav-link list-peraturan-active' onclick=\"show_detail_peraturan('" + value.id_encrypt + "',this)\">" + value.nama_peraturan + "</a></li>";
                         // Find the id_encrypt for the selected usulan_id
                         if (selectedUsulanId && value.id_usulan_raperbup == atob(selectedUsulanId)) {
@@ -257,10 +264,10 @@
                     }
                 }
             },
-            complete: function () {
+            complete: function() {
                 HoldOn.close();
             },
-            error: function (xhr, status, error) {
+            error: function(xhr, status, error) {
                 console.log('Error loading peraturan:', xhr.responseText);
                 swal('Error', 'Gagal mengambil data: ' + (xhr.responseJSON ? xhr.responseJSON.error : 'Server error'), 'error');
             }
@@ -273,11 +280,11 @@
             $("#showPanelDitolak").modal("show");
         } else {
             swal({
-                title: 'Apakah anda yakin mengubah menyetujui usulan ini?',
-                icon: 'warning',
-                buttons: true,
-                dangerMode: true,
-            })
+                    title: 'Apakah anda yakin mengubah menyetujui usulan ini?',
+                    icon: 'warning',
+                    buttons: true,
+                    dangerMode: true,
+                })
                 .then((willDelete) => {
                     if (willDelete) {
                         $.ajax({
@@ -287,10 +294,10 @@
                                 status: status
                             },
                             type: 'POST',
-                            beforeSend: function () {
+                            beforeSend: function() {
                                 HoldOn.open(optionsHoldOn);
                             },
-                            success: function (response) {
+                            success: function(response) {
                                 get_data_peraturan();
                                 if (response) {
                                     $("input[name='usulan_peraturan']").val("");
@@ -299,12 +306,12 @@
                                     swal('Gagal', 'Status tidak bisa diubah', 'error');
                                 }
                             },
-                            complete: function (response) {
+                            complete: function(response) {
                                 HoldOn.close();
                             }
                         });
                     } else {
-                        swal('Batal', 'Data masih tersimpan!', 'error').then(function (results) {
+                        swal('Batal', 'Data masih tersimpan!', 'error').then(function(results) {
                             HoldOn.close();
                             if (result.results) {
                                 show_detail_peraturan(id_peraturan);
@@ -325,10 +332,10 @@
                 id_peraturan: id_peraturan
             },
             type: 'GET',
-            beforeSend: function () {
+            beforeSend: function() {
                 HoldOn.open(optionsHoldOn);
             },
-            success: function (response) {
+            success: function(response) {
                 if (response) {
                     $("a[href$='#disetujui']").show();
                     $("a[href$='#tidakDisetujui']").show();
@@ -337,7 +344,7 @@
                     $("a[href$='#tidakDisetujui']").hide();
                 }
             },
-            complete: function () {
+            complete: function() {
                 HoldOn.close();
             }
         });
@@ -361,10 +368,10 @@
                 contentType: false,
                 processData: false,
                 type: 'POST',
-                beforeSend: function () {
+                beforeSend: function() {
                     HoldOn.open(optionsHoldOn);
                 },
-                success: function (response) {
+                success: function(response) {
                     $("#showPanelDitolak").modal("toggle");
                     $("textarea[name='catatan']").val("");
                     $("input[name='file_upload']").val("");
@@ -376,7 +383,7 @@
                         swal('Gagal', 'Status tidak bisa diubah', 'error');
                     }
                 },
-                complete: function () {
+                complete: function() {
                     HoldOn.close();
                 }
             });
@@ -386,11 +393,11 @@
     function confirm_delete(id_trx_raperbup) {
         let id_usulan_raperbup = $("input[name='usulan_peraturan']").val();
         swal({
-            title: 'Apakah anda yakin menghapus data ini?',
-            icon: 'warning',
-            buttons: true,
-            dangerMode: true,
-        })
+                title: 'Apakah anda yakin menghapus data ini?',
+                icon: 'warning',
+                buttons: true,
+                dangerMode: true,
+            })
             .then((willDelete) => {
                 if (willDelete) {
                     $.ajax({
@@ -399,10 +406,10 @@
                             id_trx_raperbup: id_trx_raperbup
                         },
                         type: 'GET',
-                        beforeSend: function () {
+                        beforeSend: function() {
                             HoldOn.open(optionsHoldOn);
                         },
-                        success: function (response) {
+                        success: function(response) {
                             get_data_peraturan();
                             if (response) {
                                 $("input[name='usulan_peraturan']").val("");
@@ -411,12 +418,12 @@
                                 swal('Gagal', 'Data tidak bisa dihapus', 'error');
                             }
                         },
-                        complete: function (response) {
+                        complete: function(response) {
                             HoldOn.close();
                         }
                     });
                 } else {
-                    swal('Batal', 'Data masih tersimpan!', 'error').then(function (results) {
+                    swal('Batal', 'Data masih tersimpan!', 'error').then(function(results) {
                         HoldOn.close();
                         if (result.results) {
                             show_detail_peraturan(id_usulan_raperbup);
@@ -434,10 +441,10 @@
                 id_peraturan: id_peraturan
             },
             type: 'GET',
-            beforeSend: function () {
+            beforeSend: function() {
                 HoldOn.open(optionsHoldOn);
             },
-            success: function (response) {
+            success: function(response) {
                 let html = "<table>";
                 html += "<tr><td>File Usulan</td><td style='padding:5px;'>:</td><td>" + response.usulan + "</td></tr>";
                 if (response.lampiran_group) {
@@ -446,7 +453,7 @@
                 html += "</table>";
                 $(".last_file").html(html);
             },
-            complete: function (response) {
+            complete: function(response) {
                 HoldOn.close();
             }
         });
