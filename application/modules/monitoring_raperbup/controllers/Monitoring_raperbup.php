@@ -61,7 +61,6 @@ class Monitoring_raperbup extends MY_Controller
         }
 
         $data['breadcrumb'] = ["header_content" => "Monitoring Usulan", "breadcrumb_link" => [['link' => false, 'content' => 'Monitoring Usulan', 'is_active' => true]]];
-
         // Render view berdasarkan level_user_id
         switch ($this->session->userdata("level_user_id")) {
             case '6':
@@ -69,6 +68,9 @@ class Monitoring_raperbup extends MY_Controller
                 break;
             case '7':
                 $this->execute('index_kasubbag', $data);
+                break;
+            case '15':
+                $this->execute('index_jft', $data);
                 break;
             case '8':
                 $this->execute('index_asisten', $data);
@@ -967,36 +969,103 @@ class Monitoring_raperbup extends MY_Controller
             "file_usulan_raperbup" => $data_last_trx->file_usulan_raperbup,
             "file_perbaikan" => ($status == '1' ? $data_last_trx->file_perbaikan : NULL),
             "level_user_id_status" => $this->session->userdata("level_user_id"),
-            "status_tracking" => '3',
+            "status_tracking" => '3', // ← TETAP 3
             "status_pesan" => "1",
             "kasubbag_agree_disagree" => $status,
+            "jft_agree_disagree" => "", // ← TAMBAH: Kosongkan untuk JFT
+            "kabag_agree_disagree" => "", // ← Tetap kosong
             'created_at' => $this->datetime(),
             "id_user_created" => $this->session->userdata("id_user")
         );
 
-        $status = $this->trx_raperbup_model->save($data_trx);
+        $status_save = $this->trx_raperbup_model->save($data_trx);
 
-        if ($status) {
+        if ($status_save) {
             $nama_peraturan = $this->usulan_raperbup_model->get_by($id_peraturan)->nama_peraturan ?: 'Usulan Tanpa Nama';
+
             if ($status == '1') {
-                // Setuju: Notif ke Kabag Hukum (level 6)
-                $kabag_users = $this->db->select('id_user')->where('level_user_id', 6)->get('user')->result();
-                foreach ($kabag_users as $kabag) {
+                // ← UBAH: Kirim notif ke JFT (level 15), bukan langsung Kabag
+                $jft_users = $this->db->select('id_user')
+                    ->where('level_user_id', 15)
+                    ->get('user')
+                    ->result();
+
+                foreach ($jft_users as $jft) {
                     $data_notif = [
-                        'id_user_tujuan' => $kabag->id_user,
+                        'id_user_tujuan' => $jft->id_user,
                         'id_usulan_raperbup' => $id_peraturan,
                         'tipe_notif' => 'setuju_kasubbag',
-                        'pesan' => 'Usulan disetujui oleh Kasubbag untuk review Kabag: ' . $nama_peraturan,
+                        'pesan' => 'Usulan disetujui oleh Kasubbag untuk review JFT: ' . $nama_peraturan,
                     ];
                     $this->Notifikasi_model->simpan_notif($data_notif);
-                    log_message('debug', 'Notif setuju_kasubbag saved: ' . json_encode($data_notif));
                 }
             }
         }
 
         $this->output
             ->set_content_type('application/json')
-            ->set_output(json_encode($status));
+            ->set_output(json_encode($status_save));
+    }
+
+    public function setuju_ditolak_jft()
+    {
+        $id_peraturan = decrypt_data($this->ipost("id_peraturan"));
+        $status = $this->ipost("status"); // 1=setuju, 2=tolak
+
+        $data_last_trx = $this->trx_raperbup_model->get(
+            array(
+                "where" => array(
+                    "usulan_raperbup_id" => $id_peraturan,
+                ),
+                "order_by" => array(
+                    "created_at" => "DESC"
+                ),
+                "limit" => 1
+            ),
+            "row"
+        );
+
+        $data_trx = array(
+            "usulan_raperbup_id" => $id_peraturan,
+            "file_usulan_raperbup" => $data_last_trx->file_usulan_raperbup,
+            "file_perbaikan" => $data_last_trx->file_perbaikan,
+            "level_user_id_status" => $this->session->userdata("level_user_id"),
+            "status_tracking" => '3', // ← TETAP 3
+            "status_pesan" => "1",
+            "kasubbag_agree_disagree" => $data_last_trx->kasubbag_agree_disagree, // Copy
+            "jft_agree_disagree" => $status, // ← Isi keputusan JFT
+            "kabag_agree_disagree" => "", // ← Kosong untuk Kabag
+            'created_at' => $this->datetime(),
+            "id_user_created" => $this->session->userdata("id_user")
+        );
+
+        $status_save = $this->trx_raperbup_model->save($data_trx);
+
+        if ($status_save) {
+            $nama_peraturan = $this->usulan_raperbup_model->get_by($id_peraturan)->nama_peraturan ?: 'Usulan Tanpa Nama';
+
+            if ($status == '1') {
+                // Kirim notif ke Kabag (level 6)
+                $kabag_users = $this->db->select('id_user')
+                    ->where('level_user_id', 6)
+                    ->get('user')
+                    ->result();
+
+                foreach ($kabag_users as $kabag) {
+                    $data_notif = [
+                        'id_user_tujuan' => $kabag->id_user,
+                        'id_usulan_raperbup' => $id_peraturan,
+                        'tipe_notif' => 'setuju_jft',
+                        'pesan' => 'Usulan disetujui oleh JFT untuk review Kabag: ' . $nama_peraturan,
+                    ];
+                    $this->Notifikasi_model->simpan_notif($data_notif);
+                }
+            }
+        }
+
+        $this->output
+            ->set_content_type('application/json')
+            ->set_output(json_encode($status_save));
     }
 
     public function raperbup_ditolak()
