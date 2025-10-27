@@ -492,11 +492,44 @@ class Usulan_raperbup extends MY_Controller
         }
 
         // Update data transaksi dengan nama file PDF
-        $this->trx_raperbup_model->edit($trx_id, array(
-            'file_usulan_raperbup' => $pdf_file_name,
-            'updated_at' => $this->datetime(),
-            'id_user_updated' => $this->session->userdata("id_user")
-        ));
+        // Update data transaksi dengan nama file PDF
+        $trx = $this->trx_raperbup_model->get(
+            array(
+                "where" => array(
+                    "id_trx_raperbup" => $trx_id
+                )
+            ),
+            "row"
+        );
+
+        if ($trx) {
+            $update_data = array(
+                'updated_at' => $this->datetime(),
+                'id_user_updated' => $this->session->userdata("id_user")
+            );
+
+            // Untuk transaksi pertama kali, simpan ke file_usulan_raperbup
+            if ($trx->file_perbaikan === null && $trx->file_usulan_raperbup === null) {
+                $update_data['file_usulan_raperbup'] = $pdf_file_name;
+            }
+            // Jika sudah ada file_usulan_raperbup tapi belum ada file_perbaikan, ini adalah perbaikan pertama
+            else if ($trx->file_perbaikan === null && $trx->file_usulan_raperbup !== null) {
+                $update_data['file_perbaikan'] = $pdf_file_name;
+            }
+            // Jika sudah ada file_perbaikan, update file_perbaikan
+            else if ($trx->file_perbaikan !== null) {
+                $update_data['file_perbaikan'] = $pdf_file_name;
+            }
+
+            $this->trx_raperbup_model->edit($trx_id, $update_data);
+        } else {
+            // Fallback: jika trx tidak ditemukan, update file_usulan_raperbup pada trx yang diberikan
+            $this->trx_raperbup_model->edit($trx_id, array(
+                'file_usulan_raperbup' => $pdf_file_name,
+                'updated_at' => $this->datetime(),
+                'id_user_updated' => $this->session->userdata("id_user")
+            ));
+        }
 
         // Jika output_mode adalah untuk preview atau download khusus, tampilkan PDF
         if ($output_mode === 'I' || $output_mode === 'D') {
@@ -549,6 +582,7 @@ class Usulan_raperbup extends MY_Controller
                 )
             )
         );
+
         $nomor_register = $data_master[0]->nomor_register;
         $user_updated = $this->db->select('nama_lengkap')
             ->from('user')
@@ -573,10 +607,25 @@ class Usulan_raperbup extends MY_Controller
         if (!$data_master) {
             $this->page_error();
         } else {
+            // Ambil transaksi PERTAMA (file original)
             $file_usulan_raperbup = $this->trx_raperbup_model->get(
                 array(
                     "order_by" => array(
-                        "id_trx_raperbup" => "ASC"
+                        "id_trx_raperbup" => "ASC" // ← ASC untuk ambil yang pertama
+                    ),
+                    "where" => array(
+                        "usulan_raperbup_id" => decrypt_data($id_usulan_raperbup)
+                    ),
+                    "limit" => "1"
+                ),
+                "row"
+            );
+
+            // Ambil transaksi TERAKHIR (untuk update)
+            $file_terakhir_trx = $this->trx_raperbup_model->get(
+                array(
+                    "order_by" => array(
+                        "id_trx_raperbup" => "DESC" // ← DESC untuk ambil yang terakhir
                     ),
                     "where" => array(
                         "usulan_raperbup_id" => decrypt_data($id_usulan_raperbup)
@@ -596,8 +645,10 @@ class Usulan_raperbup extends MY_Controller
                 );
                 $data['content'] = $data_master[0];
 
-                $ekstensi_file_usulan = explode(".", $file_usulan_raperbup->file_usulan_raperbup);
-                $data['url_preview_usulan'] = "<button type='button' class='btn btn-primary mb-2' onclick=\"view_detail('" . base_url() . $this->config->item("file_usulan") . "/" . $file_usulan_raperbup->file_usulan_raperbup . "','" . $ekstensi_file_usulan[1] . "')\">View</button>";
+                // Preview file usulan (original atau yang terakhir ada)
+                $file_untuk_preview = $file_terakhir_trx->file_perbaikan ?: $file_usulan_raperbup->file_usulan_raperbup;
+                $ekstensi_file_usulan = explode(".", $file_untuk_preview);
+                $data['url_preview_usulan'] = "<button type='button' class='btn btn-primary mb-2' onclick=\"view_detail('" . base_url() . $this->config->item("file_usulan") . "/" . $file_untuk_preview . "','" . $ekstensi_file_usulan[1] . "')\">View</button>";
 
                 $data['url_preview_lampiran'] = "";
                 if ($data_master[0]->lampiran) {
@@ -627,7 +678,15 @@ class Usulan_raperbup extends MY_Controller
 
                 $this->execute('form_usulan_raperbup', $data);
             } else {
-                $nama_file_usulan = $file_usulan_raperbup->file_usulan_raperbup;
+                // ===== PROSES UPDATE =====
+
+                // ← PENTING: Tetap gunakan file original (tidak diubah)
+                $nama_file_usulan_original = $file_usulan_raperbup->file_usulan_raperbup;
+
+                // ← File perbaikan (file yang diupdate)
+                // Jika file_perbaikan NULL atau tidak ada, gunakan file_usulan_raperbup sebagai base
+                $nama_file_perbaikan = $file_terakhir_trx->file_perbaikan ?: $file_terakhir_trx->file_usulan_raperbup;
+
                 if (!empty($_FILES['file_upload']['name'])) {
                     if (count($data_master) > 1) {
                         $this->session->set_flashdata('message', 'Data tidak bisa diubah');
@@ -642,7 +701,8 @@ class Usulan_raperbup extends MY_Controller
                             redirect('usulan_raperbup/edit_usulan_raperbup/' . $id_usulan_raperbup);
                         }
 
-                        $nama_file_usulan = $upload_file['data']['file_name'];
+                        // ← UPDATE: File baru masuk ke file_perbaikan
+                        $nama_file_perbaikan = $upload_file['data']['file_name'];
                     }
                 }
 
@@ -780,18 +840,39 @@ class Usulan_raperbup extends MY_Controller
                     );
                 }
 
+                // Update tabel usulan_raperbup
                 $this->usulan_raperbup_model->edit(decrypt_data($id_usulan_raperbup), $data);
 
+                // ← PENTING: INSERT transaksi BARU (bukan update yang lama)
+                // Ini untuk history tracking - setiap edit membuat record baru
                 $data_trx = array(
-                    "file_usulan_raperbup" => $nama_file_usulan,
-                    'updated_at' => $this->datetime(),
-                    "id_user_updated" => $this->session->userdata("id_user")
+                    "usulan_raperbup_id" => decrypt_data($id_usulan_raperbup),
+                    "file_usulan_raperbup" => $nama_file_usulan_original, // ← TETAP file original
+                    "file_perbaikan" => $nama_file_perbaikan, // ← FILE BARU/REVISI
+                    "level_user_id_status" => $this->session->userdata("level_user_id"),
+                    "status_tracking" => $file_terakhir_trx->status_tracking, // Copy status terakhir
+                    "status_pesan" => $file_terakhir_trx->status_pesan,
+                    "kasubbag_agree_disagree" => null,
+                    "jft_agree_disagree" => $file_terakhir_trx->jft_agree_disagree, // ← TAMBAH: Copy JFT
+                    "kabag_agree_disagree" => $file_terakhir_trx->kabag_agree_disagree,
+                    "asisten_agree_disagree" => $file_terakhir_trx->asisten_agree_disagree,
+                    "sekda_agree_disagree" => $file_terakhir_trx->sekda_agree_disagree,
+                    "wabup_agree_disagree" => $file_terakhir_trx->wabup_agree_disagree,
+                    "bupati_agree_disagree" => $file_terakhir_trx->bupati_agree_disagree,
+                    "provinsi_agree_disagree" => $file_terakhir_trx->provinsi_agree_disagree,
+                    "catatan_ditolak" => $file_terakhir_trx->catatan_ditolak,
+                    "file_catatan_perbaikan" => $file_terakhir_trx->file_catatan_perbaikan,
+                    "file_lampiran_provinsi" => $file_terakhir_trx->file_lampiran_provinsi,
+                    'created_at' => $this->datetime(), // ← Waktu sekarang
+                    "id_user_created" => $this->session->userdata("id_user")
                 );
 
-                $status = $this->trx_raperbup_model->edit($data_master[0]->id_trx_raperbup, $data_trx);
+                // ← INSERT (bukan edit) untuk membuat history baru
+                $status = $this->trx_raperbup_model->save($data_trx);
+
                 if ($status) {
-                    // Regenerate PDF setelah edit
-                    $this->generate_pdf_raperbup(decrypt_data($id_usulan_raperbup), $data_master[0]->id_trx_raperbup, 'F');
+                    // Regenerate PDF setelah edit - gunakan ID transaksi BARU
+                    $this->generate_pdf_raperbup(decrypt_data($id_usulan_raperbup), $status, 'F');
 
                     if ($nomor_register === null) {
                         // Jika nomor register null, kirim ke admin hukum (level 4)
