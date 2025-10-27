@@ -34,12 +34,12 @@ class Request extends MY_Controller
         $data_usulan = $this->trx_raperbup_model->get(
             array(
                 "fields" => "trx_raperbup.*,
-                            DATE_FORMAT(trx_raperbup.created_at,'%Y-%m-%d') AS tanggal_custom,
-                            DATE_FORMAT(trx_raperbup.created_at,'%H:%i:%s') AS time_custom,
-                            class_color,
-                            a.keterangan,
-                            b.nama_lengkap,
-                            teruskan_provinsi",
+                        DATE_FORMAT(trx_raperbup.created_at,'%Y-%m-%d') AS tanggal_custom,
+                        DATE_FORMAT(trx_raperbup.created_at,'%H:%i:%s') AS time_custom,
+                        class_color,
+                        a.keterangan,
+                        b.nama_lengkap,
+                        teruskan_provinsi",
                 "join" => array(
                     "level_user" => "level_user_id_status=id_level_user",
                     "usulan_raperbup" => "id_usulan_raperbup=usulan_raperbup_id",
@@ -74,21 +74,55 @@ class Request extends MY_Controller
 
         $templist = array();
         if ($data_disposisi) {
-
             foreach ($data_usulan as $key => $row) {
                 foreach ($row as $keys => $rows) {
                     $templist[$key][$keys] = $rows;
                 }
                 $templist[$key]['status_terakhir'] = "";
                 $templist[$key]['action'] = "";
+                $templist[$key]['processing_status'] = "";
+                $templist[$key]['processing_date'] = ""; // Tambah field untuk tanggal
 
-                // ===== STATUS 5: PUBLISH =====
-                if ($row->status_tracking == "5") {
-                    $templist[$key]['status_terakhir'] = "<div class='badge badge-success'>Usulan Sudah Di Publish</div>";
+                // Tentukan processing_status hanya untuk transaksi terbaru (index 0)
+                if ($key == 0) {
+                    $processing_user = "";
+                    $processing_date = longdate_indo($row->tanggal_custom) . " " . $row->time_custom;
+
+                    if ($row->status_tracking == '1') {
+                        $processing_user = $row->nama_lengkap; // Admin Hukum dari id_user_created
+                        $templist[$key]['processing_status'] = "Sedang Diproses oleh Admin Hukum " . $processing_user;
+                    } elseif ($row->status_tracking == '2' && $row->kasubbag_agree_disagree == '') {
+                        $processing_user = $nama_kasubbag->nama_lengkap; // Kasubbag dari id_user_kasubbag
+                        $templist[$key]['processing_status'] = "Sedang Diproses oleh Kasubbag " . $processing_user;
+                    } elseif ($row->status_tracking == '3' && $row->kasubbag_agree_disagree == '1' && $row->jft_agree_disagree == '') {
+                        // Query nama JFT berdasarkan level_user_id_status = 15
+                        $jft_user = $this->db->select('nama_lengkap')
+                            ->from('user')
+                            ->where('level_user_id', 15)
+                            ->get()
+                            ->row();
+                        $processing_user = $jft_user ? $jft_user->nama_lengkap : 'JFT';
+                        $templist[$key]['processing_status'] = "Sedang Diproses oleh JFT " . $processing_user;
+                    } elseif ($row->status_tracking == '3' && $row->kasubbag_agree_disagree == '1' && $row->jft_agree_disagree == '1' && $row->kabag_agree_disagree == '') {
+                        // Query nama Kabag Hukum berdasarkan level_user_id_status = 8
+                        $kabag_user = $this->db->select('nama_lengkap')
+                            ->from('user')
+                            ->where('level_user_id', 8)
+                            ->get()
+                            ->row();
+                        $processing_user = $kabag_user ? $kabag_user->nama_lengkap : 'Kabag Hukum';
+                        $templist[$key]['processing_status'] = "Sedang Diproses oleh Kabag Hukum " . $processing_user;
+                    } else {
+                        $templist[$key]['processing_status'] = "";
+                    }
+
+                    $templist[$key]['processing_date'] = $processing_date;
                 }
 
-                // ===== BUPATI SETUJU (LENGKAP DENGAN JFT) =====
-                else if (
+                // Logika status_terakhir (tetap sama seperti kode aslimu)
+                if ($row->status_tracking == "5") {
+                    $templist[$key]['status_terakhir'] = "<div class='badge badge-success'>Usulan Sudah Di Publish</div>";
+                } elseif (
                     $row->status_tracking == "3" &&
                     $row->kasubbag_agree_disagree == '1' &&
                     $row->jft_agree_disagree == '1' &&
@@ -99,10 +133,7 @@ class Request extends MY_Controller
                     $row->bupati_agree_disagree == '1'
                 ) {
                     $templist[$key]['status_terakhir'] = "<div class='badge badge-success'>Usulan Disetujui " . $row->nama_lengkap . "</div>";
-                }
-
-                // ===== BUPATI TIDAK SETUJU =====
-                else if (
+                } elseif (
                     $row->status_tracking == "3" &&
                     $row->kasubbag_agree_disagree == '1' &&
                     $row->jft_agree_disagree == '1' &&
@@ -118,12 +149,8 @@ class Request extends MY_Controller
                         $perbaikan = base_url() . $this->config->item("file_usulan") . "/" . $row->file_catatan_perbaikan;
                         $file = "<button type='button' class='btn btn-primary' onclick=\"view_detail('" . $perbaikan . "','" . $file_extension[1] . "')\">View</button>";
                     }
-
                     $templist[$key]['status_terakhir'] = "<div class='badge badge-danger mb-3'>Usulan Tidak Disetujui " . $row->nama_lengkap . "</div>" . ($row->catatan_ditolak ? "<div>Catatan :</div>" . nl2br($row->catatan_ditolak) : "") . ($row->file_catatan_perbaikan ? "<br /><br />File Catatan Perbaikan : " . $file : "");
-                }
-
-                // ===== WABUP SETUJU =====
-                else if (
+                } elseif (
                     $row->status_tracking == "3" &&
                     $row->kasubbag_agree_disagree == '1' &&
                     $row->jft_agree_disagree == '1' &&
@@ -133,10 +160,7 @@ class Request extends MY_Controller
                     $row->wabup_agree_disagree == '1'
                 ) {
                     $templist[$key]['status_terakhir'] = "<div class='badge badge-success'>Usulan Disetujui " . $row->nama_lengkap . "</div>";
-                }
-
-                // ===== WABUP TIDAK SETUJU =====
-                else if (
+                } elseif (
                     $row->status_tracking == "3" &&
                     $row->kasubbag_agree_disagree == '1' &&
                     $row->jft_agree_disagree == '1' &&
@@ -151,12 +175,8 @@ class Request extends MY_Controller
                         $perbaikan = base_url() . $this->config->item("file_usulan") . "/" . $row->file_catatan_perbaikan;
                         $file = "<button type='button' class='btn btn-primary' onclick=\"view_detail('" . $perbaikan . "','" . $file_extension[1] . "')\">View</button>";
                     }
-
                     $templist[$key]['status_terakhir'] = "<div class='badge badge-danger mb-3'>Usulan Tidak Disetujui " . $row->nama_lengkap . "</div>" . ($row->catatan_ditolak ? "<div>Catatan :</div>" . nl2br($row->catatan_ditolak) : "") . ($row->file_catatan_perbaikan ? "<br /><br />File Catatan Perbaikan : " . $file : "");
-                }
-
-                // ===== SEKDA SETUJU =====
-                else if (
+                } elseif (
                     $row->status_tracking == "3" &&
                     $row->kasubbag_agree_disagree == '1' &&
                     $row->jft_agree_disagree == '1' &&
@@ -165,10 +185,7 @@ class Request extends MY_Controller
                     $row->sekda_agree_disagree == '1'
                 ) {
                     $templist[$key]['status_terakhir'] = "<div class='badge badge-success'>Usulan Disetujui " . $row->nama_lengkap . "</div>";
-                }
-
-                // ===== SEKDA TIDAK SETUJU =====
-                else if (
+                } elseif (
                     $row->status_tracking == "3" &&
                     $row->kasubbag_agree_disagree == '1' &&
                     $row->jft_agree_disagree == '1' &&
@@ -182,12 +199,8 @@ class Request extends MY_Controller
                         $perbaikan = base_url() . $this->config->item("file_usulan") . "/" . $row->file_catatan_perbaikan;
                         $file = "<button type='button' class='btn btn-primary' onclick=\"view_detail('" . $perbaikan . "','" . $file_extension[1] . "')\">View</button>";
                     }
-
                     $templist[$key]['status_terakhir'] = "<div class='badge badge-danger mb-3'>Usulan Tidak Disetujui " . $row->nama_lengkap . "</div>" . ($row->catatan_ditolak ? "<div>Catatan :</div>" . nl2br($row->catatan_ditolak) : "") . ($row->file_catatan_perbaikan ? "<br /><br />File Catatan Perbaikan : " . $file : "");
-                }
-
-                // ===== ASISTEN/KESRA SETUJU =====
-                else if (
+                } elseif (
                     $row->status_tracking == "3" &&
                     $row->kasubbag_agree_disagree == '1' &&
                     $row->jft_agree_disagree == '1' &&
@@ -195,10 +208,7 @@ class Request extends MY_Controller
                     $row->asisten_agree_disagree == '1'
                 ) {
                     $templist[$key]['status_terakhir'] = "<div class='badge badge-success'>Usulan Disetujui " . $row->nama_lengkap . "</div>";
-                }
-
-                // ===== ASISTEN/KESRA TIDAK SETUJU =====
-                else if (
+                } elseif (
                     $row->status_tracking == "3" &&
                     $row->kasubbag_agree_disagree == '1' &&
                     $row->jft_agree_disagree == '1' &&
@@ -211,78 +221,61 @@ class Request extends MY_Controller
                         $perbaikan = base_url() . $this->config->item("file_usulan") . "/" . $row->file_catatan_perbaikan;
                         $file = "<button type='button' class='btn btn-primary' onclick=\"view_detail('" . $perbaikan . "','" . $file_extension[1] . "')\">View</button>";
                     }
-
                     $templist[$key]['status_terakhir'] = "<div class='badge badge-danger mb-3'>Usulan Tidak Disetujui " . $row->nama_lengkap . "</div>" . ($row->catatan_ditolak ? "<div>Catatan :</div>" . nl2br($row->catatan_ditolak) : "") . ($row->file_catatan_perbaikan ? "<br /><br />File Catatan Perbaikan : " . $file : "");
-                }
-
-                // ===== KABAG SETUJU (DENGAN JFT) =====
-                else if (
+                } elseif (
                     $row->status_tracking == "3" &&
                     $row->kasubbag_agree_disagree == '1' &&
                     $row->jft_agree_disagree == '1' &&
                     $row->kabag_agree_disagree == '1'
                 ) {
-                    // Usulan disetujui Kabag Hukum (sudah lewat JFT)
                     if ($row->teruskan_provinsi == "1" && $row->file_lampiran_provinsi == "") {
                         $templist[$key]['status_terakhir'] = "<div class='badge badge-success'>Usulan Disetujui " . $row->nama_lengkap . "</div>";
-                    } else if ($row->teruskan_provinsi == "1" && $row->file_lampiran_provinsi != "" && !$row->provinsi_agree_disagree) {
+                    } elseif ($row->teruskan_provinsi == "1" && $row->file_lampiran_provinsi != "" && !$row->provinsi_agree_disagree) {
                         $templist[$key]['status_terakhir'] = "<div class='badge badge-success'>Lampiran untuk Provinsi, sudah di upload oleh " . $row->nama_lengkap . " & sudah dikirim ke Admin Provinsi</div>";
-                    } else if ($row->teruskan_provinsi == "1" && $row->file_lampiran_provinsi != "" && $row->provinsi_agree_disagree == "1") {
+                    } elseif ($row->teruskan_provinsi == "1" && $row->file_lampiran_provinsi != "" && $row->provinsi_agree_disagree == "1") {
                         $templist[$key]['status_terakhir'] = "<div class='badge badge-success'>Usulan Disetujui Provinsi</div>";
-                    } else if ($row->teruskan_provinsi == "1" && $row->file_lampiran_provinsi != "" && $row->provinsi_agree_disagree == "2") {
+                    } elseif ($row->teruskan_provinsi == "1" && $row->file_lampiran_provinsi != "" && $row->provinsi_agree_disagree == "2") {
                         $file = "";
                         if ($row->file_catatan_perbaikan) {
                             $file_extension = explode(".", $row->file_catatan_perbaikan);
                             $perbaikan = base_url() . $this->config->item("file_usulan") . "/" . $row->file_catatan_perbaikan;
                             $file = "<button type='button' class='btn btn-primary' onclick=\"view_detail('" . $perbaikan . "','" . $file_extension[1] . "')\">View</button>";
                         }
-
                         $templist[$key]['status_terakhir'] = "<div class='badge badge-danger mb-3'>Usulan Tidak Disetujui Provinsi</div>" . ($row->catatan_ditolak ? "<div>Catatan :</div>" . nl2br($row->catatan_ditolak) : "") . ($row->file_catatan_perbaikan ? "<br /><br />File Catatan Perbaikan : " . $file : "");
                     } else {
                         $templist[$key]['status_terakhir'] = "<div class='badge badge-success'>Usulan Disetujui " . $row->nama_lengkap . "</div>";
                     }
-                }
-
-                // ===== KOMBINASI KASUBBAG & KABAG (TANPA JFT - untuk data lama) =====
-                else if (
+                } elseif (
                     $row->status_tracking == "3" &&
                     $row->kasubbag_agree_disagree == '1' &&
                     $row->kabag_agree_disagree == '1' &&
                     ($row->jft_agree_disagree == '' || !isset($row->jft_agree_disagree))
                 ) {
-                    // Backward compatibility: data lama yang belum ada kolom JFT
                     if ($row->teruskan_provinsi == "1" && $row->file_lampiran_provinsi == "") {
                         $templist[$key]['status_terakhir'] = "<div class='badge badge-success'>Usulan Disetujui " . $row->nama_lengkap . "</div>";
-                    } else if ($row->teruskan_provinsi == "1" && $row->file_lampiran_provinsi != "" && !$row->provinsi_agree_disagree) {
+                    } elseif ($row->teruskan_provinsi == "1" && $row->file_lampiran_provinsi != "" && !$row->provinsi_agree_disagree) {
                         $templist[$key]['status_terakhir'] = "<div class='badge badge-success'>Lampiran untuk Provinsi, sudah di upload oleh " . $row->nama_lengkap . " & sudah dikirim ke Admin Provinsi</div>";
-                    } else if ($row->teruskan_provinsi == "1" && $row->file_lampiran_provinsi != "" && $row->provinsi_agree_disagree == "1") {
+                    } elseif ($row->teruskan_provinsi == "1" && $row->file_lampiran_provinsi != "" && $row->provinsi_agree_disagree == "1") {
                         $templist[$key]['status_terakhir'] = "<div class='badge badge-success'>Usulan Disetujui Provinsi</div>";
-                    } else if ($row->teruskan_provinsi == "1" && $row->file_lampiran_provinsi != "" && $row->provinsi_agree_disagree == "2") {
+                    } elseif ($row->teruskan_provinsi == "1" && $row->file_lampiran_provinsi != "" && $row->provinsi_agree_disagree == "2") {
                         $file = "";
                         if ($row->file_catatan_perbaikan) {
                             $file_extension = explode(".", $row->file_catatan_perbaikan);
                             $perbaikan = base_url() . $this->config->item("file_usulan") . "/" . $row->file_catatan_perbaikan;
                             $file = "<button type='button' class='btn btn-primary' onclick=\"view_detail('" . $perbaikan . "','" . $file_extension[1] . "')\">View</button>";
                         }
-
                         $templist[$key]['status_terakhir'] = "<div class='badge badge-danger mb-3'>Usulan Tidak Disetujui Provinsi</div>" . ($row->catatan_ditolak ? "<div>Catatan :</div>" . nl2br($row->catatan_ditolak) : "") . ($row->file_catatan_perbaikan ? "<br /><br />File Catatan Perbaikan : " . $file : "");
                     } else {
                         $templist[$key]['status_terakhir'] = "<div class='badge badge-success'>Usulan Disetujui " . $row->nama_lengkap . "</div>";
                     }
-                }
-
-                // ===== JFT SETUJU, MENUNGGU KABAG =====
-                else if (
+                } elseif (
                     $row->status_tracking == "3" &&
                     $row->kasubbag_agree_disagree == '1' &&
                     $row->jft_agree_disagree == '1' &&
                     $row->kabag_agree_disagree == ''
                 ) {
                     $templist[$key]['status_terakhir'] = "<div class='badge badge-success'>Usulan Disetujui JFT, menunggu review Kabag</div>";
-                }
-
-                // ===== JFT TIDAK SETUJU =====
-                else if (
+                } elseif (
                     $row->status_tracking == "3" &&
                     $row->kasubbag_agree_disagree == '1' &&
                     $row->jft_agree_disagree == '2'
@@ -293,32 +286,22 @@ class Request extends MY_Controller
                         $perbaikan = base_url() . $this->config->item("file_usulan") . "/" . $row->file_catatan_perbaikan;
                         $file = "<button type='button' class='btn btn-primary' onclick=\"view_detail('" . $perbaikan . "','" . $file_extension[1] . "')\">View</button>";
                     }
-
                     $templist[$key]['status_terakhir'] = "<div class='badge badge-danger mb-3'>Usulan Tidak Disetujui JFT</div>" .
                         ($row->catatan_ditolak ? "<br />Catatan :<br />" . nl2br($row->catatan_ditolak) : "") .
                         ($row->file_catatan_perbaikan ? "<br /><br />File Catatan Perbaikan : " . $file : "");
-                }
-
-                // ===== KASUBBAG SETUJU, MENUNGGU JFT =====
-                else if (
+                } elseif (
                     $row->status_tracking == "3" &&
                     $row->kasubbag_agree_disagree == '1' &&
                     $row->jft_agree_disagree == '' &&
                     $row->kabag_agree_disagree == ''
                 ) {
                     $templist[$key]['status_terakhir'] = "<div class='badge badge-info'>Menunggu review JFT</div>";
-                }
-
-                // ===== KASUBBAG SETUJU (TANPA JFT - untuk data lama) =====
-                else if (
+                } elseif (
                     $row->status_tracking == "3" &&
                     $row->kasubbag_agree_disagree == '1'
                 ) {
                     $templist[$key]['status_terakhir'] = "<div class='badge badge-success'>Usulan Disetujui " . $nama_kasubbag->nama_lengkap . "</div>";
-                }
-
-                // ===== KASUBBAG TIDAK SETUJU =====
-                else if (
+                } elseif (
                     $row->status_tracking == "3" &&
                     $row->kasubbag_agree_disagree == '2'
                 ) {
@@ -328,45 +311,22 @@ class Request extends MY_Controller
                         $perbaikan = base_url() . $this->config->item("file_usulan") . "/" . $row->file_catatan_perbaikan;
                         $file = "<button type='button' class='btn btn-primary' onclick=\"view_detail('" . $perbaikan . "','" . $file_extension[1] . "')\">View</button>";
                     }
-
                     $templist[$key]['status_terakhir'] = "<div class='badge badge-danger mb-3'>Usulan Tidak Disetujui " . $nama_kasubbag->nama_lengkap . "</div>" . ($row->catatan_ditolak ? "<br />Catatan :<br />" . nl2br($row->catatan_ditolak) : "") . ($row->file_catatan_perbaikan ? "<br /><br />File Catatan Perbaikan : " . $file : "");
-                }
-
-                // ===== KABAG TOLAK =====
-                else if (
+                } elseif (
                     $row->status_tracking == "3" &&
                     $row->jft_agree_disagree == '' &&
                     $row->kabag_agree_disagree == '2'
                 ) {
                     $templist[$key]['status_terakhir'] = "<div class='badge badge-danger mb-3'>Usulan Ditangguhkan oleh Bagian Hukum " . $row->nama_lengkap . "</div>" . ($row->catatan_ditolak ? "<br />Catatan :<br />" . nl2br($row->catatan_ditolak) : "");
-                    // Usulan perbaikan
-                    // $file = "";
-                    // if ($row->file_perbaikan) {
-                    //     $file_extension = explode(".", $row->file_perbaikan);
-                    //     $extension = (count($file_extension) > 1) ? $file_extension[1] : 'pdf';
-                    //     $usulan = base_url() . $this->config->item("file_usulan") . "/" . $row->file_perbaikan;
-                    //     $file = "<button type='button' class='btn btn-primary' onclick=\"view_detail('" . $usulan . "','" . $extension . "')\">View</button>";
-                    // }
-
-                    // $templist[$key]['status_terakhir'] = "<div class='badge badge-warning mb-3'>Usulan Perbaikan</div> <div>File : " . $file . "</div>";
-                }
-
-                // ===== USULAN PERBAIKAN =====
-                else if (
+                } elseif (
                     $row->status_tracking == "3" &&
                     $row->kasubbag_agree_disagree == '' &&
                     $row->kabag_agree_disagree == ''
                 ) {
                     $templist[$key]['status_terakhir'] = "<div class='badge badge-warning'>Usulan Perbaikan</div>";
-                }
-
-                // ===== USULAN DISPOSISI =====
-                else if ($row->status_tracking == "2") {
+                } elseif ($row->status_tracking == "2") {
                     $templist[$key]['status_terakhir'] = "<div class='badge badge-info mb-2'>Diteruskan ke " . $row->keterangan . "</div><br />Catatan :<br />" . nl2br($row->catatan_ditolak);
-                }
-
-                // ===== USULAN BARU =====
-                else if ($row->status_tracking == "1") {
+                } elseif ($row->status_tracking == "1") {
                     $templist[$key]['status_terakhir'] = "<div class='badge badge-light'>Usulan Baru</div>";
                 }
 
@@ -377,14 +337,13 @@ class Request extends MY_Controller
                     $file_extension = explode(".", $row->file_usulan_raperbup);
                     $usulan = base_url() . $this->config->item("file_usulan") . "/" . $row->file_usulan_raperbup;
                     $templist[$key]['file'] = "<button type='button' class='btn btn-primary' onclick=\"view_detail('" . $usulan . "','" . $file_extension[1] . "')\">View</button>";
-                } else if ($row->status_tracking == '3' && $row->kasubbag_agree_disagree == '' && $row->kabag_agree_disagree == '') {
+                } elseif ($row->status_tracking == '3' && $row->kasubbag_agree_disagree == '' && $row->kabag_agree_disagree == '') {
                     $file_extension = explode(".", $row->file_perbaikan);
                     $usulan = base_url() . $this->config->item("file_usulan") . "/" . $row->file_perbaikan;
                     $templist[$key]['file'] = "<button type='button' class='btn btn-primary' onclick=\"view_detail('" . $usulan . "','" . $file_extension[1] . "')\">View</button>";
                 }
 
                 $templist[$key]['action_delete'] = "";
-                // Delete trx
                 if ($key == "0" && ($row->level_user_id_status == $this->session->userdata("level_user_id") || $row->status_tracking == '2')) {
                     $templist[$key]['action_delete'] = "<a class='dropdown-item has-icon text-danger mt-2' onClick=\"confirm_delete('" . encrypt_data($row->id_trx_raperbup) . "')\" href='#' style='padding:0 !important;'><i class='fas fa-trash-alt'></i></a>";
                 }
@@ -510,7 +469,8 @@ class Request extends MY_Controller
 
                 // KASUBBAG (level 7)
                 if ($level_user_id == '7') {
-                    if (($data_terakhir->status_tracking == "3" &&
+                    if (
+                        ($data_terakhir->status_tracking == "3" &&
                             in_array($data_terakhir->kasubbag_agree_disagree, array("1", "2"))) ||
                         $data_terakhir->status_tracking == "5"
                     ) {
@@ -534,7 +494,8 @@ class Request extends MY_Controller
                 // KABAG & ADMIN
                 else {
                     // ← UBAH: Tambah pengecekan JFT
-                    if (($data_terakhir->status_tracking == "2" ||
+                    if (
+                        ($data_terakhir->status_tracking == "2" ||
                             $data_terakhir->status_tracking == "3" ||
                             $data_terakhir->status_tracking == "5") &&
                         $data_terakhir->kabag_agree_disagree != ""
@@ -578,7 +539,8 @@ class Request extends MY_Controller
                 }
                 // KABAG & ADMIN
                 else {
-                    if (($data_terakhir->status_tracking == "2" ||
+                    if (
+                        ($data_terakhir->status_tracking == "2" ||
                             $data_terakhir->status_tracking == "3" ||
                             $data_terakhir->status_tracking == "5") &&
                         $data_terakhir->kabag_agree_disagree == ""
