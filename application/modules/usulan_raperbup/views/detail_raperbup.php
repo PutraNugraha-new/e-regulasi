@@ -24,7 +24,7 @@
                                 <?php
                                 if ($status_upload_perbaikan) {
                                 ?>
-                                    <a href="#uploadPerbaikan" class="btn btn-info" onclick="panel_upload_perbaikan()"><i class='ion ion-ios-cloud-upload'></i> Upload Perbaikan</a>
+                                    <a href="<?php echo base_url('usulan_raperbup/edit_usulan_raperbup/' . $id_usulan_raperbup); ?>" class="btn btn-info"><i class='ion ion-ios-cloud-upload'></i> Perbaiki</a>
                                 <?php
                                 }
                                 ?>
@@ -138,6 +138,7 @@
             },
             success: function(response) {
                 let html = "";
+                console.log(response);
                 $.each(response, function(index, value) {
                     html +=
                         "<div class='activity'>" +

@@ -901,51 +901,282 @@ class Usulan_raperbup extends MY_Controller
             "row"
         );
 
+        // ===== STATUS 5: PUBLISH (TIDAK BISA UPLOAD PERBAIKAN) =====
         if ($data_last_trx->status_tracking == "5") {
             $data['status_upload_perbaikan'] = false;
-        } else if ($data_last_trx->status_tracking == "3" && $data_last_trx->kasubbag_agree_disagree == '1' && $data_last_trx->kabag_agree_disagree == '1' && $data_last_trx->asisten_agree_disagree == '1' && $data_last_trx->sekda_agree_disagree == '1' && $data_last_trx->wabup_agree_disagree == '1' && $data_last_trx->bupati_agree_disagree == '1') {
+        }
+
+        // ===== BUPATI SETUJU (LENGKAP DENGAN JFT) =====
+        else if (
+            $data_last_trx->status_tracking == "3" &&
+            $data_last_trx->kasubbag_agree_disagree == '1' &&
+            $data_last_trx->jft_agree_disagree == '1' &&
+            $data_last_trx->kabag_agree_disagree == '1' &&
+            $data_last_trx->asisten_agree_disagree == '1' &&
+            $data_last_trx->sekda_agree_disagree == '1' &&
+            $data_last_trx->wabup_agree_disagree == '1' &&
+            $data_last_trx->bupati_agree_disagree == '1'
+        ) {
             $data['status_upload_perbaikan'] = false;
-        } else if ($data_last_trx->status_tracking == "3" && $data_last_trx->kasubbag_agree_disagree == '1' && $data_last_trx->kabag_agree_disagree == '1' && $data_last_trx->asisten_agree_disagree == '1' && $data_last_trx->sekda_agree_disagree == '1' && $data_last_trx->wabup_agree_disagree == '1' && $data_last_trx->bupati_agree_disagree == '2') {
-            $data['status_upload_perbaikan'] = true;
-        } else if ($data_last_trx->status_tracking == "3" && $data_last_trx->kasubbag_agree_disagree == '1' && $data_last_trx->kabag_agree_disagree == '1' && $data_last_trx->asisten_agree_disagree == '1' && $data_last_trx->sekda_agree_disagree == '1' && $data_last_trx->wabup_agree_disagree == '1') {
+        }
+
+        // ===== BUPATI TIDAK SETUJU (PERLU PERBAIKAN) =====
+        else if (
+            $data_last_trx->status_tracking == "3" &&
+            $data_last_trx->kasubbag_agree_disagree == '1' &&
+            $data_last_trx->jft_agree_disagree == '1' &&
+            $data_last_trx->kabag_agree_disagree == '1' &&
+            $data_last_trx->asisten_agree_disagree == '1' &&
+            $data_last_trx->sekda_agree_disagree == '1' &&
+            $data_last_trx->wabup_agree_disagree == '1' &&
+            $data_last_trx->bupati_agree_disagree == '2'
+        ) {
+            $data['status_upload_perbaikan'] = true; // ← BISA UPLOAD PERBAIKAN
+        }
+
+        // ===== WABUP SETUJU =====
+        else if (
+            $data_last_trx->status_tracking == "3" &&
+            $data_last_trx->kasubbag_agree_disagree == '1' &&
+            $data_last_trx->jft_agree_disagree == '1' &&
+            $data_last_trx->kabag_agree_disagree == '1' &&
+            $data_last_trx->asisten_agree_disagree == '1' &&
+            $data_last_trx->sekda_agree_disagree == '1' &&
+            $data_last_trx->wabup_agree_disagree == '1'
+        ) {
             $data['status_upload_perbaikan'] = false;
-        } else if ($data_last_trx->status_tracking == "3" && $data_last_trx->kasubbag_agree_disagree == '1' && $data_last_trx->kabag_agree_disagree == '1' && $data_last_trx->asisten_agree_disagree == '1' && $data_last_trx->sekda_agree_disagree == '1' && $data_last_trx->wabup_agree_disagree == '2') {
-            $data['status_upload_perbaikan'] = true;
-        } else if ($data_last_trx->status_tracking == "3" && $data_last_trx->kasubbag_agree_disagree == '1' && $data_last_trx->kabag_agree_disagree == '1' && $data_last_trx->asisten_agree_disagree == '1' && $data_last_trx->sekda_agree_disagree == '1') {
+        }
+
+        // ===== WABUP TIDAK SETUJU (PERLU PERBAIKAN) =====
+        else if (
+            $data_last_trx->status_tracking == "3" &&
+            $data_last_trx->kasubbag_agree_disagree == '1' &&
+            $data_last_trx->jft_agree_disagree == '1' &&
+            $data_last_trx->kabag_agree_disagree == '1' &&
+            $data_last_trx->asisten_agree_disagree == '1' &&
+            $data_last_trx->sekda_agree_disagree == '1' &&
+            $data_last_trx->wabup_agree_disagree == '2'
+        ) {
+            $data['status_upload_perbaikan'] = true; // ← BISA UPLOAD PERBAIKAN
+        }
+
+        // ===== SEKDA SETUJU =====
+        else if (
+            $data_last_trx->status_tracking == "3" &&
+            $data_last_trx->kasubbag_agree_disagree == '1' &&
+            $data_last_trx->jft_agree_disagree == '1' &&
+            $data_last_trx->kabag_agree_disagree == '1' &&
+            $data_last_trx->asisten_agree_disagree == '1' &&
+            $data_last_trx->sekda_agree_disagree == '1'
+        ) {
             $data['status_upload_perbaikan'] = false;
-        } else if ($data_last_trx->status_tracking == "3" && $data_last_trx->kasubbag_agree_disagree == '1' && $data_last_trx->kabag_agree_disagree == '1' && $data_last_trx->asisten_agree_disagree == '1' && $data_last_trx->sekda_agree_disagree == '2') {
-            $data['status_upload_perbaikan'] = true;
-        } else if ($data_last_trx->status_tracking == "3" && $data_last_trx->kasubbag_agree_disagree == '1' && $data_last_trx->kabag_agree_disagree == '1' && $data_last_trx->asisten_agree_disagree == '1') {
+        }
+
+        // ===== SEKDA TIDAK SETUJU (PERLU PERBAIKAN) =====
+        else if (
+            $data_last_trx->status_tracking == "3" &&
+            $data_last_trx->kasubbag_agree_disagree == '1' &&
+            $data_last_trx->jft_agree_disagree == '1' &&
+            $data_last_trx->kabag_agree_disagree == '1' &&
+            $data_last_trx->asisten_agree_disagree == '1' &&
+            $data_last_trx->sekda_agree_disagree == '2'
+        ) {
+            $data['status_upload_perbaikan'] = true; // ← BISA UPLOAD PERBAIKAN
+        }
+
+        // ===== ASISTEN SETUJU =====
+        else if (
+            $data_last_trx->status_tracking == "3" &&
+            $data_last_trx->kasubbag_agree_disagree == '1' &&
+            $data_last_trx->jft_agree_disagree == '1' &&
+            $data_last_trx->kabag_agree_disagree == '1' &&
+            $data_last_trx->asisten_agree_disagree == '1'
+        ) {
             $data['status_upload_perbaikan'] = false;
-        } else if ($data_last_trx->status_tracking == "3" && $data_last_trx->kasubbag_agree_disagree == '1' && $data_last_trx->kabag_agree_disagree == '1' && $data_last_trx->asisten_agree_disagree == '2') {
-            $data['status_upload_perbaikan'] = true;
-        } else if ($data_last_trx->status_tracking == "3" && $data_last_trx->kasubbag_agree_disagree == '1' && $data_last_trx->kabag_agree_disagree == '1') {
-            //kasubag setuju dan kabag menyetujuinya
-            if ($data_last_trx->teruskan_provinsi == "1" && $data_last_trx->file_lampiran_provinsi != "" && $data_last_trx->provinsi_agree_disagree == "1") {
+        }
+
+        // ===== ASISTEN TIDAK SETUJU (PERLU PERBAIKAN) =====
+        else if (
+            $data_last_trx->status_tracking == "3" &&
+            $data_last_trx->kasubbag_agree_disagree == '1' &&
+            $data_last_trx->jft_agree_disagree == '1' &&
+            $data_last_trx->kabag_agree_disagree == '1' &&
+            $data_last_trx->asisten_agree_disagree == '2'
+        ) {
+            $data['status_upload_perbaikan'] = true; // ← BISA UPLOAD PERBAIKAN
+        }
+
+        // ===== KABAG SETUJU (DENGAN JFT) =====
+        else if (
+            $data_last_trx->status_tracking == "3" &&
+            $data_last_trx->kasubbag_agree_disagree == '1' &&
+            $data_last_trx->jft_agree_disagree == '1' &&
+            $data_last_trx->kabag_agree_disagree == '1'
+        ) {
+            // Kasubbag, JFT, dan Kabag setuju
+            if (
+                $data_last_trx->teruskan_provinsi == "1" &&
+                $data_last_trx->file_lampiran_provinsi != "" &&
+                $data_last_trx->provinsi_agree_disagree == "1"
+            ) {
                 $data['status_upload_perbaikan'] = false;
-            } else if ($data_last_trx->teruskan_provinsi == "1" && $data_last_trx->file_lampiran_provinsi != "" && $data_last_trx->provinsi_agree_disagree == "2") {
-                $data['status_upload_perbaikan'] = true;
-            } else if ($data_last_trx->teruskan_provinsi == "1" && $data_last_trx->file_lampiran_provinsi != "") {
+            } else if (
+                $data_last_trx->teruskan_provinsi == "1" &&
+                $data_last_trx->file_lampiran_provinsi != "" &&
+                $data_last_trx->provinsi_agree_disagree == "2"
+            ) {
+                $data['status_upload_perbaikan'] = true; // ← PROVINSI TOLAK, BISA UPLOAD PERBAIKAN
+            } else if (
+                $data_last_trx->teruskan_provinsi == "1" &&
+                $data_last_trx->file_lampiran_provinsi != ""
+            ) {
                 $data['status_upload_perbaikan'] = false;
             } else {
                 $data['status_upload_perbaikan'] = false;
             }
-        } else if ($data_last_trx->status_tracking == "3" && $data_last_trx->kasubbag_agree_disagree == '2' && $data_last_trx->kabag_agree_disagree == '1') {
-            $data['status_upload_perbaikan'] = true;
-        } else if ($data_last_trx->status_tracking == "3" && $data_last_trx->kasubbag_agree_disagree != '' && $data_last_trx->kabag_agree_disagree == '2') {
-            $data['status_upload_perbaikan'] = false;
-        } else if ($data_last_trx->status_tracking == "3" && $data_last_trx->kasubbag_agree_disagree != '' && $data_last_trx->kabag_agree_disagree == '') {
-            $data['status_upload_perbaikan'] = false;
-        } else if ($data_last_trx->status_tracking == "3" && $data_last_trx->kasubbag_agree_disagree == '' && $data_last_trx->kabag_agree_disagree == '') {
-            $data['status_upload_perbaikan'] = false;
-        } else if ($data_last_trx->status_tracking == "2") {
-            //disposisi
-            $data['status_upload_perbaikan'] = false;
-        } else if ($data_last_trx->status_tracking == "1") {
+        }
+
+        // ===== KABAG SETUJU (TANPA JFT - backward compatibility) =====
+        else if (
+            $data_last_trx->status_tracking == "3" &&
+            $data_last_trx->kasubbag_agree_disagree == '1' &&
+            $data_last_trx->kabag_agree_disagree == '1' &&
+            ($data_last_trx->jft_agree_disagree == '' || !isset($data_last_trx->jft_agree_disagree))
+        ) {
+            // Untuk data lama yang belum ada JFT
+            if (
+                $data_last_trx->teruskan_provinsi == "1" &&
+                $data_last_trx->file_lampiran_provinsi != "" &&
+                $data_last_trx->provinsi_agree_disagree == "1"
+            ) {
+                $data['status_upload_perbaikan'] = false;
+            } else if (
+                $data_last_trx->teruskan_provinsi == "1" &&
+                $data_last_trx->file_lampiran_provinsi != "" &&
+                $data_last_trx->provinsi_agree_disagree == "2"
+            ) {
+                $data['status_upload_perbaikan'] = true;
+            } else if (
+                $data_last_trx->teruskan_provinsi == "1" &&
+                $data_last_trx->file_lampiran_provinsi != ""
+            ) {
+                $data['status_upload_perbaikan'] = false;
+            } else {
+                $data['status_upload_perbaikan'] = false;
+            }
+        }
+
+        // ===== KABAG TOLAK (DENGAN JFT) =====
+        else if (
+            $data_last_trx->status_tracking == "3" &&
+            $data_last_trx->kasubbag_agree_disagree == '' &&
+            $data_last_trx->jft_agree_disagree == '' &&
+            $data_last_trx->kabag_agree_disagree == '2'
+        ) {
+            $data['status_upload_perbaikan'] = false; // ← KABAG TOLAK, BISA UPLOAD PERBAIKAN
+        }
+
+        // ===== JFT TOLAK =====
+        else if (
+            $data_last_trx->status_tracking == "3" &&
+            $data_last_trx->kasubbag_agree_disagree == '1' &&
+            $data_last_trx->jft_agree_disagree == '2'
+        ) {
+            $data['status_upload_perbaikan'] = true; // ← JFT TOLAK, BISA UPLOAD PERBAIKAN
+        }
+
+        // ===== JFT SETUJU, MENUNGGU KABAG =====
+        else if (
+            $data_last_trx->status_tracking == "3" &&
+            $data_last_trx->kasubbag_agree_disagree == '1' &&
+            $data_last_trx->jft_agree_disagree == '1' &&
+            $data_last_trx->kabag_agree_disagree == ''
+        ) {
+            $data['status_upload_perbaikan'] = false; // ← MENUNGGU KABAG, TIDAK BISA UPLOAD
+        }
+
+        // ===== KASUBBAG SETUJU, MENUNGGU JFT =====
+        else if (
+            $data_last_trx->status_tracking == "3" &&
+            $data_last_trx->kasubbag_agree_disagree == '1' &&
+            $data_last_trx->jft_agree_disagree == '' &&
+            $data_last_trx->kabag_agree_disagree == ''
+        ) {
+            $data['status_upload_perbaikan'] = false; // ← MENUNGGU JFT, TIDAK BISA UPLOAD
+        }
+
+        // ===== KASUBBAG TIDAK SETUJU TAPI KABAG SETUJU =====
+        else if (
+            $data_last_trx->status_tracking == "3" &&
+            $data_last_trx->kasubbag_agree_disagree == '2' &&
+            $data_last_trx->kabag_agree_disagree == '1'
+        ) {
+            $data['status_upload_perbaikan'] = true; // ← KASUBBAG TOLAK TAPI KABAG OVERRIDE, BISA UPLOAD
+        }
+
+        // ===== KASUBBAG TIDAK SETUJU, KABAG BELUM =====
+        else if (
+            $data_last_trx->status_tracking == "3" &&
+            $data_last_trx->kasubbag_agree_disagree == '2' &&
+            $data_last_trx->kabag_agree_disagree == ''
+        ) {
+            $data['status_upload_perbaikan'] = true; // ← KASUBBAG TOLAK, BISA UPLOAD PERBAIKAN
+        }
+
+        // ===== SEDANG DIPROSES (Kasubbag sudah, Kabag tolak) =====
+        else if (
+            $data_last_trx->status_tracking == "3" &&
+            $data_last_trx->kasubbag_agree_disagree != '' &&
+            $data_last_trx->kabag_agree_disagree == '2'
+        ) {
+            $data['status_upload_perbaikan'] = false; // ← KABAG TOLAK, SEDANG DIPROSES
+        }
+
+        // ===== SEDANG DIPROSES (Kasubbag sudah, Kabag belum) =====
+        else if (
+            $data_last_trx->status_tracking == "3" &&
+            $data_last_trx->kasubbag_agree_disagree != '' &&
+            $data_last_trx->kabag_agree_disagree == ''
+        ) {
+            $data['status_upload_perbaikan'] = false; // ← MENUNGGU KABAG
+        }
+
+        // ===== USULAN PERBAIKAN (Belum ada approval) =====
+        else if (
+            $data_last_trx->status_tracking == "3" &&
+            $data_last_trx->kasubbag_agree_disagree == '' &&
+            $data_last_trx->kabag_agree_disagree == ''
+        ) {
+            $data['status_upload_perbaikan'] = false; // ← BELUM ADA APPROVAL
+        }
+
+        // ===== DISPOSISI =====
+        else if ($data_last_trx->status_tracking == "2") {
             $data['status_upload_perbaikan'] = false;
         }
 
-        $data['breadcrumb'] = ["header_content" => "Detail Usulan", "breadcrumb_link" => [['link' => true, 'url' => base_url() . 'usulan_raperbup', 'content' => 'Usulan', 'is_active' => false], ['link' => false, 'content' => 'Detail Usulan', 'is_active' => true]]];
+        // ===== USULAN BARU =====
+        else if ($data_last_trx->status_tracking == "1") {
+            $data['status_upload_perbaikan'] = false;
+        }
+
+        $data['breadcrumb'] = [
+            "header_content" => "Detail Usulan",
+            "breadcrumb_link" => [
+                [
+                    'link' => true,
+                    'url' => base_url() . 'usulan_raperbup',
+                    'content' => 'Usulan',
+                    'is_active' => false
+                ],
+                [
+                    'link' => false,
+                    'content' => 'Detail Usulan',
+                    'is_active' => true
+                ]
+            ]
+        ];
+
         $this->execute('detail_raperbup', $data);
     }
 

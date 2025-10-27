@@ -271,33 +271,6 @@ class Request extends MY_Controller
                     }
                 }
 
-                // ===== KASUBBAG SETUJU TAPI KABAG TIDAK SETUJU =====
-                else if (
-                    $row->status_tracking == "3" &&
-                    $row->kasubbag_agree_disagree == '1' &&
-                    $row->kabag_agree_disagree == '2'
-                ) {
-                    $templist[$key]['status_terakhir'] = "<div class='badge badge-danger'>Hasil Pemeriksaan " . $nama_kasubbag->nama_lengkap . " Tidak Disetujui Kabag Hukum </div>" . ($row->catatan_ditolak ? "<br />Catatan :<br />" . nl2br($row->catatan_ditolak) : "");
-                }
-
-                // ===== KASUBBAG TIDAK SETUJU TAPI KABAG SETUJU =====
-                else if (
-                    $row->status_tracking == "3" &&
-                    $row->kasubbag_agree_disagree == '2' &&
-                    $row->kabag_agree_disagree == '1'
-                ) {
-                    $templist[$key]['status_terakhir'] = "<div class='badge badge-success'>Hasil Pemeriksaan " . $nama_kasubbag->nama_lengkap . " Disetujui Kabag Hukum</div>";
-                }
-
-                // ===== KASUBBAG DAN KABAG TIDAK SETUJU =====
-                else if (
-                    $row->status_tracking == "3" &&
-                    $row->kasubbag_agree_disagree == '2' &&
-                    $row->kabag_agree_disagree == '2'
-                ) {
-                    $templist[$key]['status_terakhir'] = "<div class='badge badge-danger'>Hasil Pemeriksaan " . $nama_kasubbag->nama_lengkap . " Tidak Disetujui Kabag Hukum </div>" . ($row->catatan_ditolak ? "<br />Catatan :<br />" . nl2br($row->catatan_ditolak) : "");
-                }
-
                 // ===== JFT SETUJU, MENUNGGU KABAG =====
                 else if (
                     $row->status_tracking == "3" &&
@@ -357,6 +330,25 @@ class Request extends MY_Controller
                     }
 
                     $templist[$key]['status_terakhir'] = "<div class='badge badge-danger mb-3'>Usulan Tidak Disetujui " . $nama_kasubbag->nama_lengkap . "</div>" . ($row->catatan_ditolak ? "<br />Catatan :<br />" . nl2br($row->catatan_ditolak) : "") . ($row->file_catatan_perbaikan ? "<br /><br />File Catatan Perbaikan : " . $file : "");
+                }
+
+                // ===== KABAG TOLAK =====
+                else if (
+                    $row->status_tracking == "3" &&
+                    $row->jft_agree_disagree == '' &&
+                    $row->kabag_agree_disagree == '2'
+                ) {
+                    $templist[$key]['status_terakhir'] = "<div class='badge badge-danger mb-3'>Usulan Ditangguhkan oleh Bagian Hukum " . $row->nama_lengkap . "</div>" . ($row->catatan_ditolak ? "<br />Catatan :<br />" . nl2br($row->catatan_ditolak) : "");
+                    // Usulan perbaikan
+                    // $file = "";
+                    // if ($row->file_perbaikan) {
+                    //     $file_extension = explode(".", $row->file_perbaikan);
+                    //     $extension = (count($file_extension) > 1) ? $file_extension[1] : 'pdf';
+                    //     $usulan = base_url() . $this->config->item("file_usulan") . "/" . $row->file_perbaikan;
+                    //     $file = "<button type='button' class='btn btn-primary' onclick=\"view_detail('" . $usulan . "','" . $extension . "')\">View</button>";
+                    // }
+
+                    // $templist[$key]['status_terakhir'] = "<div class='badge badge-warning mb-3'>Usulan Perbaikan</div> <div>File : " . $file . "</div>";
                 }
 
                 // ===== USULAN PERBAIKAN =====
@@ -624,6 +616,48 @@ class Request extends MY_Controller
             "row"
         );
         if ($data_usulan) {
+            $data = true;
+        } else {
+            $data = false;
+        }
+
+        $this->output
+            ->set_content_type('application/json')
+            ->set_output(json_encode($data));
+    }
+
+    // ========================================
+    // METHOD: Check Apakah Tombol Final Kabag Muncul
+    // ========================================
+    public function check_approve_final_kabag()
+    {
+        $id_usulan_raperbup = decrypt_data($this->iget("id_peraturan"));
+
+        $data_usulan = $this->trx_raperbup_model->get(
+            array(
+                "where" => array(
+                    "usulan_raperbup_id" => $id_usulan_raperbup,
+                ),
+                "order_by" => array(
+                    "created_at" => "DESC"
+                ),
+                "limit" => 1
+            ),
+            "row"
+        );
+
+        // Tombol muncul jika:
+        // 1. Status tracking = 3 (tahap review)
+        // 2. Kasubbag sudah setuju
+        // 3. JFT sudah setuju
+        // 4. Kabag belum memutuskan
+        if (
+            $data_usulan &&
+            $data_usulan->status_tracking == '3' &&
+            $data_usulan->kasubbag_agree_disagree == '1' &&
+            $data_usulan->jft_agree_disagree == '1' &&
+            $data_usulan->kabag_agree_disagree == ''
+        ) {
             $data = true;
         } else {
             $data = false;

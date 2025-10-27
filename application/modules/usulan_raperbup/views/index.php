@@ -95,6 +95,7 @@
                 HoldOn.open(optionsHoldOn);
             },
             success: function(response) {
+                console.log(response);
                 $.each(response, function(index, value) {
                     datatableUsulanRaperbup.row.add([
                         value.nama_kategori,

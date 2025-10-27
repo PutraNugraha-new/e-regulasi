@@ -169,6 +169,15 @@
                 },
                 success: function(response) {
                     let html = "";
+                    let firstRejectedIndex = -1;
+
+                    // Cari index catatan_ditolak pertama
+                    $.each(response, function(index, value) {
+                        if (value.catatan_ditolak && firstRejectedIndex === -1) {
+                            firstRejectedIndex = index;
+                        }
+                    });
+
                     $.each(response, function(index, value) {
                         html += "<div class='activity'>" +
                             "<div class='activity-icon " + value.class_color + " text-white shadow-dark'>" +
@@ -184,9 +193,10 @@
                             "</div>" +
                             "<p>" + value.status_terakhir + "</p>";
 
-                        // Tampilkan tombol Revisi hanya jika ada catatan_ditolak
-                        if (value.catatan_ditolak) {
+                        // Tampilkan tombol HANYA pada index catatan_ditolak pertama
+                        if (value.catatan_ditolak && index === firstRejectedIndex) {
                             html += "<a class='btn btn-warning btn-sm' href='" + base_url + "monitoring_raperbup/edit_usulan_raperbup/" + id_peraturan + "'>Revisi</a>";
+                            // html += "<a href='#' onclick=\"change_status('1')\" class='btn btn-info ml-2'>Teruskan ke Kabag</a>";
                         }
 
                         html += "</div>" +

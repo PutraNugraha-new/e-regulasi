@@ -41,9 +41,9 @@ class Request extends MY_Controller
 
             // Subquery untuk status terakhir
             $subquery = "(SELECT usulan_raperbup_id, status_tracking
-                          FROM trx_raperbup
-                          WHERE created_at = (SELECT MAX(created_at) FROM trx_raperbup AS sub_trx WHERE sub_trx.usulan_raperbup_id = trx_raperbup.usulan_raperbup_id)
-                         ) AS t";
+                      FROM trx_raperbup
+                      WHERE created_at = (SELECT MAX(created_at) FROM trx_raperbup AS sub_trx WHERE sub_trx.usulan_raperbup_id = trx_raperbup.usulan_raperbup_id)
+                     ) AS t";
             $this->db->join($subquery, 'usulan_raperbup.id_usulan_raperbup = t.usulan_raperbup_id', 'left');
             if ($status) {
                 $wh["t.status_tracking"] = $status;
@@ -95,27 +95,122 @@ class Request extends MY_Controller
                 $templist[$key]['status_terakhir'] = $data_terakhir ? "" : "<div class='badge badge-light'>Belum Ada Transaksi</div>";
 
                 if ($data_terakhir) {
+                    // ===== STATUS 5: PUBLISH =====
                     if ($data_terakhir->status_tracking == "5") {
                         $templist[$key]['status_terakhir'] = "<div class='badge badge-success'>Usulan Sudah Di Publish</div>";
-                    } else if ($data_terakhir->status_tracking == "6") {
+                    }
+                    // ===== STATUS 6: DIBATALKAN =====
+                    else if ($data_terakhir->status_tracking == "6") {
                         $templist[$key]['status_terakhir'] = "<div class='badge badge-secondary'>Usulan Dibatalkan</div>";
-                    } else if ($data_terakhir->status_tracking == "3" && $data_terakhir->kasubbag_agree_disagree == '1' && $data_terakhir->kabag_agree_disagree == '1' && $data_terakhir->asisten_agree_disagree == '1' && $data_terakhir->sekda_agree_disagree == '1' && $data_terakhir->wabup_agree_disagree == '1' && $data_terakhir->bupati_agree_disagree == '1') {
+                    }
+
+                    // ===== BUPATI SETUJU (LENGKAP DENGAN JFT) =====
+                    else if (
+                        $data_terakhir->status_tracking == "3" &&
+                        $data_terakhir->kasubbag_agree_disagree == '1' &&
+                        $data_terakhir->jft_agree_disagree == '1' &&
+                        $data_terakhir->kabag_agree_disagree == '1' &&
+                        $data_terakhir->asisten_agree_disagree == '1' &&
+                        $data_terakhir->sekda_agree_disagree == '1' &&
+                        $data_terakhir->wabup_agree_disagree == '1' &&
+                        $data_terakhir->bupati_agree_disagree == '1'
+                    ) {
                         $templist[$key]['status_terakhir'] = "<div class='badge badge-success'>Usulan Disetujui " . ($data_terakhir->nama_lengkap ?? 'Unknown') . "</div>";
-                    } else if ($data_terakhir->status_tracking == "3" && $data_terakhir->kasubbag_agree_disagree == '1' && $data_terakhir->kabag_agree_disagree == '1' && $data_terakhir->asisten_agree_disagree == '1' && $data_terakhir->sekda_agree_disagree == '1' && $data_terakhir->wabup_agree_disagree == '1' && $data_terakhir->bupati_agree_disagree == '2') {
+                    }
+
+                    // ===== BUPATI TIDAK SETUJU =====
+                    else if (
+                        $data_terakhir->status_tracking == "3" &&
+                        $data_terakhir->kasubbag_agree_disagree == '1' &&
+                        $data_terakhir->jft_agree_disagree == '1' &&
+                        $data_terakhir->kabag_agree_disagree == '1' &&
+                        $data_terakhir->asisten_agree_disagree == '1' &&
+                        $data_terakhir->sekda_agree_disagree == '1' &&
+                        $data_terakhir->wabup_agree_disagree == '1' &&
+                        $data_terakhir->bupati_agree_disagree == '2'
+                    ) {
                         $templist[$key]['status_terakhir'] = "<div class='badge badge-danger'>Usulan Tidak Disetujui " . ($data_terakhir->nama_lengkap ?? 'Unknown') . "</div>";
-                    } else if ($data_terakhir->status_tracking == "3" && $data_terakhir->kasubbag_agree_disagree == '1' && $data_terakhir->kabag_agree_disagree == '1' && $data_terakhir->asisten_agree_disagree == '1' && $data_terakhir->sekda_agree_disagree == '1' && $data_terakhir->wabup_agree_disagree == '1') {
+                    }
+
+                    // ===== WABUP SETUJU =====
+                    else if (
+                        $data_terakhir->status_tracking == "3" &&
+                        $data_terakhir->kasubbag_agree_disagree == '1' &&
+                        $data_terakhir->jft_agree_disagree == '1' &&
+                        $data_terakhir->kabag_agree_disagree == '1' &&
+                        $data_terakhir->asisten_agree_disagree == '1' &&
+                        $data_terakhir->sekda_agree_disagree == '1' &&
+                        $data_terakhir->wabup_agree_disagree == '1'
+                    ) {
                         $templist[$key]['status_terakhir'] = "<div class='badge badge-success'>Usulan Disetujui " . ($data_terakhir->nama_lengkap ?? 'Unknown') . "</div>";
-                    } else if ($data_terakhir->status_tracking == "3" && $data_terakhir->kasubbag_agree_disagree == '1' && $data_terakhir->kabag_agree_disagree == '1' && $data_terakhir->asisten_agree_disagree == '1' && $data_terakhir->sekda_agree_disagree == '1' && $data_terakhir->wabup_agree_disagree == '2') {
+                    }
+
+                    // ===== WABUP TIDAK SETUJU =====
+                    else if (
+                        $data_terakhir->status_tracking == "3" &&
+                        $data_terakhir->kasubbag_agree_disagree == '1' &&
+                        $data_terakhir->jft_agree_disagree == '1' &&
+                        $data_terakhir->kabag_agree_disagree == '1' &&
+                        $data_terakhir->asisten_agree_disagree == '1' &&
+                        $data_terakhir->sekda_agree_disagree == '1' &&
+                        $data_terakhir->wabup_agree_disagree == '2'
+                    ) {
                         $templist[$key]['status_terakhir'] = "<div class='badge badge-danger'>Usulan Tidak Disetujui " . ($data_terakhir->nama_lengkap ?? 'Unknown') . "</div>";
-                    } else if ($data_terakhir->status_tracking == "3" && $data_terakhir->kasubbag_agree_disagree == '1' && $data_terakhir->kabag_agree_disagree == '1' && $data_terakhir->asisten_agree_disagree == '1' && $data_terakhir->sekda_agree_disagree == '1') {
+                    }
+
+                    // ===== SEKDA SETUJU =====
+                    else if (
+                        $data_terakhir->status_tracking == "3" &&
+                        $data_terakhir->kasubbag_agree_disagree == '1' &&
+                        $data_terakhir->jft_agree_disagree == '1' &&
+                        $data_terakhir->kabag_agree_disagree == '1' &&
+                        $data_terakhir->asisten_agree_disagree == '1' &&
+                        $data_terakhir->sekda_agree_disagree == '1'
+                    ) {
                         $templist[$key]['status_terakhir'] = "<div class='badge badge-success'>Usulan Disetujui " . ($data_terakhir->nama_lengkap ?? 'Unknown') . "</div>";
-                    } else if ($data_terakhir->status_tracking == "3" && $data_terakhir->kasubbag_agree_disagree == '1' && $data_terakhir->kabag_agree_disagree == '1' && $data_terakhir->asisten_agree_disagree == '1' && $data_terakhir->sekda_agree_disagree == '2') {
+                    }
+
+                    // ===== SEKDA TIDAK SETUJU =====
+                    else if (
+                        $data_terakhir->status_tracking == "3" &&
+                        $data_terakhir->kasubbag_agree_disagree == '1' &&
+                        $data_terakhir->jft_agree_disagree == '1' &&
+                        $data_terakhir->kabag_agree_disagree == '1' &&
+                        $data_terakhir->asisten_agree_disagree == '1' &&
+                        $data_terakhir->sekda_agree_disagree == '2'
+                    ) {
                         $templist[$key]['status_terakhir'] = "<div class='badge badge-danger'>Usulan Tidak Disetujui " . ($data_terakhir->nama_lengkap ?? 'Unknown') . "</div>";
-                    } else if ($data_terakhir->status_tracking == "3" && $data_terakhir->kasubbag_agree_disagree == '1' && $data_terakhir->kabag_agree_disagree == '1' && $data_terakhir->asisten_agree_disagree == '1') {
+                    }
+
+                    // ===== ASISTEN/KESRA SETUJU =====
+                    else if (
+                        $data_terakhir->status_tracking == "3" &&
+                        $data_terakhir->kasubbag_agree_disagree == '1' &&
+                        $data_terakhir->jft_agree_disagree == '1' &&
+                        $data_terakhir->kabag_agree_disagree == '1' &&
+                        $data_terakhir->asisten_agree_disagree == '1'
+                    ) {
                         $templist[$key]['status_terakhir'] = "<div class='badge badge-success'>Usulan Disetujui " . ($data_terakhir->nama_lengkap ?? 'Unknown') . "</div>";
-                    } else if ($data_terakhir->status_tracking == "3" && $data_terakhir->kasubbag_agree_disagree == '1' && $data_terakhir->kabag_agree_disagree == '1' && $data_terakhir->asisten_agree_disagree == '2') {
+                    }
+
+                    // ===== ASISTEN/KESRA TIDAK SETUJU =====
+                    else if (
+                        $data_terakhir->status_tracking == "3" &&
+                        $data_terakhir->kasubbag_agree_disagree == '1' &&
+                        $data_terakhir->jft_agree_disagree == '1' &&
+                        $data_terakhir->kabag_agree_disagree == '1' &&
+                        $data_terakhir->asisten_agree_disagree == '2'
+                    ) {
                         $templist[$key]['status_terakhir'] = "<div class='badge badge-danger'>Usulan Tidak Disetujui " . ($data_terakhir->nama_lengkap ?? 'Unknown') . "</div>";
-                    } else if ($data_terakhir->status_tracking == "3" && $data_terakhir->kasubbag_agree_disagree == '1' && $data_terakhir->kabag_agree_disagree == '1') {
+                    }
+
+                    // ===== KABAG SETUJU (DENGAN JFT) =====
+                    else if (
+                        $data_terakhir->status_tracking == "3" &&
+                        $data_terakhir->kasubbag_agree_disagree == '1' &&
+                        $data_terakhir->jft_agree_disagree == '1' &&
+                        $data_terakhir->kabag_agree_disagree == '1'
+                    ) {
                         if ($row->teruskan_provinsi == "1" && $data_terakhir->file_lampiran_provinsi != "" && $data_terakhir->provinsi_agree_disagree == "1") {
                             $templist[$key]['status_terakhir'] = "<div class='badge badge-success'>Usulan Disetujui Provinsi</div>";
                         } else if ($row->teruskan_provinsi == "1" && $data_terakhir->file_lampiran_provinsi != "" && $data_terakhir->provinsi_agree_disagree == "2") {
@@ -131,17 +226,124 @@ class Request extends MY_Controller
                         } else {
                             $templist[$key]['status_terakhir'] = "<div class='badge badge-success'>Usulan Disetujui " . ($data_terakhir->nama_lengkap ?? 'Unknown') . "</div>";
                         }
-                    } else if ($data_terakhir->status_tracking == "3" && $data_terakhir->kasubbag_agree_disagree == '2' && $data_terakhir->kabag_agree_disagree == '1') {
+                    }
+
+                    // ===== KABAG SETUJU (TANPA JFT - backward compatibility) =====
+                    else if (
+                        $data_terakhir->status_tracking == "3" &&
+                        $data_terakhir->kasubbag_agree_disagree == '1' &&
+                        $data_terakhir->kabag_agree_disagree == '1' &&
+                        ($data_terakhir->jft_agree_disagree == '' || !isset($data_terakhir->jft_agree_disagree))
+                    ) {
+                        if ($row->teruskan_provinsi == "1" && $data_terakhir->file_lampiran_provinsi != "" && $data_terakhir->provinsi_agree_disagree == "1") {
+                            $templist[$key]['status_terakhir'] = "<div class='badge badge-success'>Usulan Disetujui Provinsi</div>";
+                        } else if ($row->teruskan_provinsi == "1" && $data_terakhir->file_lampiran_provinsi != "" && $data_terakhir->provinsi_agree_disagree == "2") {
+                            $file = "";
+                            if ($data_terakhir->file_catatan_perbaikan) {
+                                $file_extension = explode(".", $data_terakhir->file_catatan_perbaikan);
+                                $perbaikan = base_url() . $this->config->item("file_usulan") . "/" . $data_terakhir->file_catatan_perbaikan;
+                                $file = "<button type='button' class='btn btn-primary' onclick=\"view_detail('" . $perbaikan . "','" . ($file_extension[1] ?? 'pdf') . "')\">View</button>";
+                            }
+                            $templist[$key]['status_terakhir'] = "<div class='badge badge-danger mb-3'>Usulan Tidak Disetujui Provinsi</div>" . ($data_terakhir->catatan_ditolak ? "<div>Catatan :</div>" . nl2br($data_terakhir->catatan_ditolak) : "") . ($data_terakhir->file_catatan_perbaikan ? "<br /><br />File Catatan Perbaikan : " . $file : "");
+                        } else if ($row->teruskan_provinsi == "1" && $data_terakhir->file_lampiran_provinsi != "") {
+                            $templist[$key]['status_terakhir'] = "<div class='badge badge-success text-left'>Lampiran untuk Provinsi, <br />sudah di upload oleh " . ($data_terakhir->nama_lengkap ?? 'Unknown') . " & sudah dikirim ke Admin Provinsi</div>";
+                        } else {
+                            $templist[$key]['status_terakhir'] = "<div class='badge badge-success'>Usulan Disetujui " . ($data_terakhir->nama_lengkap ?? 'Unknown') . "</div>";
+                        }
+                    }
+
+                    // ===== KASUBBAG TIDAK SETUJU TAPI KABAG SETUJU =====
+                    else if (
+                        $data_terakhir->status_tracking == "3" &&
+                        $data_terakhir->kasubbag_agree_disagree == '2' &&
+                        $data_terakhir->kabag_agree_disagree == '1'
+                    ) {
                         $templist[$key]['status_terakhir'] = "<div class='badge badge-danger'>Usulan Tidak Disetujui " . ($data_terakhir->nama_lengkap ?? 'Unknown') . "</div>";
-                    } else if ($data_terakhir->status_tracking == "3" && $data_terakhir->kasubbag_agree_disagree != '' && $data_terakhir->kabag_agree_disagree == '2') {
+                    }
+
+                    // ===== JFT SETUJU, MENUNGGU KABAG =====
+                    else if (
+                        $data_terakhir->status_tracking == "3" &&
+                        $data_terakhir->kasubbag_agree_disagree == '1' &&
+                        $data_terakhir->jft_agree_disagree == '1' &&
+                        $data_terakhir->kabag_agree_disagree == ''
+                    ) {
+                        $templist[$key]['status_terakhir'] = "<div class='badge badge-info'>Disetujui JFT, menunggu review Kabag</div>";
+                    }
+
+                    // ===== JFT TIDAK SETUJU =====
+                    else if (
+                        $data_terakhir->status_tracking == "3" &&
+                        $data_terakhir->kasubbag_agree_disagree == '1' &&
+                        $data_terakhir->jft_agree_disagree == '2'
+                    ) {
+                        $templist[$key]['status_terakhir'] = "<div class='badge badge-danger'>Usulan Tidak Disetujui JFT</div>";
+                    }
+
+                    // ===== KASUBBAG SETUJU, MENUNGGU JFT =====
+                    else if (
+                        $data_terakhir->status_tracking == "3" &&
+                        $data_terakhir->kasubbag_agree_disagree == '1' &&
+                        $data_terakhir->jft_agree_disagree == '' &&
+                        $data_terakhir->kabag_agree_disagree == ''
+                    ) {
+                        $templist[$key]['status_terakhir'] = "<div class='badge badge-info'>Disetujui Kasubbag, menunggu review JFT</div>";
+                    }
+
+                    // ===== KABAG TOLAK (DENGAN JFT) =====
+                    else if (
+                        $data_terakhir->status_tracking == "3" &&
+                        $data_terakhir->kasubbag_agree_disagree == '' &&
+                        $data_terakhir->jft_agree_disagree == '' &&
+                        $data_terakhir->kabag_agree_disagree == '2'
+                    ) {
+                        $file = "";
+                        if ($data_terakhir->file_catatan_perbaikan) {
+                            $file_extension = explode(".", $data_terakhir->file_catatan_perbaikan);
+                            $extension = (count($file_extension) > 1) ? $file_extension[1] : 'pdf';
+                            $perbaikan = base_url() . $this->config->item("file_usulan") . "/" . $data_terakhir->file_catatan_perbaikan;
+                            $file = "<button type='button' class='btn btn-primary' onclick=\"view_detail('" . $perbaikan . "','" . $extension . "')\">View</button>";
+                        }
+
+                        $templist[$key]['status_terakhir'] = "<div class='badge badge-danger mb-3'>Usulan Ditolak oleh Kabag Hukum</div>" .
+                            ($data_terakhir->catatan_ditolak ? "Catatan :<br />" . nl2br($data_terakhir->catatan_ditolak) : "") .
+                            ($data_terakhir->file_catatan_perbaikan ? "<div class='mt-3'>File perbaikan : " . $file . "</div>" : "");
+                    }
+
+                    // ===== SEDANG DIPROSES (Kasubbag sudah, Kabag tolak) =====
+                    else if (
+                        $data_terakhir->status_tracking == "3" &&
+                        $data_terakhir->kasubbag_agree_disagree != '' &&
+                        $data_terakhir->kabag_agree_disagree == '2'
+                    ) {
                         $templist[$key]['status_terakhir'] = "<div class='badge badge-warning'>Sedang diproses oleh " . ($row->keterangan ?? 'Unknown') . "</div>";
-                    } else if ($data_terakhir->status_tracking == "3" && $data_terakhir->kasubbag_agree_disagree != '' && $data_terakhir->kabag_agree_disagree == '') {
+                    }
+
+                    // ===== SEDANG DIPROSES (Kasubbag sudah, Kabag belum) =====
+                    else if (
+                        $data_terakhir->status_tracking == "3" &&
+                        $data_terakhir->kasubbag_agree_disagree != '' &&
+                        $data_terakhir->kabag_agree_disagree == ''
+                    ) {
                         $templist[$key]['status_terakhir'] = "<div class='badge badge-warning'>Sedang diproses oleh " . ($row->keterangan ?? 'Unknown') . "</div>";
-                    } else if ($data_terakhir->status_tracking == "3" && $data_terakhir->kasubbag_agree_disagree == '' && $data_terakhir->kabag_agree_disagree == '') {
+                    }
+
+                    // ===== USULAN PERBAIKAN =====
+                    else if (
+                        $data_terakhir->status_tracking == "3" &&
+                        $data_terakhir->kasubbag_agree_disagree == '' &&
+                        $data_terakhir->kabag_agree_disagree == ''
+                    ) {
                         $templist[$key]['status_terakhir'] = "<div class='badge badge-warning'>Usulan Perbaikan</div>";
-                    } else if ($data_terakhir->status_tracking == "2") {
+                    }
+
+                    // ===== DISPOSISI =====
+                    else if ($data_terakhir->status_tracking == "2") {
                         $templist[$key]['status_terakhir'] = "<div class='badge badge-info'>Diteruskan ke " . ($row->keterangan ?? 'Unknown') . "</div>";
-                    } else if ($data_terakhir->status_tracking == "1") {
+                    }
+
+                    // ===== USULAN BARU =====
+                    else if ($data_terakhir->status_tracking == "1") {
                         $templist[$key]['status_terakhir'] = "<div class='badge badge-light'>Usulan Baru</div>";
                     }
                 }
@@ -175,10 +377,10 @@ class Request extends MY_Controller
                 }
 
                 $lampiran_group = "<div class='dropdown d-inline mr-2'>
-                    <button class='btn btn-info dropdown-toggle' type='button' id='dropdownMenuButton' data-toggle='dropdown' aria-haspopup='true' aria-expanded='false'>
-                      Lampiran
-                    </button>
-                    <div class='dropdown-menu'>";
+                <button class='btn btn-info dropdown-toggle' type='button' id='dropdownMenuButton' data-toggle='dropdown' aria-haspopup='true' aria-expanded='false'>
+                  Lampiran
+                </button>
+                <div class='dropdown-menu'>";
                 if (in_array($row->kategori_usulan_id, array("1", "2"))) {
                     $lampiran_group .= $link_lampiran;
                     $lampiran_group .= $link_lampiran_sk_tim;

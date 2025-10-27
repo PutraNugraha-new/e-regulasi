@@ -1032,7 +1032,7 @@ class Monitoring_raperbup extends MY_Controller
             "level_user_id_status" => $this->session->userdata("level_user_id"),
             "status_tracking" => '3', // ← TETAP 3
             "status_pesan" => "1",
-            "kasubbag_agree_disagree" => $data_last_trx->kasubbag_agree_disagree, // Copy
+            "kasubbag_agree_disagree" => '1', // Copy
             "jft_agree_disagree" => $status, // ← Isi keputusan JFT
             "kabag_agree_disagree" => "", // ← Kosong untuk Kabag
             'created_at' => $this->datetime(),
@@ -2318,5 +2318,203 @@ class Monitoring_raperbup extends MY_Controller
         $this->output
             ->set_content_type('application/json')
             ->set_output(json_encode($status));
+    }
+
+    // ========================================
+    // METHOD BARU: Kabag Approve Final
+    // ========================================
+    public function approve_final_kabag()
+    {
+        $id_usulan_raperbup = decrypt_data($this->ipost("id_usulan_raperbup"));
+        $catatan = $this->ipost("catatan"); // Optional: catatan persetujuan
+
+        $data_last_trx = $this->trx_raperbup_model->get(
+            array(
+                "where" => array(
+                    "usulan_raperbup_id" => $id_usulan_raperbup,
+                ),
+                "order_by" => array(
+                    "created_at" => "DESC"
+                ),
+                "limit" => 1
+            ),
+            "row"
+        );
+
+        // Validasi: JFT harus sudah approve
+        if ($data_last_trx->jft_agree_disagree != '1') {
+            $this->output
+                ->set_content_type('application/json')
+                ->set_output(json_encode([
+                    'status' => false,
+                    'message' => 'Usulan harus disetujui JFT terlebih dahulu.'
+                ]));
+            return;
+        }
+
+        // Validasi: Kabag belum approve
+        if ($data_last_trx->kabag_agree_disagree == '1') {
+            $this->output
+                ->set_content_type('application/json')
+                ->set_output(json_encode([
+                    'status' => false,
+                    'message' => 'Usulan sudah disetujui sebelumnya.'
+                ]));
+            return;
+        }
+
+        // Gunakan file perbaikan jika ada
+        $file_usulan = $data_last_trx->file_usulan_raperbup;
+        if ($data_last_trx->file_perbaikan) {
+            $file_usulan = $data_last_trx->file_perbaikan;
+        }
+
+        // Simpan transaksi baru dengan status FINAL (status_tracking = 5)
+        $data_trx = array(
+            "usulan_raperbup_id" => $id_usulan_raperbup,
+            "file_usulan_raperbup" => $file_usulan,
+            "file_perbaikan" => $data_last_trx->file_perbaikan,
+            "file_catatan_perbaikan" => $data_last_trx->file_catatan_perbaikan,
+            "catatan_ditolak" => $catatan ?: $data_last_trx->catatan_ditolak,
+            "level_user_id_status" => $this->session->userdata("level_user_id"),
+            "status_tracking" => '5', // ← STATUS FINAL (PUBLISH)
+            "kasubbag_agree_disagree" => $data_last_trx->kasubbag_agree_disagree,
+            "jft_agree_disagree" => $data_last_trx->jft_agree_disagree,
+            "kabag_agree_disagree" => '1', // ← KABAG SETUJU
+            'created_at' => $this->datetime(),
+            "id_user_created" => $this->session->userdata("id_user")
+        );
+
+        $status = $this->trx_raperbup_model->save($data_trx);
+
+        if ($status) {
+            $nama_peraturan = $this->usulan_raperbup_model->get_by($id_usulan_raperbup)->nama_peraturan ?: 'Usulan Tanpa Nama';
+
+            // Kirim notifikasi ke Pengaju (Admin PD)
+            $id_pengaju = $this->db->select('id_user_created')
+                ->where('id_usulan_raperbup', $id_usulan_raperbup)
+                ->get('usulan_raperbup')
+                ->row()->id_user_created;
+
+            $data_notif = [
+                'id_user_tujuan' => $id_pengaju,
+                'id_usulan_raperbup' => $id_usulan_raperbup,
+                'tipe_notif' => 'approve_final_kabag',
+                'pesan' => 'Usulan Anda telah disetujui dan difinalisasi oleh Kabag Hukum: ' . $nama_peraturan,
+            ];
+            $this->Notifikasi_model->simpan_notif($data_notif);
+            log_message('debug', 'Notif approve_final_kabag saved: ' . json_encode($data_notif));
+
+            // Optional: Kirim notif ke Kasubbag dan JFT sebagai informasi
+            if ($data_last_trx->id_user_created) {
+                $data_notif_kasubbag = [
+                    'id_user_tujuan' => $data_last_trx->id_user_created,
+                    'id_usulan_raperbup' => $id_usulan_raperbup,
+                    'tipe_notif' => 'info_final',
+                    'pesan' => 'Usulan yang Anda periksa telah disetujui final oleh Kabag Hukum: ' . $nama_peraturan,
+                ];
+                $this->Notifikasi_model->simpan_notif($data_notif_kasubbag);
+            }
+        }
+
+        $this->output
+            ->set_content_type('application/json')
+            ->set_output(json_encode(['status' => $status]));
+    }
+
+
+    // ========================================
+    // METHOD BARU: Kabag Tolak Final
+    // ========================================
+    public function reject_final_kabag()
+    {
+        $id_usulan_raperbup = decrypt_data($this->ipost("id_usulan_raperbup"));
+        $catatan = $this->ipost("catatan"); // Wajib: alasan penolakan
+
+        if (!$catatan) {
+            $this->output
+                ->set_content_type('application/json')
+                ->set_output(json_encode([
+                    'status' => false,
+                    'message' => 'Catatan penolakan wajib diisi.'
+                ]));
+            return;
+        }
+
+        $data_last_trx = $this->trx_raperbup_model->get(
+            array(
+                "where" => array(
+                    "usulan_raperbup_id" => $id_usulan_raperbup,
+                ),
+                "order_by" => array(
+                    "created_at" => "DESC"
+                ),
+                "limit" => 1
+            ),
+            "row"
+        );
+
+        // Validasi: JFT harus sudah approve
+        if ($data_last_trx->jft_agree_disagree != '1') {
+            $this->output
+                ->set_content_type('application/json')
+                ->set_output(json_encode([
+                    'status' => false,
+                    'message' => 'Usulan harus disetujui JFT terlebih dahulu.'
+                ]));
+            return;
+        }
+
+        // Simpan transaksi baru dengan status TOLAK
+        $data_trx = array(
+            "usulan_raperbup_id" => $id_usulan_raperbup,
+            "file_usulan_raperbup" => $data_last_trx->file_usulan_raperbup,
+            "file_perbaikan" => $data_last_trx->file_perbaikan,
+            "file_catatan_perbaikan" => $data_last_trx->file_catatan_perbaikan,
+            "catatan_ditolak" => $catatan, // ← CATATAN PENOLAKAN
+            "level_user_id_status" => $this->session->userdata("level_user_id"),
+            "status_tracking" => '3', // ← KEMBALI KE STATUS 3 (untuk perbaikan)
+            "kasubbag_agree_disagree" => '', // ← RESET untuk revisi ulang
+            "jft_agree_disagree" => '', // ← RESET untuk revisi ulang
+            "kabag_agree_disagree" => '2', // ← KABAG TOLAK
+            'created_at' => $this->datetime(),
+            "id_user_created" => $this->session->userdata("id_user")
+        );
+
+        $status = $this->trx_raperbup_model->save($data_trx);
+
+        if ($status) {
+            $nama_peraturan = $this->usulan_raperbup_model->get_by($id_usulan_raperbup)->nama_peraturan ?: 'Usulan Tanpa Nama';
+
+            // Kirim notifikasi ke Pengaju (Admin PD)
+            $id_pengaju = $this->db->select('id_user_created')
+                ->where('id_usulan_raperbup', $id_usulan_raperbup)
+                ->get('usulan_raperbup')
+                ->row()->id_user_created;
+
+            $data_notif = [
+                'id_user_tujuan' => $id_pengaju,
+                'id_usulan_raperbup' => $id_usulan_raperbup,
+                'tipe_notif' => 'reject_final_kabag',
+                'pesan' => 'Usulan Anda ditolak oleh Kabag Hukum: ' . $nama_peraturan . ' (Catatan: ' . $catatan . ')',
+            ];
+            $this->Notifikasi_model->simpan_notif($data_notif);
+            log_message('debug', 'Notif reject_final_kabag saved: ' . json_encode($data_notif));
+
+            // Kirim notif ke Kasubbag untuk informasi
+            if ($data_last_trx->id_user_created) {
+                $data_notif_kasubbag = [
+                    'id_user_tujuan' => $data_last_trx->id_user_created,
+                    'id_usulan_raperbup' => $id_usulan_raperbup,
+                    'tipe_notif' => 'info_tolak_kabag',
+                    'pesan' => 'Usulan ditolak oleh Kabag Hukum, perlu revisi: ' . $nama_peraturan,
+                ];
+                $this->Notifikasi_model->simpan_notif($data_notif_kasubbag);
+            }
+        }
+
+        $this->output
+            ->set_content_type('application/json')
+            ->set_output(json_encode(['status' => $status]));
     }
 }

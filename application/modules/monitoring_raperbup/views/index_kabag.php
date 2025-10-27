@@ -70,13 +70,19 @@
                         <div class="card-header d-block">
                             <h4><span class='last_file'></span></h4>
                             <div class="card-header-action text-right">
-                                <a href="#publish" onclick="publish_for_skpd()" class="btn btn-info">Publish</a>
-                                <a href="#disposisi" onclick="disposisi_monitoring_raperbup()"
-                                    class="btn btn-info">Disposisi</a>
-                                <a href="#disetujui" onclick="change_status_pemeriksaan_kasubag('1')"
-                                    class="btn btn-info">Meneruskan</a>
-                                <a href="#tidakDisetujui" onclick="change_status_ditolak('2')"
-                                    class="btn btn-info">Menolak</a>
+                                <!-- Tombol LAMA (disembunyikan, untuk jaga-jaga) -->
+                                <a href="#publish" onclick="publish_for_skpd()" class="btn btn-info" style="display:none;">Publish</a>
+                                <a href="#disposisi" onclick="disposisi_monitoring_raperbup()" class="btn btn-info">Disposisi</a>
+                                <a href="#disetujui" onclick="change_status_pemeriksaan_kasubag('1')" class="btn btn-info" style="display:none;">Meneruskan</a>
+                                <a href="#tidakDisetujui" onclick="change_status_ditolak('2')" class="btn btn-info" style="display:none;">Menolak</a>
+
+                                <!-- Tombol BARU untuk Kabag Final -->
+                                <a href="#terimafinal" onclick="approve_final_kabag_confirm()" class="btn btn-success">
+                                    <i class="fas fa-check-circle"></i> Terima & Setujui
+                                </a>
+                                <a href="#tolakfinal" onclick="reject_final_kabag_confirm()" class="btn btn-danger">
+                                    <i class="fas fa-times-circle"></i> Tolak
+                                </a>
                             </div>
                         </div>
                         <div class="card-body" style="background-color: #f4f6f9;">
@@ -201,14 +207,20 @@
     $("a[href$='#disetujui']").hide();
     $("a[href$='#tidakDisetujui']").hide();
     $("a[href$='#publish']").hide();
+    $("a[href$='#terimafinal']").hide();
+    $("a[href$='#tolakfinal']").hide();
 
     function get_data_peraturan() {
         $(".list-activites").html("");
         $(".list-peraturan").html("<li>Belum Ada Peraturan</li>");
+
         $("a[href$='#disposisi']").hide();
         $("a[href$='#disetujui']").hide();
         $("a[href$='#tidakDisetujui']").hide();
         $("a[href$='#publish']").hide();
+        $("a[href$='#terimafinal']").hide(); // ← TAMBAH
+        $("a[href$='#tolakfinal']").hide(); // ← TAMBAH
+
         $(".last_file").html("");
         let skpd = $("select[name='skpd']").val();
         let filter = $("input[name='filter']:checked").val();
@@ -253,11 +265,14 @@
         $("a[href$='#disetujui']").hide();
         $("a[href$='#tidakDisetujui']").hide();
         $("a[href$='#publish']").hide();
+        $("a[href$='#terimafinal']").hide(); // ← TAMBAH
+        $("a[href$='#tolakfinal']").hide(); // ← TAMBAH
         $("input[name='usulan_peraturan']").val("");
         if (id_peraturan) {
             $("input[name='usulan_peraturan']").val(id_peraturan);
             check_disposisi();
-            check_disetujui_tidak_disetujui_kabag();
+            // check_disetujui_tidak_disetujui_kabag();
+            check_approve_final_kabag();
             check_publish();
             get_last_file();
             $.ajax({
@@ -296,6 +311,166 @@
                 }
             });
         }
+    }
+
+    function check_approve_final_kabag() {
+        let id_peraturan = $("input[name='usulan_peraturan']").val();
+
+        $("a[href$='#terimafinal']").hide();
+        $("a[href$='#tolakfinal']").hide();
+
+        $.ajax({
+            url: base_url + 'monitoring_raperbup/request/check_approve_final_kabag',
+            data: {
+                id_peraturan: id_peraturan
+            },
+            type: 'GET',
+            beforeSend: function() {
+                HoldOn.open(optionsHoldOn);
+            },
+            success: function(response) {
+                console.log('Check Approve Final Kabag:', response);
+                if (response) {
+                    $("a[href$='#terimafinal']").show();
+                    $("a[href$='#tolakfinal']").show();
+                } else {
+                    $("a[href$='#terimafinal']").hide();
+                    $("a[href$='#tolakfinal']").hide();
+                }
+            },
+            complete: function() {
+                HoldOn.close();
+            }
+        });
+    }
+
+    // ========================================
+    // FUNGSI BARU: Kabag Terima & Setujui
+    // ========================================
+    function approve_final_kabag_confirm() {
+        let id_peraturan = $("input[name='usulan_peraturan']").val();
+
+        swal({
+                title: 'Apakah Anda yakin menyetujui usulan ini?',
+                text: 'Usulan akan difinalisasi dan tidak bisa diubah lagi.',
+                icon: 'warning',
+                buttons: {
+                    cancel: 'Batal',
+                    confirm: {
+                        text: 'Ya, Setuju',
+                        value: true,
+                    }
+                },
+                dangerMode: false,
+            })
+            .then((willApprove) => {
+                if (willApprove) {
+                    $.ajax({
+                        url: base_url + 'monitoring_raperbup/approve_final_kabag',
+                        data: {
+                            id_usulan_raperbup: id_peraturan,
+                            catatan: '' // Optional: bisa dikosongkan atau tambah input
+                        },
+                        type: 'POST',
+                        beforeSend: function() {
+                            HoldOn.open(optionsHoldOn);
+                        },
+                        success: function(response) {
+                            if (response.status) {
+                                swal('Berhasil', 'Usulan telah disetujui dan difinalisasi!', 'success')
+                                    .then(() => {
+                                        get_data_peraturan();
+                                        $("input[name='usulan_peraturan']").val("");
+                                    });
+                            } else {
+                                swal('Gagal', response.message || 'Usulan tidak bisa disetujui', 'error');
+                            }
+                        },
+                        error: function() {
+                            swal('Error', 'Terjadi kesalahan sistem', 'error');
+                        },
+                        complete: function() {
+                            HoldOn.close();
+                        }
+                    });
+                } else {
+                    swal('Dibatalkan', 'Usulan belum disetujui', 'info');
+                }
+            });
+    }
+
+    // ========================================
+    // FUNGSI BARU: Kabag Tolak
+    // ========================================
+    function reject_final_kabag_confirm() {
+        let id_peraturan = $("input[name='usulan_peraturan']").val();
+
+        swal({
+                title: 'Tolak Usulan',
+                text: 'Masukkan alasan penolakan:',
+                content: {
+                    element: "textarea",
+                    attributes: {
+                        placeholder: "Tuliskan alasan penolakan...",
+                        rows: 4,
+                    },
+                },
+                buttons: {
+                    cancel: 'Batal',
+                    confirm: {
+                        text: 'Tolak Usulan',
+                        value: true,
+                    }
+                },
+                dangerMode: true,
+            })
+            .then((catatan) => {
+                // Be robust for different swal versions: some return `true` on confirm instead of the textarea value
+                if (typeof catatan === 'boolean') {
+                    // try to read the textarea value inserted by swal in the modal
+                    let textareaVal = $(".swal-modal").find("textarea").val();
+                    catatan = textareaVal;
+                }
+
+                if (catatan) {
+                    const catatanStr = String(catatan);
+                    if (!catatanStr.trim()) {
+                        swal('Gagal', 'Catatan penolakan wajib diisi!', 'error');
+                        return;
+                    }
+
+                    $.ajax({
+                        url: base_url + 'monitoring_raperbup/reject_final_kabag',
+                        data: {
+                            id_usulan_raperbup: id_peraturan,
+                            catatan: catatanStr
+                        },
+                        type: 'POST',
+                        beforeSend: function() {
+                            HoldOn.open(optionsHoldOn);
+                        },
+                        success: function(response) {
+                            if (response.status) {
+                                swal('Berhasil', 'Usulan telah ditolak dan dikembalikan untuk revisi', 'success')
+                                    .then(() => {
+                                        get_data_peraturan();
+                                        $("input[name='usulan_peraturan']").val("");
+                                    });
+                            } else {
+                                swal('Gagal', response.message || 'Usulan tidak bisa ditolak', 'error');
+                            }
+                        },
+                        error: function() {
+                            swal('Error', 'Terjadi kesalahan sistem', 'error');
+                        },
+                        complete: function() {
+                            HoldOn.close();
+                        }
+                    });
+                } else if (catatan !== null) {
+                    swal('Gagal', 'Catatan penolakan wajib diisi!', 'error');
+                }
+            });
     }
 
     function disposisi_monitoring_raperbup() {
