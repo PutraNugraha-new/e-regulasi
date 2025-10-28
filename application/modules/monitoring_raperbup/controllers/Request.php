@@ -1250,6 +1250,8 @@ class Request extends MY_Controller
     public function get_last_file()
     {
         $id_usulan_raperbup = decrypt_data($this->iget("id_peraturan"));
+
+        // Ambil data terakhir dari trx_raperbup
         $data_terakhir = $this->trx_raperbup_model->get(
             array(
                 "where" => array(
@@ -1263,57 +1265,76 @@ class Request extends MY_Controller
             "row"
         );
 
+        // Ambil data usulan utama
         $data_usulan = $this->usulan_raperbup_model->get_by($id_usulan_raperbup);
 
-        if ($data_usulan->lampiran) {
-            $file_extension = explode(".", $data_usulan->lampiran);
-            $lampiran = base_url() . $this->config->item("file_lampiran") . "/" . $data_usulan->lampiran;
-            $link_lampiran = "<a href='#viewdetail' class='dropdown-item' onclick=\"view_detail('" . $lampiran . "','" . $file_extension[1] . "')\">Kepala Dinas</a>";
+        // === FUNGSI BANTU: Ekstrak ekstensi dengan aman ===
+        $get_ext = function ($filename, $default = 'pdf') {
+            if (empty($filename)) return $default;
+            $parts = explode(".", $filename);
+            return count($parts) > 1 ? strtolower(end($parts)) : $default;
+        };
+
+        // === LAMPIRAN UTAMA (Kepala Dinas, SK Tim, Daftar Hadir) ===
+        $link_lampiran = $link_lampiran_sk_tim = $link_lampiran_daftar_hadir = '';
+
+        if (!empty($data_usulan->lampiran)) {
+            $ext = $get_ext($data_usulan->lampiran);
+            $url = base_url() . $this->config->item("file_lampiran") . "/" . $data_usulan->lampiran;
+            $link_lampiran = "<a href='#viewdetail' class='dropdown-item' onclick=\"view_detail('$url', '$ext')\">Kepala Dinas</a>";
         }
 
-        if ($data_usulan->lampiran_sk_tim) {
-            $file_extension_sk_tim = explode(".", $data_usulan->lampiran_sk_tim);
-            $lampiran_sk_tim = base_url() . $this->config->item("file_lampiran") . "/" . $data_usulan->lampiran_sk_tim;
-            $link_lampiran_sk_tim = "<a href='#viewdetail' class='dropdown-item' onclick=\"view_detail('" . $lampiran_sk_tim . "','" . $file_extension_sk_tim[1] . "')\">SK Tim</a>";
+        if (!empty($data_usulan->lampiran_sk_tim)) {
+            $ext = $get_ext($data_usulan->lampiran_sk_tim);
+            $url = base_url() . $this->config->item("file_lampiran") . "/" . $data_usulan->lampiran_sk_tim;
+            $link_lampiran_sk_tim = "<a href='#viewdetail' class='dropdown-item' onclick=\"view_detail('$url', '$ext')\">SK Tim</a>";
         }
 
-        if ($data_usulan->lampiran_daftar_hadir) {
-            $file_extension_daftar_hadir = explode(".", $data_usulan->lampiran_daftar_hadir);
-            $lampiran_daftar_hadir = base_url() . $this->config->item("file_lampiran") . "/" . $data_usulan->lampiran_daftar_hadir;
-            $link_lampiran_daftar_hadir = "<a href='#viewdetail' class='dropdown-item' onclick=\"view_detail('" . $lampiran_daftar_hadir . "','" . $file_extension_daftar_hadir[1] . "')\">Daftar Hadir</a>";
+        if (!empty($data_usulan->lampiran_daftar_hadir)) {
+            $ext = $get_ext($data_usulan->lampiran_daftar_hadir);
+            $url = base_url() . $this->config->item("file_lampiran") . "/" . $data_usulan->lampiran_daftar_hadir;
+            $link_lampiran_daftar_hadir = "<a href='#viewdetail' class='dropdown-item' onclick=\"view_detail('$url', '$ext')\">Daftar Hadir</a>";
         }
 
-        $lampiran_group = "";
-        $lampiran_group .= "<div class='dropdown d-inline mr-2'>
+        // === GROUP LAMPIRAN ===
+        $lampiran_group = "<div class='dropdown d-inline mr-2'>
         <button class='btn btn-primary dropdown-toggle' type='button' id='dropdownMenuButton' data-toggle='dropdown' aria-haspopup='true' aria-expanded='false'>
           Lampiran
         </button>
         <div class='dropdown-menu'>";
 
         if (in_array($data_usulan->kategori_usulan_id, array("1", "2"))) {
-            if ($data_usulan->lampiran) {
-                $lampiran_group .= $link_lampiran;
-            }
-
-            if ($data_usulan->lampiran_sk_tim) {
-                $lampiran_group .= $link_lampiran_sk_tim;
-            }
-
-            if ($data_usulan->lampiran_daftar_hadir) {
-                $lampiran_group .= $link_lampiran_daftar_hadir;
-            }
+            if ($link_lampiran) $lampiran_group .= $link_lampiran;
+            if ($link_lampiran_sk_tim) $lampiran_group .= $link_lampiran_sk_tim;
+            if ($link_lampiran_daftar_hadir) $lampiran_group .= $link_lampiran_daftar_hadir;
         } else {
-            $lampiran_group .= $link_lampiran;
+            if ($link_lampiran) $lampiran_group .= $link_lampiran;
         }
 
         $lampiran_group .= "</div></div>";
-
         $data['lampiran_group'] = $lampiran_group;
 
-        $file_extension = explode(".", $data_terakhir->file_usulan_raperbup);
-        $usulan = base_url() . $this->config->item("file_usulan") . "/" . $data_terakhir->file_usulan_raperbup;
-        $data['usulan'] = "<button  type='button' class='btn btn-primary' onclick=\"view_detail('" . $usulan . "','" . $file_extension[1] . "')\">View</button>";
+        // === FILE UTAMA: Prioritas file_perbaikan → file_usulan_raperbup ===
+        $filename = '';
+        $file_url = '';
 
+        if (!empty($data_terakhir->file_perbaikan)) {
+            $filename = $data_terakhir->file_perbaikan;
+            $file_url = base_url() . $this->config->item("file_usulan") . "/" . $filename;
+        } elseif (!empty($data_terakhir->file_usulan_raperbup)) {
+            $filename = $data_terakhir->file_usulan_raperbup;
+            $file_url = base_url() . $this->config->item("file_usulan") . "/" . $filename;
+        }
+
+        // Jika ada file, buat tombol View
+        if ($filename) {
+            $ext = $get_ext($filename);
+            $data['usulan'] = "<button type='button' class='btn btn-primary' onclick=\"view_detail('$file_url', '$ext')\">View</button>";
+        } else {
+            $data['usulan'] = "<span class='text-muted'>Tidak ada file</span>";
+        }
+
+        // Output JSON
         $this->output
             ->set_content_type('application/json')
             ->set_output(json_encode($data));

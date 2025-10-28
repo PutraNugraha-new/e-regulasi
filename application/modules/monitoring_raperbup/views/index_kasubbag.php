@@ -179,7 +179,7 @@
                     });
 
                     $.each(response, function(index, value) {
-                        console.log(value);
+                        // console.log(value, firstRejectedIndex);
                         html += "<div class='activity'>" +
                             "<div class='activity-icon " + value.class_color + " text-white shadow-dark'>" +
                             "<i class='fas fa-user-alt'></i>" +
@@ -197,7 +197,7 @@
                         // Tampilkan tombol HANYA pada index catatan_ditolak pertama
                         if (value.catatan_ditolak && index === firstRejectedIndex) {
                             html += "<a class='btn btn-warning btn-sm' href='" + base_url + "monitoring_raperbup/edit_usulan_raperbup/" + id_peraturan + "'>Revisi</a>";
-                            // html += "<a href='#disetujui' onclick=\"change_status('1')\" class='btn btn-info ml-2'>Teruskan ke JFT</a>";
+                            // html += "<a href='' class='btn btn-info ml-2'>View Revisi</a>";
                         }
 
                         html += "</div>" +
@@ -458,7 +458,7 @@
             success: function(response) {
                 // console.log(response);
                 let html = "<table>";
-                // html += "<tr><td>File Usulan</td><td style='padding:5px;'>:</td><td>" + response.usulan + "</td></tr>";
+                html += "<tr><td>File Revisi</td><td style='padding:5px;'>:</td><td>" + response.usulan + "</td></tr>";
                 if (response.lampiran_group) {
                     html += "<tr><td>Lampiran</td><td style='padding:5px;'>:</td><td>" + response.lampiran_group + "</td></tr>";
                 }
