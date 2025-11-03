@@ -293,8 +293,8 @@ class Request extends MY_Controller
                     // ===== KABAG TOLAK (DENGAN JFT) =====
                     else if (
                         $data_terakhir->status_tracking == "3" &&
-                        $data_terakhir->kasubbag_agree_disagree == '' &&
-                        $data_terakhir->jft_agree_disagree == '' &&
+                        $data_terakhir->kasubbag_agree_disagree == '1' &&
+                        $data_terakhir->jft_agree_disagree == '1' &&
                         $data_terakhir->kabag_agree_disagree == '2'
                     ) {
                         $file = "";
@@ -313,7 +313,8 @@ class Request extends MY_Controller
                     // ===== SEDANG DIPROSES (Kasubbag sudah, Kabag tolak) =====
                     else if (
                         $data_terakhir->status_tracking == "3" &&
-                        $data_terakhir->kasubbag_agree_disagree != '' &&
+                        $data_terakhir->kasubbag_agree_disagree == '1' &&
+                        $data_terakhir->jft_agree_disagree == '1' &&
                         $data_terakhir->kabag_agree_disagree == '2'
                     ) {
                         $templist[$key]['status_terakhir'] = "<div class='badge badge-warning'>Sedang diproses oleh " . ($row->keterangan ?? 'Unknown') . "</div>";

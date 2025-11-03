@@ -34,12 +34,12 @@ class Request extends MY_Controller
         $data_usulan = $this->trx_raperbup_model->get(
             array(
                 "fields" => "trx_raperbup.*,
-                        DATE_FORMAT(trx_raperbup.created_at,'%Y-%m-%d') AS tanggal_custom,
-                        DATE_FORMAT(trx_raperbup.created_at,'%H:%i:%s') AS time_custom,
-                        class_color,
-                        a.keterangan,
-                        b.nama_lengkap,
-                        teruskan_provinsi",
+                    DATE_FORMAT(trx_raperbup.created_at,'%Y-%m-%d') AS tanggal_custom,
+                    DATE_FORMAT(trx_raperbup.created_at,'%H:%i:%s') AS time_custom,
+                    class_color,
+                    a.keterangan,
+                    b.nama_lengkap,
+                    teruskan_provinsi",
                 "join" => array(
                     "level_user" => "level_user_id_status=id_level_user",
                     "usulan_raperbup" => "id_usulan_raperbup=usulan_raperbup_id",
@@ -72,6 +72,33 @@ class Request extends MY_Controller
             $data_disposisi = true;
         }
 
+        // ========================================
+        // BAGIAN BARU: Ambil file perbaikan terakhir
+        // ========================================
+        $file_perbaikan_terakhir = $this->trx_raperbup_model->get(
+            array(
+                "fields" => "file_perbaikan, created_at",
+                "where" => array(
+                    "usulan_raperbup_id" => $id_usulan_raperbup,
+                    "file_perbaikan IS NOT NULL" => null,
+                    "file_perbaikan !=" => ""
+                ),
+                "order_by" => array("created_at" => "DESC")
+            ),
+            "row"
+        );
+
+        $latest_perbaikan_url = "";
+        $latest_perbaikan_ext = "";
+        $latest_perbaikan_date = "";
+        if ($file_perbaikan_terakhir && !empty($file_perbaikan_terakhir->file_perbaikan)) {
+            $ext = pathinfo($file_perbaikan_terakhir->file_perbaikan, PATHINFO_EXTENSION);
+            $latest_perbaikan_url = base_url() . $this->config->item("file_usulan") . "/" . $file_perbaikan_terakhir->file_perbaikan;
+            $latest_perbaikan_ext = $ext;
+            $latest_perbaikan_date = longdate_indo(date('Y-m-d', strtotime($file_perbaikan_terakhir->created_at)));
+        }
+        // ========================================
+
         $templist = array();
         if ($data_disposisi) {
             foreach ($data_usulan as $key => $row) {
@@ -81,7 +108,7 @@ class Request extends MY_Controller
                 $templist[$key]['status_terakhir'] = "";
                 $templist[$key]['action'] = "";
                 $templist[$key]['processing_status'] = "";
-                $templist[$key]['processing_date'] = ""; // Tambah field untuk tanggal
+                $templist[$key]['processing_date'] = "";
 
                 // Tentukan processing_status hanya untuk transaksi terbaru (index 0)
                 if ($key == 0) {
@@ -89,13 +116,12 @@ class Request extends MY_Controller
                     $processing_date = longdate_indo($row->tanggal_custom) . " " . $row->time_custom;
 
                     if ($row->status_tracking == '1') {
-                        $processing_user = $row->nama_lengkap; // Admin Hukum dari id_user_created
+                        $processing_user = $row->nama_lengkap;
                         $templist[$key]['processing_status'] = "Sedang Diproses oleh Admin Hukum " . $processing_user;
                     } elseif ($row->status_tracking == '2' && $row->kasubbag_agree_disagree == '') {
-                        $processing_user = $nama_kasubbag->nama_lengkap; // Kasubbag dari id_user_kasubbag
+                        $processing_user = $nama_kasubbag->nama_lengkap;
                         $templist[$key]['processing_status'] = "Sedang Diproses oleh Kasubbag " . $processing_user;
                     } elseif ($row->status_tracking == '3' && $row->kasubbag_agree_disagree == '1' && $row->jft_agree_disagree == '') {
-                        // Query nama JFT berdasarkan level_user_id_status = 15
                         $jft_user = $this->db->select('nama_lengkap')
                             ->from('user')
                             ->where('level_user_id', 15)
@@ -104,7 +130,6 @@ class Request extends MY_Controller
                         $processing_user = $jft_user ? $jft_user->nama_lengkap : 'JFT';
                         $templist[$key]['processing_status'] = "Sedang Diproses oleh JFT " . $processing_user;
                     } elseif ($row->status_tracking == '3' && $row->kasubbag_agree_disagree == '1' && $row->jft_agree_disagree == '1' && $row->kabag_agree_disagree == '') {
-                        // Query nama Kabag Hukum berdasarkan level_user_id_status = 8
                         $kabag_user = $this->db->select('nama_lengkap')
                             ->from('user')
                             ->where('level_user_id', 8)
@@ -119,7 +144,7 @@ class Request extends MY_Controller
                     $templist[$key]['processing_date'] = $processing_date;
                 }
 
-                // Logika status_terakhir (tetap sama seperti kode aslimu)
+                // Logika status_terakhir (TETAP SAMA - TIDAK DIUBAH)
                 if ($row->status_tracking == "5") {
                     $templist[$key]['status_terakhir'] = "<div class='badge badge-success'>Usulan Sudah Di Publish</div>";
                 } elseif (
@@ -298,9 +323,19 @@ class Request extends MY_Controller
                     $templist[$key]['status_terakhir'] = "<div class='badge badge-info'>Menunggu review JFT</div>";
                 } elseif (
                     $row->status_tracking == "3" &&
-                    $row->kasubbag_agree_disagree == '1'
+                    $row->kasubbag_agree_disagree == '1' &&
+                    $row->jft_agree_disagree == '1' &&
+                    $row->kabag_agree_disagree == '2'
                 ) {
-                    $templist[$key]['status_terakhir'] = "<div class='badge badge-success'>Usulan Disetujui " . $nama_kasubbag->nama_lengkap . "</div>";
+                    $file = "";
+                    if ($row->file_catatan_perbaikan) {
+                        $file_extension = explode(".", $row->file_catatan_perbaikan);
+                        $perbaikan = base_url() . $this->config->item("file_usulan") . "/" . $row->file_catatan_perbaikan;
+                        $file = "<button type='button' class='btn btn-primary' onclick=\"view_detail('" . $perbaikan . "','" . $file_extension[1] . "')\">View</button>";
+                    }
+                    $templist[$key]['status_terakhir'] = "<div class='badge badge-danger mb-3'>Usulan Tidak Disetujui " . $row->nama_lengkap . "</div>" .
+                        ($row->catatan_ditolak ? "<div>Catatan :</div>" . nl2br($row->catatan_ditolak) : "") .
+                        ($row->file_catatan_perbaikan ? "<br /><br />File Catatan Perbaikan : " . $file : "");
                 } elseif (
                     $row->status_tracking == "3" &&
                     $row->kasubbag_agree_disagree == '2'
@@ -332,16 +367,34 @@ class Request extends MY_Controller
 
                 $templist[$key]['tanggal_custom'] = longdate_indo($row->tanggal_custom) . " " . $row->time_custom;
 
+                // ========================================
+                // BAGIAN DIUBAH: Logika tampilan file
+                // ========================================
                 $templist[$key]['file'] = "";
-                if ($row->status_tracking == '1') {
+
+                // 1. File Usulan Awal (hanya jika status_tracking = 1)
+                if ($row->status_tracking == '1' && !empty($row->file_usulan_raperbup)) {
                     $file_extension = explode(".", $row->file_usulan_raperbup);
                     $usulan = base_url() . $this->config->item("file_usulan") . "/" . $row->file_usulan_raperbup;
-                    $templist[$key]['file'] = "<button type='button' class='btn btn-primary' onclick=\"view_detail('" . $usulan . "','" . $file_extension[1] . "')\">View</button>";
-                } elseif ($row->status_tracking == '3' && $row->kasubbag_agree_disagree == '' && $row->kabag_agree_disagree == '') {
-                    $file_extension = explode(".", $row->file_perbaikan);
-                    $usulan = base_url() . $this->config->item("file_usulan") . "/" . $row->file_perbaikan;
-                    $templist[$key]['file'] = "<button type='button' class='btn btn-primary' onclick=\"view_detail('" . $usulan . "','" . $file_extension[1] . "')\">View</button>";
+                    $templist[$key]['file'] = "<button type='button' class='btn btn-primary btn-sm' onclick=\"view_detail('" . $usulan . "','" . $file_extension[1] . "')\">View Usulan Awal</button>";
                 }
+
+                // 2. File Perbaikan TERAKHIR (HANYA di baris terbaru)
+                if ($key == 0 && !empty($latest_perbaikan_url)) {
+                    $label = "View Perbaikan Terakhir";
+                    if (!empty($latest_perbaikan_date)) {
+                        $label .= " (" . $latest_perbaikan_date . ")";
+                    }
+                    $btn_perbaikan = "<button type='button' class='btn btn-info btn-sm' onclick=\"view_detail('" . $latest_perbaikan_url . "','" . $latest_perbaikan_ext . "')\">" . $label . "</button>";
+
+                    // Gabungkan dengan file usulan jika ada
+                    if (!empty($templist[$key]['file'])) {
+                        $templist[$key]['file'] .= " " . $btn_perbaikan;
+                    } else {
+                        $templist[$key]['file'] = $btn_perbaikan;
+                    }
+                }
+                // ========================================
 
                 $templist[$key]['action_delete'] = "";
                 if ($key == "0" && ($row->level_user_id_status == $this->session->userdata("level_user_id") || $row->status_tracking == '2')) {
@@ -678,8 +731,9 @@ class Request extends MY_Controller
             ),
             "row"
         );
-
-        if ($data_usulan->status_tracking == '2' || $data_usulan->kabag_agree_disagree == '2' || ($data_usulan->status_tracking == '3' && $data_usulan->kabag_agree_disagree == '' && $data_usulan->kasubbag_agree_disagree == '')) {
+        // var_dump($data_usulan);
+        // die;
+        if ($data_usulan->status_tracking == '2' || $data_usulan->jft_agree_disagree == '2' || ($data_usulan->status_tracking == '3' && $data_usulan->kasubbag_agree_disagree == '')) {
             $data = true;
         } else {
             $data = false;
@@ -756,6 +810,13 @@ class Request extends MY_Controller
             $data_usulan->kasubbag_agree_disagree == '1' &&
             $data_usulan->jft_agree_disagree == '' &&
             $data_usulan->kabag_agree_disagree == ''
+        ) {
+            $data = true;
+        } elseif (
+            $data_usulan->status_tracking == '3' &&
+            $data_usulan->kasubbag_agree_disagree == '1' &&
+            $data_usulan->jft_agree_disagree == '1' &&
+            $data_usulan->kabag_agree_disagree == '2'
         ) {
             $data = true;
         } else {

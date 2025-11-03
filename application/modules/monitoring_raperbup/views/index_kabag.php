@@ -764,10 +764,11 @@
             },
             success: function(response) {
                 let html = "<table>";
-                html += "<tr><td>File Usulan</td><td style='padding:5px;'>:</td><td>" + response.usulan + "</td></tr>";
+                html += "<tr><td>File Final</td><td style='padding:5px;'>:</td><td>" + response.usulan + "</td></tr>";
                 if (response.lampiran_group) {
                     html += "<tr><td>Lampiran</td><td style='padding:5px;'>:</td><td>" + response.lampiran_group + "</td></tr>";
                 }
+                html += "<tr><td>Catatan Kabag</td><td style='padding:5px;'>:</td><td>isi catatan</td></tr>";
                 html += "</table>";
                 $(".last_file").html(html);
             },

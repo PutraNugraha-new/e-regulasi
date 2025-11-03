@@ -179,6 +179,7 @@
                     });
 
                     $.each(response, function(index, value) {
+                        console.log(response);
                         html += "<div class='activity'>" +
                             "<div class='activity-icon " + value.class_color + " text-white shadow-dark'>" +
                             "<i class='fas fa-user-alt'></i>" +
@@ -456,7 +457,7 @@
             },
             success: function(response) {
                 let html = "<table>";
-                html += "<tr><td>File Usulan</td><td style='padding:5px;'>:</td><td>" + response.usulan + "</td></tr>";
+                html += "<tr><td>File Revisi</td><td style='padding:5px;'>:</td><td>" + response.usulan + "</td></tr>";
                 if (response.lampiran_group) {
                     html += "<tr><td>Lampiran</td><td style='padding:5px;'>:</td><td>" + response.lampiran_group + "</td></tr>";
                 }

@@ -734,7 +734,7 @@ class Monitoring_raperbup extends MY_Controller
             ->where('id_level_user', $this->session->userdata("level_user_id"))
             ->get()
             ->row();
-        if (!in_array($level_user->id_level_user, [4, 6, 7])) {
+        if (!in_array($level_user->id_level_user, [4, 6, 7, 15])) {
             echo json_encode([
                 'status' => 'error',
                 'message' => 'Anda tidak memiliki akses untuk mengupdate catatan revisi'
@@ -807,7 +807,7 @@ class Monitoring_raperbup extends MY_Controller
             ->where('id_level_user', $this->session->userdata("level_user_id"))
             ->get()
             ->row();
-        if (!in_array($level_user->id_level_user, [4, 6, 7])) {
+        if (!in_array($level_user->id_level_user, [4, 6, 7, 15])) {
             echo json_encode([
                 'status' => 'error',
                 'message' => 'Anda tidak memiliki akses untuk mengupdate catatan revisi'
@@ -868,7 +868,7 @@ class Monitoring_raperbup extends MY_Controller
             ->where('id_level_user', $this->session->userdata("level_user_id"))
             ->get()
             ->row();
-        if (!in_array($level_user->id_level_user, [4, 6, 7])) {
+        if (!in_array($level_user->id_level_user, [4, 6, 7, 15])) {
             echo json_encode([
                 'status' => 'error',
                 'message' => 'Anda tidak memiliki akses untuk mengupdate catatan revisi'
@@ -1134,6 +1134,10 @@ class Monitoring_raperbup extends MY_Controller
         $id_usulan_raperbup_decrypted = decrypt_data($id_usulan_raperbup);
         $nama_peraturan = $this->usulan_raperbup_model->get_by($id_usulan_raperbup_decrypted)->nama_peraturan ?: 'Usulan Tanpa Nama';
 
+        // Cek level user yang sedang login
+        $level_user_id = $this->session->userdata("level_user_id");
+        $is_jft = ($level_user_id == 15);
+
         if (!empty($_FILES['file_upload']['name'])) {
             $input_name = "file_upload";
             $upload_file = $this->upload_file($input_name, $this->config->item('file_usulan'), "", "doc");
@@ -1146,30 +1150,50 @@ class Monitoring_raperbup extends MY_Controller
                     "file_usulan_raperbup" => $data_last_trx->file_usulan_raperbup,
                     "file_catatan_perbaikan" => $file_name,
                     "file_perbaikan" => $data_last_trx->file_perbaikan,
-                    "level_user_id_status" => $this->session->userdata("level_user_id"),
+                    "level_user_id_status" => $level_user_id,
                     "status_tracking" => "3",
                     "status_pesan" => "2",
-                    "kasubbag_agree_disagree" => "2",
                     'created_at' => $this->datetime(),
                     "id_user_created" => $this->session->userdata("id_user")
                 );
 
+                // Set kolom agree_disagree sesuai level user
+                if ($is_jft) {
+                    $data_trx["jft_agree_disagree"] = "2";
+                } else {
+                    $data_trx["kasubbag_agree_disagree"] = "2";
+                }
+
                 $status = $this->trx_raperbup_model->save($data_trx);
 
                 if ($status) {
-                    // Notif ke Admin PD (pengaju)
-                    $id_pengaju = $this->db->select('id_user_created')
-                        ->where('id_usulan_raperbup', $id_usulan_raperbup_decrypted)
-                        ->get('usulan_raperbup')
-                        ->row()->id_user_created;
+                    // Set tipe notif dan pesan sesuai level user
+                    $tipe_notif = $is_jft ? 'tolak_jft' : 'tolak_kasubbag';
+                    $penolak = $is_jft ? 'JFT' : 'Kasubbag';
+
+                    // Tentukan tujuan notifikasi
+                    if ($is_jft) {
+                        // Jika JFT yang menolak, notif ke Kasubbag (level 7)
+                        $id_tujuan = $this->db->select('id_user')
+                            ->where('level_user_id', 7)
+                            ->get('user')
+                            ->row()->id_user;
+                    } else {
+                        // Jika Kasubbag yang menolak, notif ke Admin PD (pengaju)
+                        $id_tujuan = $this->db->select('id_user_created')
+                            ->where('id_usulan_raperbup', $id_usulan_raperbup_decrypted)
+                            ->get('usulan_raperbup')
+                            ->row()->id_user_created;
+                    }
+
                     $data_notif = [
-                        'id_user_tujuan' => $id_pengaju,
+                        'id_user_tujuan' => $id_tujuan,
                         'id_usulan_raperbup' => $id_usulan_raperbup_decrypted,
-                        'tipe_notif' => 'tolak_kasubbag',
-                        'pesan' => 'Usulan ditolak oleh Kasubbag: ' . $nama_peraturan . ($catatan ? ' (Catatan: ' . $catatan . ')' : ''),
+                        'tipe_notif' => $tipe_notif,
+                        'pesan' => 'Usulan ditolak oleh ' . $penolak . ': ' . $nama_peraturan . ($catatan ? ' (Catatan: ' . $catatan . ')' : ''),
                     ];
                     $this->Notifikasi_model->simpan_notif($data_notif);
-                    log_message('debug', 'Notif tolak_kasubbag saved: ' . json_encode($data_notif));
+                    log_message('debug', 'Notif ' . $tipe_notif . ' saved: ' . json_encode($data_notif));
                 }
             } else {
                 $status = false;
@@ -1181,13 +1205,20 @@ class Monitoring_raperbup extends MY_Controller
                 "file_usulan_raperbup" => $data_last_trx->file_usulan_raperbup,
                 "file_catatan_perbaikan" => NULL,
                 "file_perbaikan" => $data_last_trx->file_perbaikan,
-                "level_user_id_status" => $this->session->userdata("level_user_id"),
+                "level_user_id_status" => $level_user_id,
                 "status_tracking" => "3",
                 "status_pesan" => "2",
-                "kasubbag_agree_disagree" => "2",
                 'created_at' => $this->datetime(),
                 "id_user_created" => $this->session->userdata("id_user")
             );
+
+            // Set kolom agree_disagree sesuai level user
+            if ($is_jft) {
+                $data_trx["kasubbag_agree_disagree"] = "1";
+                $data_trx["jft_agree_disagree"] = "2";
+            } else {
+                $data_trx["kasubbag_agree_disagree"] = "2";
+            }
 
             $status = $this->trx_raperbup_model->save($data_trx);
 
@@ -1197,14 +1228,29 @@ class Monitoring_raperbup extends MY_Controller
                     ->where('id_usulan_raperbup', $id_usulan_raperbup_decrypted)
                     ->get('usulan_raperbup')
                     ->row()->id_user_created;
-                $data_notif = [
-                    'id_user_tujuan' => $id_pengaju,
-                    'id_usulan_raperbup' => $id_usulan_raperbup_decrypted,
-                    'tipe_notif' => 'tolak_kasubbag',
-                    'pesan' => 'Usulan ditolak oleh Kasubbag: ' . $nama_peraturan . ($catatan ? ' (Catatan: ' . $catatan . ')' : ''),
-                ];
+
+                // Set tipe notif dan pesan sesuai level user
+                $tipe_notif = $is_jft ? 'tolak_jft' : 'tolak_kasubbag';
+                $penolak = $is_jft ? 'JFT' : 'Kasubbag';
+
+                if ($is_jft) {
+                    $data_notif = [
+                        'id_user_tujuan' => $data_last_trx->id_user_created,
+                        'id_usulan_raperbup' => $id_usulan_raperbup_decrypted,
+                        'tipe_notif' => $tipe_notif,
+                        'pesan' => 'Usulan ditolak oleh ' . $penolak . ': ' . $nama_peraturan . ($catatan ? ' (Catatan: ' . $catatan . ')' : ''),
+                    ];
+                } else {
+                    $data_notif = [
+                        'id_user_tujuan' => $id_pengaju,
+                        'id_usulan_raperbup' => $id_usulan_raperbup_decrypted,
+                        'tipe_notif' => $tipe_notif,
+                        'pesan' => 'Usulan ditolak oleh ' . $penolak . ': ' . $nama_peraturan . ($catatan ? ' (Catatan: ' . $catatan . ')' : ''),
+                    ];
+                }
+
                 $this->Notifikasi_model->simpan_notif($data_notif);
-                log_message('debug', 'Notif tolak_kasubbag saved: ' . json_encode($data_notif));
+                log_message('debug', 'Notif ' . $tipe_notif . ' saved: ' . json_encode($data_notif));
             }
         }
 
@@ -2410,9 +2456,9 @@ class Monitoring_raperbup extends MY_Controller
 
         // Gunakan file perbaikan jika ada
         $file_usulan = $data_last_trx->file_usulan_raperbup;
-        if ($data_last_trx->file_perbaikan) {
-            $file_usulan = $data_last_trx->file_perbaikan;
-        }
+        // if ($data_last_trx->file_perbaikan) {
+        //     $file_usulan = $data_last_trx->file_perbaikan;
+        // }
 
         // Simpan transaksi baru dengan status FINAL (status_tracking = 5)
         $data_trx = array(
@@ -2420,6 +2466,7 @@ class Monitoring_raperbup extends MY_Controller
             "file_usulan_raperbup" => $file_usulan,
             "file_perbaikan" => $data_last_trx->file_perbaikan,
             "file_catatan_perbaikan" => $data_last_trx->file_catatan_perbaikan,
+            "file_final" => $data_last_trx->file_perbaikan,
             "catatan_ditolak" => $catatan ?: $data_last_trx->catatan_ditolak,
             "level_user_id_status" => $this->session->userdata("level_user_id"),
             "status_tracking" => '5', // ← STATUS FINAL (PUBLISH)
@@ -2431,6 +2478,16 @@ class Monitoring_raperbup extends MY_Controller
         );
 
         $status = $this->trx_raperbup_model->save($data_trx);
+
+        $source_path = FCPATH . 'assets/file_usulan/' . $data_last_trx->file_perbaikan;
+        $destination_path = FCPATH . 'assets/file_final/' . $data_last_trx->file_perbaikan;
+
+        if (!is_dir(dirname($destination_path))) {
+            mkdir(dirname($destination_path), 0755, true);
+        }
+
+        copy($source_path, $destination_path);
+
 
         if ($status) {
             $nama_peraturan = $this->usulan_raperbup_model->get_by($id_usulan_raperbup)->nama_peraturan ?: 'Usulan Tanpa Nama';
@@ -2519,8 +2576,8 @@ class Monitoring_raperbup extends MY_Controller
             "catatan_ditolak" => $catatan, // ← CATATAN PENOLAKAN
             "level_user_id_status" => $this->session->userdata("level_user_id"),
             "status_tracking" => '3', // ← KEMBALI KE STATUS 3 (untuk perbaikan)
-            "kasubbag_agree_disagree" => '', // ← RESET untuk revisi ulang
-            "jft_agree_disagree" => '', // ← RESET untuk revisi ulang
+            "kasubbag_agree_disagree" => '1', // ← RESET untuk revisi ulang
+            "jft_agree_disagree" => '1', // ← RESET untuk revisi ulang
             "kabag_agree_disagree" => '2', // ← KABAG TOLAK
             'created_at' => $this->datetime(),
             "id_user_created" => $this->session->userdata("id_user")
