@@ -320,169 +320,176 @@
                                             </button>
                                         </div>
 
-                                        <!-- Input Judul Bab -->
-                                        <div class="form-group row">
-                                            <label class="col-form-label col-lg-2">Judul Bab <span class="text-danger">*</span></label>
-                                            <div class="col-lg-10">
-                                                <input type="text" class="form-control"
-                                                    name="judul_bab[<?php echo $bab_number; ?>]"
-                                                    placeholder="Masukkan Judul Bab <?php echo $bab_number; ?>"
-                                                    value="<?php echo isset($bab['judul']) ? htmlspecialchars($bab['judul']) : ''; ?>">
-                                            </div>
-                                        </div>
+                                        <div class="form-with-revisi">
+                                            <div class="form-main-content">
+                                                <!-- Input Judul Bab -->
+                                                <div class="form-group row">
+                                                    <label class="col-form-label col-lg-2">Judul Bab <span class="text-danger">*</span></label>
+                                                    <div class="col-lg-10">
+                                                        <input type="text" class="form-control"
+                                                            name="judul_bab[<?php echo $bab_number; ?>]"
+                                                            placeholder="Masukkan Judul Bab <?php echo $bab_number; ?>"
+                                                            value="<?php echo isset($bab['judul']) ? htmlspecialchars($bab['judul']) : ''; ?>">
+                                                    </div>
+                                                </div>
 
-                                        <div class="bagian-container" data-bab="<?php echo $bab_number; ?>">
-                                            <?php
-                                            // Tampilkan BAGIAN jika ada
-                                            $bagian_counter = 0;
-                                            $bagian_names = [
-                                                '',
-                                                'Kesatu',
-                                                'Kedua',
-                                                'Ketiga',
-                                                'Keempat',
-                                                'Kelima',
-                                                'Keenam',
-                                                'Ketujuh',
-                                                'Kedelapan',
-                                                'Kesembilan',
-                                                'Kesepuluh'
-                                            ];
+                                                <div class="bagian-container" data-bab="<?php echo $bab_number; ?>">
+                                                    <?php
+                                                    // Tampilkan BAGIAN jika ada
+                                                    $bagian_counter = 0;
+                                                    $bagian_names = [
+                                                        '',
+                                                        'Kesatu',
+                                                        'Kedua',
+                                                        'Ketiga',
+                                                        'Keempat',
+                                                        'Kelima',
+                                                        'Keenam',
+                                                        'Ketujuh',
+                                                        'Kedelapan',
+                                                        'Kesembilan',
+                                                        'Kesepuluh'
+                                                    ];
 
-                                            if (!empty($bab['bagian']) && is_array($bab['bagian'])) {
-                                                foreach ($bab['bagian'] as $bagian_number => $bagian) {
-                                                    $bagian_counter++;
-                                                    $bagian_name = $bagian_names[$bagian_number] ?? "Ke-$bagian_number";
-                                            ?>
-                                                    <div class="bagian-field" data-bab="<?php echo $bab_number; ?>"
-                                                        data-bagian="<?php echo $bagian_number; ?>">
-                                                        <div class="field-header">
-                                                            <span class="bagian-number">Bagian <?php echo $bagian_name; ?></span>
-                                                            <button type="button" class="btn btn-sm btn-remove-field remove-bagian"
+                                                    if (!empty($bab['bagian']) && is_array($bab['bagian'])) {
+                                                        foreach ($bab['bagian'] as $bagian_number => $bagian) {
+                                                            $bagian_counter++;
+                                                            $bagian_name = $bagian_names[$bagian_number] ?? "Ke-$bagian_number";
+                                                    ?>
+                                                            <div class="bagian-field" data-bab="<?php echo $bab_number; ?>"
                                                                 data-bagian="<?php echo $bagian_number; ?>">
-                                                                <i class="fas fa-trash"></i> Hapus
-                                                            </button>
-                                                        </div>
-
-                                                        <!-- Input Judul Bagian -->
-                                                        <div class="form-group">
-                                                            <input type="text" class="form-control"
-                                                                name="judul_bagian[<?php echo $bab_number; ?>][<?php echo $bagian_number; ?>]"
-                                                                placeholder="Masukkan Judul Bagian <?php echo $bagian_name; ?>"
-                                                                value="<?php echo isset($bagian['judul']) ? htmlspecialchars($bagian['judul']) : ''; ?>"
-                                                                required>
-                                                        </div>
-
-                                                        <!-- Pasal dalam Bagian -->
-                                                        <div class="pasal-container" data-bab="<?php echo $bab_number; ?>"
-                                                            data-bagian="<?php echo $bagian_number; ?>">
-                                                            <?php
-                                                            $pasal_count_in_bagian = 0;
-                                                            if (!empty($bagian['pasal']) && is_array($bagian['pasal'])) {
-                                                                $pasal_count_in_bagian = count($bagian['pasal']);
-                                                                foreach ($bagian['pasal'] as $pasal_number => $pasal) {
-                                                                    $textarea_id = "isi_pasal_$pasal_number";
-                                                            ?>
-                                                                    <div class="pasal-field" data-bab="<?php echo $bab_number; ?>"
-                                                                        data-pasal="<?php echo $pasal_number; ?>"
+                                                                <div class="field-header">
+                                                                    <span class="bagian-number">Bagian <?php echo $bagian_name; ?></span>
+                                                                    <button type="button" class="btn btn-sm btn-remove-field remove-bagian"
                                                                         data-bagian="<?php echo $bagian_number; ?>">
-                                                                        <div class="field-header">
-                                                                            <span class="pasal-number">Pasal <?php echo $pasal_number; ?></span>
-                                                                            <button type="button" class="btn btn-sm btn-remove-field remove-pasal"
-                                                                                data-pasal="<?php echo $pasal_number; ?>"
-                                                                                <?php echo $pasal_count_in_bagian == 1 ? 'style="display: none;"' : ''; ?>>
-                                                                                <i class="fas fa-trash"></i> Hapus
-                                                                            </button>
-                                                                        </div>
-                                                                        <div class="form-group">
-                                                                            <textarea name="isi_pasal[<?php echo $pasal_number; ?>]"
-                                                                                id="<?php echo $textarea_id; ?>"
-                                                                                class="form-control" rows="3"
-                                                                                placeholder="Masukkan isi Pasal <?php echo $pasal_number; ?>..."
-                                                                                required><?php echo isset($pasal['isi']) ? $pasal['isi'] : ''; ?></textarea>
-                                                                            <input type="hidden" name="pasal_bab_mapping[<?php echo $pasal_number; ?>]"
-                                                                                value="<?php echo $bab_number; ?>">
-                                                                            <input type="hidden" name="pasal_bagian_mapping[<?php echo $pasal_number; ?>]"
-                                                                                value="<?php echo $bagian_number; ?>">
-                                                                        </div>
-                                                                    </div>
-                                                            <?php
-                                                                }
-                                                            }
-                                                            ?>
-                                                            <!-- Tombol Tambah Pasal dalam Bagian -->
-                                                            <div class="add-pasal-container">
-                                                                <button type="button" class="btn btn-sm btn-add-pasal add-pasal-btn"
-                                                                    data-bab="<?php echo $bab_number; ?>"
+                                                                        <i class="fas fa-trash"></i> Hapus
+                                                                    </button>
+                                                                </div>
+
+                                                                <!-- Input Judul Bagian -->
+                                                                <div class="form-group">
+                                                                    <input type="text" class="form-control"
+                                                                        name="judul_bagian[<?php echo $bab_number; ?>][<?php echo $bagian_number; ?>]"
+                                                                        placeholder="Masukkan Judul Bagian <?php echo $bagian_name; ?>"
+                                                                        value="<?php echo isset($bagian['judul']) ? htmlspecialchars($bagian['judul']) : ''; ?>"
+                                                                        required>
+                                                                </div>
+
+                                                                <!-- Pasal dalam Bagian -->
+                                                                <div class="pasal-container" data-bab="<?php echo $bab_number; ?>"
                                                                     data-bagian="<?php echo $bagian_number; ?>">
-                                                                    <i class="fas fa-plus"></i> Tambah Pasal
-                                                                </button>
-                                                                <br>
-                                                                <small class="text-muted mt-2 d-block">Klik untuk menambah pasal baru dalam bagian ini</small>
+                                                                    <?php
+                                                                    $pasal_count_in_bagian = 0;
+                                                                    if (!empty($bagian['pasal']) && is_array($bagian['pasal'])) {
+                                                                        $pasal_count_in_bagian = count($bagian['pasal']);
+                                                                        foreach ($bagian['pasal'] as $pasal_number => $pasal) {
+                                                                            $textarea_id = "isi_pasal_$pasal_number";
+                                                                    ?>
+                                                                            <div class="pasal-field" data-bab="<?php echo $bab_number; ?>"
+                                                                                data-pasal="<?php echo $pasal_number; ?>"
+                                                                                data-bagian="<?php echo $bagian_number; ?>">
+                                                                                <div class="field-header">
+                                                                                    <span class="pasal-number">Pasal <?php echo $pasal_number; ?></span>
+                                                                                    <button type="button" class="btn btn-sm btn-remove-field remove-pasal"
+                                                                                        data-pasal="<?php echo $pasal_number; ?>"
+                                                                                        <?php echo $pasal_count_in_bagian == 1 ? 'style="display: none;"' : ''; ?>>
+                                                                                        <i class="fas fa-trash"></i> Hapus
+                                                                                    </button>
+                                                                                </div>
+                                                                                <div class="form-group">
+                                                                                    <textarea name="isi_pasal[<?php echo $pasal_number; ?>]"
+                                                                                        id="<?php echo $textarea_id; ?>"
+                                                                                        class="form-control" rows="3"
+                                                                                        placeholder="Masukkan isi Pasal <?php echo $pasal_number; ?>..."
+                                                                                        required><?php echo isset($pasal['isi']) ? $pasal['isi'] : ''; ?></textarea>
+                                                                                    <input type="hidden" name="pasal_bab_mapping[<?php echo $pasal_number; ?>]"
+                                                                                        value="<?php echo $bab_number; ?>">
+                                                                                    <input type="hidden" name="pasal_bagian_mapping[<?php echo $pasal_number; ?>]"
+                                                                                        value="<?php echo $bagian_number; ?>">
+                                                                                </div>
+                                                                            </div>
+                                                                    <?php
+                                                                        }
+                                                                    }
+                                                                    ?>
+                                                                    <!-- Tombol Tambah Pasal dalam Bagian -->
+                                                                    <div class="add-pasal-container">
+                                                                        <button type="button" class="btn btn-sm btn-add-pasal add-pasal-btn"
+                                                                            data-bab="<?php echo $bab_number; ?>"
+                                                                            data-bagian="<?php echo $bagian_number; ?>">
+                                                                            <i class="fas fa-plus"></i> Tambah Pasal
+                                                                        </button>
+                                                                        <br>
+                                                                        <small class="text-muted mt-2 d-block">Klik untuk menambah pasal baru dalam bagian ini</small>
+                                                                    </div>
+                                                                </div>
                                                             </div>
+                                                    <?php
+                                                        }
+                                                    }
+
+                                                    ?>
+
+                                                    <!-- Tombol Tambah Bagian -->
+                                                    <div class="add-bagian-container">
+                                                        <button type="button" class="btn btn-sm btn-add-bagian add-bagian-btn"
+                                                            data-bab="<?php echo $bab_number; ?>">
+                                                            <i class="fas fa-plus"></i> Tambah Bagian
+                                                        </button>
+                                                        <br>
+                                                        <small class="text-muted mt-2 d-block">Klik untuk menambah bagian baru dalam bab ini</small>
+                                                    </div>
+
+                                                    <!-- Pasal tanpa Bagian (langsung di Bab) -->
+                                                    <div class="pasal-container" data-bab="<?php echo $bab_number; ?>" data-bagian="0">
+                                                        <?php
+                                                        $pasal_count_without_bagian = 0;
+                                                        if (!empty($bab['pasal']) && is_array($bab['pasal'])) {
+                                                            $pasal_count_without_bagian = count($bab['pasal']);
+                                                            foreach ($bab['pasal'] as $pasal_number => $pasal) {
+                                                                $textarea_id = "isi_pasal_$pasal_number";
+                                                        ?>
+                                                                <div class="pasal-field" data-bab="<?php echo $bab_number; ?>"
+                                                                    data-pasal="<?php echo $pasal_number; ?>" data-bagian="0">
+                                                                    <div class="field-header">
+                                                                        <span class="pasal-number">Pasal <?php echo $pasal_number; ?></span>
+                                                                        <button type="button" class="btn btn-sm btn-remove-field remove-pasal"
+                                                                            data-pasal="<?php echo $pasal_number; ?>"
+                                                                            <?php echo $pasal_count_without_bagian == 1 ? 'style="display: none;"' : ''; ?>>
+                                                                            <i class="fas fa-trash"></i> Hapus
+                                                                        </button>
+                                                                    </div>
+                                                                    <div class="form-group">
+                                                                        <textarea name="isi_pasal[<?php echo $pasal_number; ?>]"
+                                                                            id="<?php echo $textarea_id; ?>"
+                                                                            class="form-control" rows="3"
+                                                                            placeholder="Masukkan isi Pasal <?php echo $pasal_number; ?>..."
+                                                                            required><?php echo isset($pasal['isi']) ? $pasal['isi'] : ''; ?></textarea>
+                                                                        <input type="hidden" name="pasal_bab_mapping[<?php echo $pasal_number; ?>]"
+                                                                            value="<?php echo $bab_number; ?>">
+                                                                        <input type="hidden" name="pasal_bagian_mapping[<?php echo $pasal_number; ?>]"
+                                                                            value="0">
+                                                                    </div>
+                                                                </div>
+                                                        <?php
+                                                            }
+                                                        }
+                                                        ?>
+                                                        <!-- Tombol Tambah Pasal tanpa Bagian -->
+                                                        <div class="add-pasal-container">
+                                                            <button type="button" class="btn btn-sm btn-add-pasal add-pasal-btn"
+                                                                data-bab="<?php echo $bab_number; ?>" data-bagian="0">
+                                                                <i class="fas fa-plus"></i> Tambah Pasal
+                                                            </button>
+                                                            <br>
+                                                            <small class="text-muted mt-2 d-block">Klik untuk menambah pasal baru tanpa bagian</small>
                                                         </div>
                                                     </div>
-                                            <?php
-                                                }
-                                            }
-
-                                            ?>
-
-                                            <!-- Tombol Tambah Bagian -->
-                                            <div class="add-bagian-container">
-                                                <button type="button" class="btn btn-sm btn-add-bagian add-bagian-btn"
-                                                    data-bab="<?php echo $bab_number; ?>">
-                                                    <i class="fas fa-plus"></i> Tambah Bagian
-                                                </button>
-                                                <br>
-                                                <small class="text-muted mt-2 d-block">Klik untuk menambah bagian baru dalam bab ini</small>
-                                            </div>
-
-                                            <!-- Pasal tanpa Bagian (langsung di Bab) -->
-                                            <div class="pasal-container" data-bab="<?php echo $bab_number; ?>" data-bagian="0">
-                                                <?php
-                                                $pasal_count_without_bagian = 0;
-                                                if (!empty($bab['pasal']) && is_array($bab['pasal'])) {
-                                                    $pasal_count_without_bagian = count($bab['pasal']);
-                                                    foreach ($bab['pasal'] as $pasal_number => $pasal) {
-                                                        $textarea_id = "isi_pasal_$pasal_number";
-                                                ?>
-                                                        <div class="pasal-field" data-bab="<?php echo $bab_number; ?>"
-                                                            data-pasal="<?php echo $pasal_number; ?>" data-bagian="0">
-                                                            <div class="field-header">
-                                                                <span class="pasal-number">Pasal <?php echo $pasal_number; ?></span>
-                                                                <button type="button" class="btn btn-sm btn-remove-field remove-pasal"
-                                                                    data-pasal="<?php echo $pasal_number; ?>"
-                                                                    <?php echo $pasal_count_without_bagian == 1 ? 'style="display: none;"' : ''; ?>>
-                                                                    <i class="fas fa-trash"></i> Hapus
-                                                                </button>
-                                                            </div>
-                                                            <div class="form-group">
-                                                                <textarea name="isi_pasal[<?php echo $pasal_number; ?>]"
-                                                                    id="<?php echo $textarea_id; ?>"
-                                                                    class="form-control" rows="3"
-                                                                    placeholder="Masukkan isi Pasal <?php echo $pasal_number; ?>..."
-                                                                    required><?php echo isset($pasal['isi']) ? $pasal['isi'] : ''; ?></textarea>
-                                                                <input type="hidden" name="pasal_bab_mapping[<?php echo $pasal_number; ?>]"
-                                                                    value="<?php echo $bab_number; ?>">
-                                                                <input type="hidden" name="pasal_bagian_mapping[<?php echo $pasal_number; ?>]"
-                                                                    value="0">
-                                                            </div>
-                                                        </div>
-                                                <?php
-                                                    }
-                                                }
-                                                ?>
-                                                <!-- Tombol Tambah Pasal tanpa Bagian -->
-                                                <div class="add-pasal-container">
-                                                    <button type="button" class="btn btn-sm btn-add-pasal add-pasal-btn"
-                                                        data-bab="<?php echo $bab_number; ?>" data-bagian="0">
-                                                        <i class="fas fa-plus"></i> Tambah Pasal
-                                                    </button>
-                                                    <br>
-                                                    <small class="text-muted mt-2 d-block">Klik untuk menambah pasal baru tanpa bagian</small>
                                                 </div>
                                             </div>
+                                            <?php if ($is_edit_mode): ?>
+                                                <div class="revisi-container" id="revisi-bab-<?php echo $bab_number; ?>"></div>
+                                            <?php endif; ?>
                                         </div>
                                         <hr>
                                     </div>
@@ -711,6 +718,11 @@
             'penjelasan'
         ];
 
+        // Tambahkan revisi untuk setiap BAB
+        <?php foreach ($bab_data as $bab_number => $bab) { ?>
+            kolomDenganRevisi.push('bab-<?php echo $bab_number; ?>');
+        <?php } ?>
+
         // Grouping revisi berdasarkan kolom_tujuan
         const revisiMap = {};
 
@@ -761,6 +773,19 @@
                 console.warn(`Container ${containerId} not found`);
                 return;
             }
+
+            const revisiList = revisiMap[key] || [];
+            renderRevisiContainer(container, key, revisiList);
+        });
+
+        // Render revisi untuk BAB dinamis
+        $('.bab-field').each(function() {
+            const babNumber = $(this).data('number');
+            const key = `bab-${babNumber}`;
+            const containerId = `revisi-${key}`;
+            const container = $(`#${containerId}`);
+
+            if (container.length === 0) return;
 
             const revisiList = revisiMap[key] || [];
             renderRevisiContainer(container, key, revisiList);
@@ -1732,6 +1757,9 @@
     });
 
     function addBabField(number) {
+        const revisiContainerHtml = isEditMode ?
+            `<div class="revisi-container" id="revisi-bab-${number}"></div>` : '';
+
         const newField = `
             <div class="bab-field" data-number="${number}">
                 <div class="field-header">
@@ -1740,29 +1768,37 @@
                         <i class="fas fa-trash"></i> Hapus
                     </button>
                 </div>
-                <div class="form-group row">
-                    <label class="col-form-label col-lg-2">Judul Bab <span class="text-danger">*</span></label>
-                    <div class="col-lg-10">
-                        <input type="text" class="form-control" name="judul_bab[${number}]" placeholder="Masukkan Judul Bab ${number}" required>
-                    </div>
-                </div>
-                <div class="bagian-container" data-bab="${number}">
-                    <div class="add-bagian-container">
-                        <button type="button" class="btn btn-sm btn-add-bagian add-bagian-btn" data-bab="${number}">
-                            <i class="fas fa-plus"></i> Tambah Bagian
-                        </button>
-                        <br>
-                        <small class="text-muted mt-2 d-block">Klik untuk menambah bagian baru dalam bab ini</small>
-                    </div>
-                    <div class="pasal-container" data-bab="${number}" data-bagian="0">
-                        <div class="add-pasal-container">
-                            <button type="button" class="btn btn-sm btn-add-pasal add-pasal-btn" data-bab="${number}" data-bagian="0">
-                                <i class="fas fa-plus"></i> Tambah Pasal
-                            </button>
-                            <br>
-                            <small class="text-muted mt-2 d-block">Klik untuk menambah pasal baru tanpa bagian</small>
+                
+                <div class="form-with-revisi">
+                    <div class="form-main-content">
+                        <div class="form-group row">
+                            <label class="col-form-label col-lg-2">Judul Bab <span class="text-danger">*</span></label>
+                            <div class="col-lg-10">
+                                <input type="text" class="form-control" name="judul_bab[${number}]" 
+                                    placeholder="Masukkan Judul Bab ${number}" required>
+                            </div>
+                        </div>
+                        <div class="bagian-container" data-bab="${number}">
+                            <div class="add-bagian-container">
+                                <button type="button" class="btn btn-sm btn-add-bagian add-bagian-btn" data-bab="${number}">
+                                    <i class="fas fa-plus"></i> Tambah Bagian
+                                </button>
+                                <br>
+                                <small class="text-muted mt-2 d-block">Klik untuk menambah bagian baru dalam bab ini</small>
+                            </div>
+                            <div class="pasal-container" data-bab="${number}" data-bagian="0">
+                                <div class="add-pasal-container">
+                                    <button type="button" class="btn btn-sm btn-add-pasal add-pasal-btn" 
+                                            data-bab="${number}" data-bagian="0">
+                                        <i class="fas fa-plus"></i> Tambah Pasal
+                                    </button>
+                                    <br>
+                                    <small class="text-muted mt-2 d-block">Klik untuk menambah pasal baru tanpa bagian</small>
+                                </div>
+                            </div>
                         </div>
                     </div>
+                    ${revisiContainerHtml}
                 </div>
                 <hr>
             </div>
@@ -1771,7 +1807,10 @@
         $('#bab-container .add-field-container').before(newField);
 
         setTimeout(function() {
-            setFormAccess(); // Apply form access untuk field baru
+            if (isEditMode) {
+                tampilkanRevisi(); // Inisialisasi revisi untuk BAB baru
+            }
+            setFormAccess();
         }, 100);
 
         $('html, body').animate({
@@ -1813,6 +1852,12 @@
             $(field).attr('data-number', newNumber);
             $(field).find('.field-number').first().text(`BAB ${newNumber}`);
 
+            // Update revisi container ID
+            const revisiContainer = $(field).find('.revisi-container');
+            if (revisiContainer.length > 0) {
+                revisiContainer.attr('id', `revisi-bab-${newNumber}`);
+            }
+
             $(field).find('.bagian-container').attr('data-bab', newNumber);
             $(field).find('.add-bagian-btn').attr('data-bab', newNumber);
 
@@ -1849,7 +1894,7 @@
         });
 
         babCounter = tempBabCounter;
-        tampilkanRevisi(); // Perbarui revisi setelah reorganisasi
+        tampilkanRevisi(); // Refresh semua revisi termasuk BAB
     }
 
     $('form').on('submit', function() {
