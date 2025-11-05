@@ -287,20 +287,43 @@ class Usulan_raperbup extends MY_Controller
                 foreach ($judul_bab as $bab_number => $judul) {
                     $bab_pasal_data[$bab_number] = array(
                         'judul' => $judul,
-                        'pasal' => array()
+                        'pasal' => array(),
+                        'bagian' => array()
                     );
                 }
 
-                // Distribusikan pasal ke bab dan bagian yang sesuai berdasarkan mapping
+                // Proses bagian jika ada
+                if (!empty($judul_bagian)) {
+                    foreach ($judul_bagian as $bab_num => $bagian_array) {
+                        if (is_array($bagian_array)) {
+                            foreach ($bagian_array as $bagian_num => $judul_bagian_text) {
+                                if (isset($bab_pasal_data[$bab_num])) {
+                                    $bab_pasal_data[$bab_num]['bagian'][$bagian_num] = array(
+                                        'judul' => $judul_bagian_text,
+                                        'pasal' => array()
+                                    );
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // Distribusikan pasal ke bab dan bagian yang sesuai
                 if (!empty($isi_pasal) && !empty($pasal_bab_mapping)) {
                     foreach ($isi_pasal as $pasal_number => $isi) {
                         $bab_number = isset($pasal_bab_mapping[$pasal_number]) ? $pasal_bab_mapping[$pasal_number] : null;
                         $bagian_number = isset($pasal_bagian_mapping[$pasal_number]) ? $pasal_bagian_mapping[$pasal_number] : 0;
+
                         if ($bab_number && isset($bab_pasal_data[$bab_number])) {
-                            $bab_pasal_data[$bab_number]['pasal'][$pasal_number] = array(
-                                'isi' => $isi,
-                                'bagian' => $bagian_number
-                            );
+                            $pasal_data = array('isi' => $isi);
+
+                            // Jika pasal ada dalam bagian
+                            if ($bagian_number > 0 && isset($bab_pasal_data[$bab_number]['bagian'][$bagian_number])) {
+                                $bab_pasal_data[$bab_number]['bagian'][$bagian_number]['pasal'][$pasal_number] = $pasal_data;
+                            } else {
+                                // Pasal langsung di bab (tanpa bagian)
+                                $bab_pasal_data[$bab_number]['pasal'][$pasal_number] = $pasal_data;
+                            }
                         }
                     }
                 }
@@ -315,8 +338,6 @@ class Usulan_raperbup extends MY_Controller
                 'bab_pasal_data' => $bab_pasal_data,
                 'judul_bab' => $judul_bab,
                 'judul_bagian' => $judul_bagian,
-                'pasal_bab_mapping' => $pasal_bab_mapping,
-                'pasal_bagian_mapping' => $pasal_bagian_mapping,
                 'penjelasan' => $penjelasan,
                 'nomor' => '123', // Nomor sementara untuk preview
                 'tanggal' => date('d F Y', strtotime($this->datetime())),
@@ -376,7 +397,6 @@ class Usulan_raperbup extends MY_Controller
         $this->mpdf_library->mpdf->Output($pdf_file_name, 'I');
         exit; // Pastikan tidak ada kode lain yang dieksekusi setelah ini
     }
-
 
     public function generate_pdf_raperbup($id_usulan_raperbup, $trx_id, $output_mode = 'F', $is_perbaikan = false)
     {
@@ -449,7 +469,7 @@ class Usulan_raperbup extends MY_Controller
 
         $this->mpdf_library->mpdf->WriteHTML($html);
 
-        $pdf_file_name = 'Keputusan_Bupati_' . str_replace(' ', '_', $data_usulan->nama_peraturan) . '_' . time() . '.pdf';
+        $pdf_file_name = str_replace(' ', '_', $data_usulan->nama_peraturan) . '_' . time() . '.pdf';
         $pdf_path = FCPATH . 'assets/file_usulan/' . $pdf_file_name;
 
         try {

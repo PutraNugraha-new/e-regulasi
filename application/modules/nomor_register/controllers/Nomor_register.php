@@ -305,9 +305,6 @@ class Nomor_register extends MY_Controller
                 }
             }
 
-            // Debug: Log struktur data (hapus setelah selesai debug)
-            log_message('debug', 'Bab Pasal Data: ' . print_r($bab_pasal_data, true));
-
             // Data untuk template Peraturan Bupati
             $data = array(
                 'nama_peraturan' => $nama_peraturan,
@@ -315,6 +312,8 @@ class Nomor_register extends MY_Controller
                 'mengingat' => $mengingat,
                 'menetapkan' => $menetapkan,
                 'bab_pasal_data' => $bab_pasal_data,
+                'judul_bab' => $judul_bab,
+                'judul_bagian' => $judul_bagian,
                 'penjelasan' => $penjelasan,
                 'nomor' => '123', // Nomor sementara untuk preview
                 'tanggal' => date('d F Y', strtotime($this->datetime())),
@@ -338,6 +337,7 @@ class Nomor_register extends MY_Controller
             );
         }
 
+
         // Pilih template berdasarkan kategori usulan
         $template = ($kategori_usulan_id == 1) ? 'template/perda' : (($kategori_usulan_id == 2) ? 'template/perbup' : 'template/kepbup');
         $html = $this->load->view($template, $data, TRUE);
@@ -345,29 +345,33 @@ class Nomor_register extends MY_Controller
         // Konfigurasi mPDF
         $this->mpdf_library->mpdf->SetTitle('Preview Peraturan Bupati Katingan');
         if ($kategori_usulan_id == 1 || $kategori_usulan_id == 2) {
-            // Atur header dengan nomor halaman
+            // Atur header dengan nomor halaman untuk halaman genap dan ganjil
             $header_html = '- {PAGENO} -';
             $this->mpdf_library->mpdf->SetHTMLHeader($header_html, 'E', true);
             $this->mpdf_library->mpdf->SetHTMLHeader($header_html, 'O', true);
+
+            // Paksa header di halaman pertama menjadi kosong
             $this->mpdf_library->mpdf->SetHTMLHeader('', 'first');
+
+            // Tambahkan konten utama
             $this->mpdf_library->mpdf->WriteHTML($html);
         } else {
             $this->mpdf_library->mpdf->WriteHTML($html);
         }
 
-        // Nama file PDF
+        // Nama file PDF sementara untuk preview
         $pdf_file_name = 'Preview_Peraturan_Bupati_' . time() . '.pdf';
 
-        // Bersihkan output buffer
+        // Bersihkan output buffer sebelum mengirim header PDF
         ob_clean();
 
-        // Output PDF
+        // Output PDF untuk preview (inline)
         header('Content-Type: application/pdf');
         header('Content-Disposition: inline; filename="' . $pdf_file_name . '"');
         header('Content-Transfer-Encoding: binary');
         header('Accept-Ranges: bytes');
         $this->mpdf_library->mpdf->Output($pdf_file_name, 'I');
-        exit;
+        exit; // Pastikan tidak ada kode lain yang dieksekusi setelah ini
     }
 
     public function generate_pdf_raperbup($id_usulan_raperbup, $trx_id, $output_mode = 'F')
