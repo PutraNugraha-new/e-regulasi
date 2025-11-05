@@ -51,8 +51,10 @@ class Usulan_raperbup extends MY_Controller
                         if (!isset($upload_file_lampiran_daftar_hadir['error'])) {
                             // Ambil data bab dan pasal dari form
                             $judul_bab = $this->input->post("judul_bab"); // array
+                            $judul_bagian = $this->input->post("judul_bagian"); // array 2D [bab][bagian]
                             $isi_pasal = $this->input->post("isi_pasal"); // array
                             $pasal_bab_mapping = $this->input->post("pasal_bab_mapping"); // array mapping pasal ke bab
+                            $pasal_bagian_mapping = $this->input->post("pasal_bagian_mapping"); // array mapping pasal ke bagian
 
                             // Buat struktur JSON untuk bab_pasal_data
                             $bab_pasal_data = array();
@@ -62,18 +64,44 @@ class Usulan_raperbup extends MY_Controller
                                 foreach ($judul_bab as $bab_number => $judul) {
                                     $bab_pasal_data[$bab_number] = array(
                                         'judul' => $judul,
-                                        'pasal' => array()
+                                        'pasal' => array(),
+                                        'bagian' => array()
                                     );
                                 }
 
-                                // Distribusikan pasal ke bab yang sesuai berdasarkan mapping
+                                // Tambahkan bagian ke struktur bab
+                                if (!empty($judul_bagian)) {
+                                    foreach ($judul_bagian as $bab_number => $bagian_array) {
+                                        if (isset($bab_pasal_data[$bab_number]) && is_array($bagian_array)) {
+                                            foreach ($bagian_array as $bagian_number => $judul_bagian_text) {
+                                                $bab_pasal_data[$bab_number]['bagian'][$bagian_number] = array(
+                                                    'judul' => $judul_bagian_text,
+                                                    'pasal' => array()
+                                                );
+                                            }
+                                        }
+                                    }
+                                }
+
+                                // Distribusikan pasal ke bab/bagian yang sesuai berdasarkan mapping
                                 if (!empty($isi_pasal) && !empty($pasal_bab_mapping)) {
                                     foreach ($isi_pasal as $pasal_number => $isi) {
                                         $bab_number = $pasal_bab_mapping[$pasal_number];
+                                        $bagian_number = isset($pasal_bagian_mapping[$pasal_number]) ? $pasal_bagian_mapping[$pasal_number] : 0;
+
                                         if (isset($bab_pasal_data[$bab_number])) {
-                                            $bab_pasal_data[$bab_number]['pasal'][$pasal_number] = array(
-                                                'isi' => $isi
-                                            );
+                                            // Jika pasal ada di dalam bagian (bagian_number > 0)
+                                            if ($bagian_number > 0 && isset($bab_pasal_data[$bab_number]['bagian'][$bagian_number])) {
+                                                $bab_pasal_data[$bab_number]['bagian'][$bagian_number]['pasal'][$pasal_number] = array(
+                                                    'isi' => $isi
+                                                );
+                                            }
+                                            // Jika pasal langsung di bab (bagian_number = 0)
+                                            else {
+                                                $bab_pasal_data[$bab_number]['pasal'][$pasal_number] = array(
+                                                    'isi' => $isi
+                                                );
+                                            }
                                         }
                                     }
                                 }
@@ -285,6 +313,7 @@ class Usulan_raperbup extends MY_Controller
                 'mengingat' => $mengingat,
                 'menetapkan' => $menetapkan,
                 'bab_pasal_data' => $bab_pasal_data,
+                'judul_bab' => $judul_bab,
                 'judul_bagian' => $judul_bagian,
                 'pasal_bab_mapping' => $pasal_bab_mapping,
                 'pasal_bagian_mapping' => $pasal_bagian_mapping,
@@ -683,25 +712,55 @@ class Usulan_raperbup extends MY_Controller
                     }
 
                     $judul_bab = $this->input->post("judul_bab");
+                    $judul_bagian = $this->input->post("judul_bagian");
                     $isi_pasal = $this->input->post("isi_pasal");
                     $pasal_bab_mapping = $this->input->post("pasal_bab_mapping");
+                    $pasal_bagian_mapping = $this->input->post("pasal_bagian_mapping");
                     $bab_pasal_data = array();
 
                     if (!empty($judul_bab)) {
+                        // Inisialisasi struktur bab
                         foreach ($judul_bab as $bab_number => $judul) {
                             $bab_pasal_data[$bab_number] = array(
                                 'judul' => $judul,
-                                'pasal' => array()
+                                'pasal' => array(),
+                                'bagian' => array()
                             );
                         }
 
+                        // Tambahkan bagian ke struktur bab
+                        if (!empty($judul_bagian)) {
+                            foreach ($judul_bagian as $bab_number => $bagian_array) {
+                                if (isset($bab_pasal_data[$bab_number]) && is_array($bagian_array)) {
+                                    foreach ($bagian_array as $bagian_number => $judul_bagian_text) {
+                                        $bab_pasal_data[$bab_number]['bagian'][$bagian_number] = array(
+                                            'judul' => $judul_bagian_text,
+                                            'pasal' => array()
+                                        );
+                                    }
+                                }
+                            }
+                        }
+
+                        // Distribusikan pasal ke bab/bagian yang sesuai berdasarkan mapping
                         if (!empty($isi_pasal) && !empty($pasal_bab_mapping)) {
                             foreach ($isi_pasal as $pasal_number => $isi) {
                                 $bab_number = $pasal_bab_mapping[$pasal_number];
+                                $bagian_number = isset($pasal_bagian_mapping[$pasal_number]) ? $pasal_bagian_mapping[$pasal_number] : 0;
+
                                 if (isset($bab_pasal_data[$bab_number])) {
-                                    $bab_pasal_data[$bab_number]['pasal'][$pasal_number] = array(
-                                        'isi' => $isi
-                                    );
+                                    // Jika pasal ada di dalam bagian (bagian_number > 0)
+                                    if ($bagian_number > 0 && isset($bab_pasal_data[$bab_number]['bagian'][$bagian_number])) {
+                                        $bab_pasal_data[$bab_number]['bagian'][$bagian_number]['pasal'][$pasal_number] = array(
+                                            'isi' => $isi
+                                        );
+                                    }
+                                    // Jika pasal langsung di bab (bagian_number = 0)
+                                    else {
+                                        $bab_pasal_data[$bab_number]['pasal'][$pasal_number] = array(
+                                            'isi' => $isi
+                                        );
+                                    }
                                 }
                             }
                         }

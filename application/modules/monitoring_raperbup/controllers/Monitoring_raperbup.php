@@ -277,25 +277,55 @@ class Monitoring_raperbup extends MY_Controller
                     }
 
                     $judul_bab = $this->input->post("judul_bab");
+                    $judul_bagian = $this->input->post("judul_bagian");
                     $isi_pasal = $this->input->post("isi_pasal");
                     $pasal_bab_mapping = $this->input->post("pasal_bab_mapping");
+                    $pasal_bagian_mapping = $this->input->post("pasal_bagian_mapping");
                     $bab_pasal_data = array();
 
                     if (!empty($judul_bab)) {
+                        // Inisialisasi struktur bab
                         foreach ($judul_bab as $bab_number => $judul) {
                             $bab_pasal_data[$bab_number] = array(
                                 'judul' => $judul,
-                                'pasal' => array()
+                                'pasal' => array(),
+                                'bagian' => array()
                             );
                         }
 
+                        // Tambahkan bagian ke struktur bab
+                        if (!empty($judul_bagian)) {
+                            foreach ($judul_bagian as $bab_number => $bagian_array) {
+                                if (isset($bab_pasal_data[$bab_number]) && is_array($bagian_array)) {
+                                    foreach ($bagian_array as $bagian_number => $judul_bagian_text) {
+                                        $bab_pasal_data[$bab_number]['bagian'][$bagian_number] = array(
+                                            'judul' => $judul_bagian_text,
+                                            'pasal' => array()
+                                        );
+                                    }
+                                }
+                            }
+                        }
+
+                        // Distribusikan pasal ke bab/bagian yang sesuai berdasarkan mapping
                         if (!empty($isi_pasal) && !empty($pasal_bab_mapping)) {
                             foreach ($isi_pasal as $pasal_number => $isi) {
                                 $bab_number = $pasal_bab_mapping[$pasal_number];
+                                $bagian_number = isset($pasal_bagian_mapping[$pasal_number]) ? $pasal_bagian_mapping[$pasal_number] : 0;
+
                                 if (isset($bab_pasal_data[$bab_number])) {
-                                    $bab_pasal_data[$bab_number]['pasal'][$pasal_number] = array(
-                                        'isi' => $isi
-                                    );
+                                    // Jika pasal ada di dalam bagian (bagian_number > 0)
+                                    if ($bagian_number > 0 && isset($bab_pasal_data[$bab_number]['bagian'][$bagian_number])) {
+                                        $bab_pasal_data[$bab_number]['bagian'][$bagian_number]['pasal'][$pasal_number] = array(
+                                            'isi' => $isi
+                                        );
+                                    }
+                                    // Jika pasal langsung di bab (bagian_number = 0)
+                                    else {
+                                        $bab_pasal_data[$bab_number]['pasal'][$pasal_number] = array(
+                                            'isi' => $isi
+                                        );
+                                    }
                                 }
                             }
                         }
@@ -469,24 +499,50 @@ class Monitoring_raperbup extends MY_Controller
                 foreach ($judul_bab as $bab_number => $judul) {
                     $bab_pasal_data[$bab_number] = array(
                         'judul' => $judul,
-                        'pasal' => array()
+                        'pasal' => array(),
+                        'bagian' => array()
                     );
                 }
 
-                // Distribusikan pasal ke bab dan bagian yang sesuai berdasarkan mapping
+                // Proses bagian jika ada
+                if (!empty($judul_bagian)) {
+                    foreach ($judul_bagian as $bab_num => $bagian_array) {
+                        if (is_array($bagian_array)) {
+                            foreach ($bagian_array as $bagian_num => $judul_bagian_text) {
+                                if (isset($bab_pasal_data[$bab_num])) {
+                                    $bab_pasal_data[$bab_num]['bagian'][$bagian_num] = array(
+                                        'judul' => $judul_bagian_text,
+                                        'pasal' => array()
+                                    );
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // Distribusikan pasal ke bab dan bagian yang sesuai
                 if (!empty($isi_pasal) && !empty($pasal_bab_mapping)) {
                     foreach ($isi_pasal as $pasal_number => $isi) {
                         $bab_number = isset($pasal_bab_mapping[$pasal_number]) ? $pasal_bab_mapping[$pasal_number] : null;
                         $bagian_number = isset($pasal_bagian_mapping[$pasal_number]) ? $pasal_bagian_mapping[$pasal_number] : 0;
+
                         if ($bab_number && isset($bab_pasal_data[$bab_number])) {
-                            $bab_pasal_data[$bab_number]['pasal'][$pasal_number] = array(
-                                'isi' => $isi,
-                                'bagian' => $bagian_number
-                            );
+                            $pasal_data = array('isi' => $isi);
+
+                            // Jika pasal ada dalam bagian
+                            if ($bagian_number > 0 && isset($bab_pasal_data[$bab_number]['bagian'][$bagian_number])) {
+                                $bab_pasal_data[$bab_number]['bagian'][$bagian_number]['pasal'][$pasal_number] = $pasal_data;
+                            } else {
+                                // Pasal langsung di bab (tanpa bagian)
+                                $bab_pasal_data[$bab_number]['pasal'][$pasal_number] = $pasal_data;
+                            }
                         }
                     }
                 }
             }
+
+            // Debug: Log struktur data (hapus setelah selesai debug)
+            log_message('debug', 'Bab Pasal Data: ' . print_r($bab_pasal_data, true));
 
             // Data untuk template Peraturan Bupati
             $data = array(
@@ -495,9 +551,6 @@ class Monitoring_raperbup extends MY_Controller
                 'mengingat' => $mengingat,
                 'menetapkan' => $menetapkan,
                 'bab_pasal_data' => $bab_pasal_data,
-                'judul_bagian' => $judul_bagian,
-                'pasal_bab_mapping' => $pasal_bab_mapping,
-                'pasal_bagian_mapping' => $pasal_bagian_mapping,
                 'penjelasan' => $penjelasan,
                 'nomor' => '123', // Nomor sementara untuk preview
                 'tanggal' => date('d F Y', strtotime($this->datetime())),
@@ -521,7 +574,6 @@ class Monitoring_raperbup extends MY_Controller
             );
         }
 
-
         // Pilih template berdasarkan kategori usulan
         $template = ($kategori_usulan_id == 1) ? 'template/perda' : (($kategori_usulan_id == 2) ? 'template/perbup' : 'template/kepbup');
         $html = $this->load->view($template, $data, TRUE);
@@ -529,33 +581,29 @@ class Monitoring_raperbup extends MY_Controller
         // Konfigurasi mPDF
         $this->mpdf_library->mpdf->SetTitle('Preview Peraturan Bupati Katingan');
         if ($kategori_usulan_id == 1 || $kategori_usulan_id == 2) {
-            // Atur header dengan nomor halaman untuk halaman genap dan ganjil
+            // Atur header dengan nomor halaman
             $header_html = '- {PAGENO} -';
             $this->mpdf_library->mpdf->SetHTMLHeader($header_html, 'E', true);
             $this->mpdf_library->mpdf->SetHTMLHeader($header_html, 'O', true);
-
-            // Paksa header di halaman pertama menjadi kosong
             $this->mpdf_library->mpdf->SetHTMLHeader('', 'first');
-
-            // Tambahkan konten utama
             $this->mpdf_library->mpdf->WriteHTML($html);
         } else {
             $this->mpdf_library->mpdf->WriteHTML($html);
         }
 
-        // Nama file PDF sementara untuk preview
+        // Nama file PDF
         $pdf_file_name = 'Preview_Peraturan_Bupati_' . time() . '.pdf';
 
-        // Bersihkan output buffer sebelum mengirim header PDF
+        // Bersihkan output buffer
         ob_clean();
 
-        // Output PDF untuk preview (inline)
+        // Output PDF
         header('Content-Type: application/pdf');
         header('Content-Disposition: inline; filename="' . $pdf_file_name . '"');
         header('Content-Transfer-Encoding: binary');
         header('Accept-Ranges: bytes');
         $this->mpdf_library->mpdf->Output($pdf_file_name, 'I');
-        exit; // Pastikan tidak ada kode lain yang dieksekusi setelah ini
+        exit;
     }
 
     public function generate_pdf_raperbup($id_usulan_raperbup, $trx_id, $output_mode = 'F')

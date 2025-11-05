@@ -684,7 +684,7 @@
     var currentUserId = <?php echo $this->session->userdata('id_user') ? $this->session->userdata('id_user') : 0; ?>;
     var currentUserLevel = <?php echo isset($level_user) ? $level_user : 0; ?>;
     var canManageRevisi = [4, 6, 7, 15].includes(Number(currentUserLevel));
-    console.log("Current User ID:", currentUserId, "Level:", currentUserLevel, "Can Manage Revisi:", canManageRevisi);
+    // console.log("Current User ID:", currentUserId, "Level:", currentUserLevel, "Can Manage Revisi:", canManageRevisi);
 
     // Fungsi untuk menampilkan revisi
     function tampilkanRevisi() {
@@ -843,7 +843,7 @@
         }
 
         container.html(html);
-        console.log(`Rendered container: ${key}, Has form: ${canManageRevisi}`);
+        // console.log(`Rendered container: ${key}, Has form: ${canManageRevisi}`);
     }
 
 
@@ -1020,10 +1020,10 @@
     });
 
     function setFormAccess() {
-        console.log('Setting form access for level:', currentUserLevel);
+        // console.log('Setting form access for level:', currentUserLevel);
 
         if (currentUserLevel == 6) {
-            console.log('Setting readonly mode for level 6');
+            // console.log('Setting readonly mode for level 6');
 
             // Untuk INPUT dan TEXTAREA - gunakan readonly instead of disabled
             $('#form-usulan').find('input:not(.input-revisi), textarea:not(.input-revisi)').each(function() {
@@ -1108,7 +1108,7 @@
             });
 
         } else {
-            console.log('Form editable for level:', currentUserLevel);
+            // console.log('Form editable for level:', currentUserLevel);
         }
     }
 
@@ -1201,7 +1201,7 @@
             }
 
             var formData = new FormData($('#form-usulan')[0]);
-            console.log('Form Data prepared for preview:', formData);
+            // console.log('Form Data prepared for preview:', formData);
 
             $.ajax({
                 url: '<?= base_url('monitoring_raperbup/preview_pdf_raperbup') ?>',

@@ -195,168 +195,212 @@
         </div>
 
         <!-- Bagian Bab, Bagian, dan Pasal -->
-        <?php if (!empty($bab_pasal_data) && is_array($bab_pasal_data) || !empty($judul_bagian) && is_array($judul_bagian)): ?>
+        <?php
+        // Deteksi mode: preview atau generate
+        // Preview: ada $judul_bagian dari POST
+        // Generate: ada $bab_pasal_data dari database yang sudah di-decode
+        $is_preview = isset($judul_bagian) && is_array($judul_bagian);
+        $is_generate = isset($bab_pasal_data) && is_array($bab_pasal_data) && !$is_preview;
+
+        if ($is_preview || $is_generate):
+        ?>
             <?php
             // Function terbilang untuk angka Romawi
-            function romawi($angka)
-            {
-                $romawi = array(
-                    1 => 'I',
-                    2 => 'II',
-                    3 => 'III',
-                    4 => 'IV',
-                    5 => 'V',
-                    6 => 'VI',
-                    7 => 'VII',
-                    8 => 'VIII',
-                    9 => 'IX',
-                    10 => 'X',
-                    11 => 'XI',
-                    12 => 'XII',
-                    13 => 'XIII',
-                    14 => 'XIV',
-                    15 => 'XV',
-                    16 => 'XVI',
-                    17 => 'XVII',
-                    18 => 'XVIII',
-                    19 => 'XIX',
-                    20 => 'XX'
-                );
-                return isset($romawi[$angka]) ? $romawi[$angka] : $angka;
-            }
-
-            // Function terbilang untuk nama bagian
-            function terbilang_bagian($angka)
-            {
-                $terbilang = array(
-                    1 => 'Kesatu',
-                    2 => 'Kedua',
-                    3 => 'Ketiga',
-                    4 => 'Keempat',
-                    5 => 'Kelima',
-                    6 => 'Keenam',
-                    7 => 'Ketujuh',
-                    8 => 'Kedelapan',
-                    9 => 'Kesembilan',
-                    10 => 'Kesepuluh',
-                    11 => 'Kesebelas',
-                    12 => 'Kedua Belas',
-                    13 => 'Ketiga Belas',
-                    14 => 'Keempat Belas',
-                    15 => 'Kelima Belas',
-                    16 => 'Keenam Belas',
-                    17 => 'Ketujuh Belas',
-                    18 => 'Kedelapan Belas',
-                    19 => 'Kesembilan Belas',
-                    20 => 'Kedua Puluh'
-                );
-                return isset($terbilang[$angka]) ? $terbilang[$angka] : "Ke-$angka";
-            }
-
-            // Mengelompokkan pasal berdasarkan bab dan bagian
-            $grouped_data = [];
-            foreach ($bab_pasal_data as $bab_number => $bab) {
-                $grouped_data[$bab_number] = [
-                    'judul' => $bab['judul'],
-                    'bagian' => [],
-                    'pasal_tanpa_bagian' => []
-                ];
-                // Inisialisasi bagian jika ada
-                if (!empty($judul_bagian[$bab_number]) && is_array($judul_bagian[$bab_number])) {
-                    foreach ($judul_bagian[$bab_number] as $bagian_number => $judul_bagian) {
-                        $grouped_data[$bab_number]['bagian'][$bagian_number] = [
-                            'judul' => $judul_bagian,
-                            'pasal' => []
-                        ];
-                    }
+            if (!function_exists('romawi')) {
+                function romawi($angka)
+                {
+                    $romawi = array(
+                        1 => 'I',
+                        2 => 'II',
+                        3 => 'III',
+                        4 => 'IV',
+                        5 => 'V',
+                        6 => 'VI',
+                        7 => 'VII',
+                        8 => 'VIII',
+                        9 => 'IX',
+                        10 => 'X',
+                        11 => 'XI',
+                        12 => 'XII',
+                        13 => 'XIII',
+                        14 => 'XIV',
+                        15 => 'XV',
+                        16 => 'XVI',
+                        17 => 'XVII',
+                        18 => 'XVIII',
+                        19 => 'XIX',
+                        20 => 'XX'
+                    );
+                    return isset($romawi[$angka]) ? $romawi[$angka] : $angka;
                 }
             }
 
-            // Mengelompokkan pasal ke dalam bab dan bagian
-            foreach ($bab_pasal_data as $bab_number => $bab) {
-                if (!empty($bab['pasal']) && is_array($bab['pasal'])) {
-                    foreach ($bab['pasal'] as $pasal_number => $pasal) {
-                        $bagian_number = isset($pasal['bagian']) ? $pasal['bagian'] : 0;
-                        if ($bagian_number == 0) {
-                            // Pasal tanpa bagian
-                            $grouped_data[$bab_number]['pasal_tanpa_bagian'][$pasal_number] = [
-                                'isi' => $pasal['isi']
-                            ];
-                        } else {
-                            // Pasal dalam bagian
-                            if (isset($grouped_data[$bab_number]['bagian'][$bagian_number])) {
-                                $grouped_data[$bab_number]['bagian'][$bagian_number]['pasal'][$pasal_number] = [
-                                    'isi' => $pasal['isi']
-                                ];
+            // Function terbilang untuk nama bagian
+            if (!function_exists('terbilang_bagian')) {
+                function terbilang_bagian($angka)
+                {
+                    $terbilang = array(
+                        1 => 'Kesatu',
+                        2 => 'Kedua',
+                        3 => 'Ketiga',
+                        4 => 'Keempat',
+                        5 => 'Kelima',
+                        6 => 'Keenam',
+                        7 => 'Ketujuh',
+                        8 => 'Kedelapan',
+                        9 => 'Kesembilan',
+                        10 => 'Kesepuluh',
+                        11 => 'Kesebelas',
+                        12 => 'Kedua Belas',
+                        13 => 'Ketiga Belas',
+                        14 => 'Keempat Belas',
+                        15 => 'Kelima Belas',
+                        16 => 'Keenam Belas',
+                        17 => 'Ketujuh Belas',
+                        18 => 'Kedelapan Belas',
+                        19 => 'Kesembilan Belas',
+                        20 => 'Kedua Puluh'
+                    );
+                    return isset($terbilang[$angka]) ? $terbilang[$angka] : "Ke-$angka";
+                }
+            }
+
+            // ========== MODE PREVIEW (dari POST form) ==========
+            if ($is_preview) {
+                // Mengelompokkan data dari POST
+                $grouped_data = [];
+
+                // Inisialisasi bab dari $judul_bab
+                if (isset($judul_bab) && is_array($judul_bab)) {
+                    foreach ($judul_bab as $bab_number => $judul_bab_text) {
+                        $grouped_data[$bab_number] = [
+                            'judul' => $judul_bab_text,
+                            'bagian' => [],
+                            'pasal_tanpa_bagian' => []
+                        ];
+                    }
+                }
+
+                // Tambahkan bagian dari $judul_bagian
+                if (isset($judul_bagian) && is_array($judul_bagian)) {
+                    foreach ($judul_bagian as $bab_number => $bagian_array) {
+                        if (is_array($bagian_array)) {
+                            foreach ($bagian_array as $bagian_number => $judul_bagian_text) {
+                                if (isset($grouped_data[$bab_number])) {
+                                    $grouped_data[$bab_number]['bagian'][$bagian_number] = [
+                                        'judul' => $judul_bagian_text,
+                                        'pasal' => []
+                                    ];
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // Distribusikan pasal dari $bab_pasal_data (yang dibuat di controller preview)
+                if (isset($bab_pasal_data) && is_array($bab_pasal_data)) {
+                    foreach ($bab_pasal_data as $bab_number => $bab) {
+                        if (isset($bab['pasal']) && is_array($bab['pasal'])) {
+                            foreach ($bab['pasal'] as $pasal_number => $pasal) {
+                                $bagian_number = isset($pasal['bagian']) ? $pasal['bagian'] : 0;
+
+                                if (isset($grouped_data[$bab_number])) {
+                                    if ($bagian_number == 0) {
+                                        // Pasal tanpa bagian
+                                        $grouped_data[$bab_number]['pasal_tanpa_bagian'][$pasal_number] = [
+                                            'isi' => $pasal['isi']
+                                        ];
+                                    } else {
+                                        // Pasal dalam bagian
+                                        if (isset($grouped_data[$bab_number]['bagian'][$bagian_number])) {
+                                            $grouped_data[$bab_number]['bagian'][$bagian_number]['pasal'][$pasal_number] = [
+                                                'isi' => $pasal['isi']
+                                            ];
+                                        }
+                                    }
+                                }
                             }
                         }
                     }
                 }
             }
+            // ========== MODE GENERATE (dari database) ==========
+            else if ($is_generate) {
+                $grouped_data = [];
+
+                foreach ($bab_pasal_data as $bab_number => $bab) {
+                    $grouped_data[$bab_number] = [
+                        'judul' => isset($bab['judul']) ? $bab['judul'] : '',
+                        'bagian' => isset($bab['bagian']) && is_array($bab['bagian']) ? $bab['bagian'] : [],
+                        'pasal_tanpa_bagian' => isset($bab['pasal']) && is_array($bab['pasal']) ? $bab['pasal'] : []
+                    ];
+                }
+            } else {
+                $grouped_data = [];
+            }
             ?>
 
-            <?php foreach ($grouped_data as $bab_number => $bab): ?>
-                <!-- Judul Bab rata tengah dari konten -->
-                <div class="centered-title-container">
-                    <div class="centered-title-content">
-                        <p style="margin:0;">BAB <?php echo romawi($bab_number); ?></p>
-                        <p style="margin:0;text-transform: uppercase;"><?php echo htmlspecialchars($bab['judul']); ?></p>
+            <!-- Loop untuk menampilkan Bab, Bagian, dan Pasal -->
+            <?php if (!empty($grouped_data) && is_array($grouped_data)): ?>
+                <?php foreach ($grouped_data as $bab_number => $bab): ?>
+                    <!-- Judul Bab -->
+                    <div class="centered-title-container">
+                        <div class="centered-title-content">
+                            <p style="margin:0;">BAB <?php echo romawi($bab_number); ?></p>
+                            <p style="margin:0;text-transform: uppercase;"><?php echo htmlspecialchars($bab['judul']); ?></p>
+                        </div>
                     </div>
-                </div>
 
-                <!-- Bagian dalam Bab -->
-                <?php if (!empty($bab['bagian']) && is_array($bab['bagian'])): ?>
-                    <?php foreach ($bab['bagian'] as $bagian_number => $bagian): ?>
-                        <!-- Judul Bagian rata tengah dari konten -->
-                        <div class="centered-title-container">
-                            <div class="centered-title-content">
-                                <p style="margin:0;">Bagian <?php echo terbilang_bagian($bagian_number); ?></p>
-                                <p style="margin:0;text-transform: uppercase;"><?php echo htmlspecialchars($bagian['judul']); ?></p>
-                            </div>
-                        </div>
-
-                        <!-- Pasal-pasal dalam Bagian -->
-                        <?php if (!empty($bagian['pasal']) && is_array($bagian['pasal'])): ?>
-                            <?php foreach ($bagian['pasal'] as $pasal_number => $pasal): ?>
-                                <!-- Judul Pasal rata tengah dari konten -->
-                                <div class="centered-title-container">
-                                    <div class="centered-title-content">
-                                        <p style="margin:0;">Pasal <?php echo $pasal_number; ?></p>
-                                    </div>
+                    <!-- Bagian dalam Bab -->
+                    <?php if (!empty($bab['bagian']) && is_array($bab['bagian'])): ?>
+                        <?php foreach ($bab['bagian'] as $bagian_number => $bagian): ?>
+                            <!-- Judul Bagian -->
+                            <div class="centered-title-container">
+                                <div class="centered-title-content">
+                                    <p style="margin:0;">Bagian <?php echo terbilang_bagian($bagian_number); ?></p>
+                                    <p style="margin:0;text-transform: uppercase;"><?php echo htmlspecialchars($bagian['judul']); ?></p>
                                 </div>
+                            </div>
 
-                                <div class="menimbang-section">
-                                    <div class="pasal-label">Pasal</div>
-                                    <div class="pasal-colon">:</div>
-                                    <div class="pasal-content">
-                                        <?php echo $pasal['isi']; ?>
+                            <!-- Pasal dalam Bagian -->
+                            <?php if (!empty($bagian['pasal']) && is_array($bagian['pasal'])): ?>
+                                <?php foreach ($bagian['pasal'] as $pasal_number => $pasal): ?>
+                                    <div class="centered-title-container">
+                                        <div class="centered-title-content">
+                                            <p style="margin:0;">Pasal <?php echo $pasal_number; ?></p>
+                                        </div>
                                     </div>
+                                    <div class="menimbang-section">
+                                        <div class="pasal-label">Pasal</div>
+                                        <div class="pasal-colon">:</div>
+                                        <div class="pasal-content">
+                                            <?php echo $pasal['isi']; ?>
+                                        </div>
+                                    </div>
+                                <?php endforeach; ?>
+                            <?php endif; ?>
+                        <?php endforeach; ?>
+                    <?php endif; ?>
+
+                    <!-- Pasal tanpa Bagian -->
+                    <?php if (!empty($bab['pasal_tanpa_bagian']) && is_array($bab['pasal_tanpa_bagian'])): ?>
+                        <?php foreach ($bab['pasal_tanpa_bagian'] as $pasal_number => $pasal): ?>
+                            <div class="centered-title-container">
+                                <div class="centered-title-content">
+                                    <p style="margin:0;">Pasal <?php echo $pasal_number; ?></p>
                                 </div>
-                            <?php endforeach; ?>
-                        <?php endif; ?>
-                    <?php endforeach; ?>
-                <?php endif; ?>
-
-                <!-- Pasal-pasal tanpa Bagian -->
-                <?php if (!empty($bab['pasal_tanpa_bagian']) && is_array($bab['pasal_tanpa_bagian'])): ?>
-                    <?php foreach ($bab['pasal_tanpa_bagian'] as $pasal_number => $pasal): ?>
-                        <!-- Judul Pasal rata tengah dari konten -->
-                        <div class="centered-title-container">
-                            <div class="centered-title-content">
-                                <p style="margin:0;">Pasal <?php echo $pasal_number; ?></p>
                             </div>
-                        </div>
-
-                        <div class="menimbang-section">
-                            <div class="pasal-label">Pasal</div>
-                            <div class="pasal-colon">:</div>
-                            <div class="pasal-content">
-                                <?php echo $pasal['isi']; ?>
+                            <div class="menimbang-section">
+                                <div class="pasal-label">Pasal</div>
+                                <div class="pasal-colon">:</div>
+                                <div class="pasal-content">
+                                    <?php echo $pasal['isi']; ?>
+                                </div>
                             </div>
-                        </div>
-                    <?php endforeach; ?>
-                <?php endif; ?>
-            <?php endforeach; ?>
+                        <?php endforeach; ?>
+                    <?php endif; ?>
+                <?php endforeach; ?>
+            <?php endif; ?>
         <?php else: ?>
             <p>Tidak ada data bab atau bagian yang tersedia.</p>
         <?php endif; ?>
