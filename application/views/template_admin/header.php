@@ -34,6 +34,7 @@
 
 	<script>
 		var base_url = "<?php echo base_url(); ?>";
+		var is_admin_opd = <?= ($this->session->userdata('level_user_id') == 5) ? 'true' : 'false' ?>;
 	</script>
 
 	<!-- General JS Scripts -->
@@ -75,29 +76,40 @@
 				</ul>
 				<ul class="navbar-nav navbar-right">
 					<li class="dropdown dropdown-list-toggle">
-						<a href="#" data-toggle="dropdown" class="nav-link notification-toggle nav-link-lg">
+						<a href="#" data-toggle="dropdown" class="nav-link notification-toggle nav-link-lg" <?php if ($this->session->userdata('level_user_id') == 5): ?>
+								style="pointer-events: none; opacity: 0.6;"
+								title="Notifikasi hanya untuk monitoring internal" <?php endif; ?>>
 							<i class="far fa-bell"></i>
 							<span class="badge badge-danger" id="notificationCount">0</span>
 						</a>
 						<div class="dropdown-menu dropdown-list dropdown-menu-right">
 							<div class="dropdown-header">Pemberitahuan
 								<div class="float-right">
-									<a href="#" onclick="tandaiSemuaDibaca();">Tandai semua telah dibaca</a>
+									<?php if ($this->session->userdata('level_user_id') != 5): ?>
+										<a href="#" onclick="tandaiSemuaDibaca();">Tandai semua telah dibaca</a>
+									<?php else: ?>
+										<span class="text-muted">Tidak dapat diubah</span>
+									<?php endif; ?>
 								</div>
 							</div>
 							<div class="dropdown-list-content dropdown-list-icons" id="notificationList">
 								<div class="dropdown-item text-center">Memuat notifikasi...</div>
 							</div>
 							<div class="dropdown-footer text-center">
-								<a href="<?php echo base_url(); ?>dashboard/notifikasi">Lihat Semua <i
-										class="fas fa-chevron-right"></i></a>
+								<?php if ($this->session->userdata('level_user_id') != 5): ?>
+									<a href="<?php echo base_url(); ?>dashboard/notifikasi">Lihat Semua <i
+											class="fas fa-chevron-right"></i></a>
+								<?php else: ?>
+									<span class="text-muted">Tidak tersedia</span>
+								<?php endif; ?>
 							</div>
 						</div>
 					</li>
 					<li class="dropdown"><a href="#" data-toggle="dropdown"
 							class="nav-link dropdown-toggle nav-link-lg nav-link-user">
 							<div class="d-sm-none d-lg-inline-block">
-								<?php echo $this->session->userdata("nama_lengkap"); ?></div>
+								<?php echo $this->session->userdata("nama_lengkap"); ?>
+							</div>
 						</a>
 						<div class="dropdown-menu dropdown-menu-right">
 							<a href="<?php echo base_url(); ?>Login/act_logout"
@@ -133,7 +145,6 @@
 											weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'
 										});
 
-										// Tentukan link berdasarkan nomor_register
 										var usulan_id = item.id_usulan_raperbup || '';
 										var kategori_id = item.kategori_usulan_id || '';
 										var link = '';
@@ -144,7 +155,8 @@
 											link = base_url + 'monitoring_raperbup/index?usulan_id=' + usulan_id + '&kategori_usulan_id=' + kategori_id;
 										}
 
-										html += `
+										if (!is_admin_opd) {
+											html += `
 								<a href="${link}" class="dropdown-item" onclick="return tandaiDibaca(${item.id_notifikasi}, '${link}')">
 									<div class="dropdown-item-icon bg-info text-white">
 										<i class="fas fa-bell"></i>
@@ -155,6 +167,20 @@
 										<div class="time">${formattedDate}</div>
 									</div>
 								</a>`;
+										} else {
+											html += `
+								<div class="dropdown-item">
+									<div class="dropdown-item-icon bg-secondary text-white">
+										<i class="fas fa-bell"></i>
+									</div>
+									<div class="dropdown-item-desc">
+										<b>${item.nama_pengguna}</b><br>
+										<i>${item.pesan}</i>
+										<div class="time">${formattedDate}</div>
+										<small class="text-muted">Tidak dapat diakses</small>
+									</div>
+								</div>`;
+										}
 									});
 								} else {
 									html = '<div class="dropdown-item text-center">Tidak ada pemberitahuan baru</div>';
@@ -169,8 +195,12 @@
 						});
 					}
 
-					// Fungsi tandai dibaca + redirect
 					window.tandaiDibaca = function (id_notifikasi, link) {
+						if (is_admin_opd) {
+							swal('Akses Ditolak', 'Anda tidak memiliki izin untuk mengakses halaman ini.', 'warning');
+							return false;
+						}
+
 						$.ajax({
 							url: base_url + 'dashboard/request/tandai_dibaca',
 							type: 'POST',
@@ -178,8 +208,8 @@
 							dataType: 'json',
 							success: function (response) {
 								if (response === true) {
-									loadNotifikasi(); // Refresh badge
-									window.location.href = link; // Redirect
+									loadNotifikasi();
+									window.location.href = link;
 								} else {
 									swal('Gagal', 'Gagal menandai notifikasi sebagai dibaca.', 'error');
 								}
@@ -188,11 +218,15 @@
 								swal('Error', 'Terjadi kesalahan saat menghubungi server.', 'error');
 							}
 						});
-						return false; // Cegah redirect langsung
+						return false;
 					};
 
-					// Tandai semua dibaca
 					window.tandaiSemuaDibaca = function () {
+						if (is_admin_opd) {
+							swal('Tidak Diizinkan', 'Fitur ini hanya untuk Admin Pusat.', 'info');
+							return;
+						}
+
 						$.ajax({
 							url: base_url + 'dashboard/request/tandai_semua_dibaca',
 							type: 'POST',
@@ -211,9 +245,8 @@
 						});
 					};
 
-					// Load pertama kali + polling
 					loadNotifikasi();
-					setInterval(loadNotifikasi, 10000); // Tiap 10 detik
+					setInterval(loadNotifikasi, 10000);
 				});
 			</script>
 </body>
