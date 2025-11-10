@@ -261,12 +261,8 @@
             $(".list-peraturan-active").removeClass("active");
             $(e).addClass("active");
         }
-        $("a[href$='#disposisi']").hide();
         $("a[href$='#disetujui']").hide();
         $("a[href$='#tidakDisetujui']").hide();
-        $("a[href$='#publish']").hide();
-        $("a[href$='#terimafinal']").hide(); // ← TAMBAH
-        $("a[href$='#tolakfinal']").hide(); // ← TAMBAH
         $("input[name='usulan_peraturan']").val("");
         if (id_peraturan) {
             $("input[name='usulan_peraturan']").val(id_peraturan);
@@ -286,7 +282,17 @@
                 },
                 success: function(response) {
                     let html = "";
+                    let firstRejectedIndex = -1;
+
+                    // Cari index catatan_ditolak pertama
                     $.each(response, function(index, value) {
+                        if (value.catatan_ditolak && firstRejectedIndex === -1) {
+                            firstRejectedIndex = index;
+                        }
+                    });
+
+                    $.each(response, function(index, value) {
+                        console.log(response);
                         html += "<div class='activity'>" +
                             "<div class='activity-icon " + value.class_color + " text-white shadow-dark'>" +
                             "<i class='fas fa-user-alt'></i>" +
@@ -299,9 +305,16 @@
                             value.action_delete +
                             "</div>" +
                             "</div>" +
-                            "<p>" + value.status_terakhir + "</p>" +
-                            "</div>" +
-                            "</div>"
+                            "<p>" + value.status_terakhir + "</p>";
+
+                        // Tampilkan tombol HANYA pada index catatan_ditolak pertama
+                        if (value.catatan_ditolak && index === firstRejectedIndex) {
+                            html += "<a class='btn btn-warning btn-sm' href='" + base_url + "monitoring_raperbup/edit_usulan_raperbup/" + id_peraturan + "'>Revisi</a>";
+                            // html += "<a href='#' onclick=\"change_status('1')\" class='btn btn-info ml-2'>Teruskan ke Kabag</a>";
+                        }
+
+                        html += "</div>" +
+                            "</div>";
                     });
 
                     $(".list-activites").html(html);
@@ -768,7 +781,6 @@
                 if (response.lampiran_group) {
                     html += "<tr><td>Lampiran</td><td style='padding:5px;'>:</td><td>" + response.lampiran_group + "</td></tr>";
                 }
-                html += "<tr><td>Catatan Kabag</td><td style='padding:5px;'>:</td><td>isi catatan</td></tr>";
                 html += "</table>";
                 $(".last_file").html(html);
             },

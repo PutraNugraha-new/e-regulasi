@@ -445,7 +445,7 @@ class Nomor_register extends MY_Controller
 
         $this->mpdf_library->mpdf->WriteHTML($html);
 
-        $pdf_file_name = 'Keputusan_Bupati_' . str_replace(' ', '_', $data_usulan->nama_peraturan) . '_' . time() . '.pdf';
+        $pdf_file_name = str_replace(' ', '_', $data_usulan->nama_peraturan) . '_' . time() . '.pdf';
         $pdf_path = FCPATH . 'assets/file_usulan/' . $pdf_file_name;
 
         try {

@@ -112,12 +112,16 @@ class Monitoring_raperbup extends MY_Controller
             )
         );
 
+        $ambil_data = $this->usulan_raperbup_model->get_by(decrypt_data($id_usulan_raperbup));
+
         $user_updated = $this->db->select('nama_lengkap')
             ->from('user')
-            ->where('id_user', $data_master[0]->id_user_updated)
+            ->where('id_user', $ambil_data->id_user_updated)
             ->get()
             ->row();
-        $last_updated_at = $data_master[0]->updated_at ? date('d-m-Y H:i:s', strtotime($data_master[0]->updated_at)) : '-';
+        // var_dump($user_updated);
+        // die;
+        $last_updated_at = $ambil_data->updated_at ? date('d-m-Y H:i:s', strtotime($ambil_data->updated_at)) : '-';
 
         $data['user_updated'] = $user_updated ? $user_updated->nama_lengkap : null;
         $data['last_updated_at'] = $last_updated_at;
