@@ -38,6 +38,8 @@
 
 <script>
     $(document).ready(function () {
+        var is_admin_opd = <?= ($this->session->userdata('level_user_id') == 5) ? 'true' : 'false' ?>;
+
         function loadNotifikasiDashboard() {
             $.ajax({
                 url: base_url + 'dashboard/request/get_notifikasi',
@@ -57,7 +59,6 @@
                                 weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'
                             });
 
-                            // Tentukan link berdasarkan nomor_register
                             var usulan_id = item.id_usulan_raperbup || '';
                             var kategori_id = item.kategori_usulan_id || '';
                             var link = '';
@@ -74,10 +75,22 @@
                         <div class="media-body">
                             <div class="media-title">${item.nama_pengguna}</div>
                             <span class="text-small text-muted">${item.pesan}</span>
-                            <div class="text-small text-muted">${formattedDate}</div>
+                            <div class="text-small text-muted">${formattedDate}</div>`;
+
+                            if (!is_admin_opd) {
+                                html += `
                             <a href="${link}" 
                                onclick="return tandaiDibaca(${item.id_notifikasi}, '${link}')" 
-                               class="btn btn-sm btn-primary mt-2">Lihat Detail</a>
+                               class="btn btn-sm btn-primary mt-2">Lihat Detail</a>`;
+                            } else {
+                                html += `
+                            <button class="btn btn-sm btn-secondary mt-2" disabled>
+                                Lihat Detail (Tidak Tersedia)
+                            </button>
+                            <small class="text-muted d-block mt-1">Fitur hanya untuk Admin Pusat</small>`;
+                            }
+
+                            html += `
                         </div>
                     </li>`;
                         });
@@ -95,7 +108,12 @@
             });
         }
 
-        function tandaiDibaca(id_notifikasi, link) {
+        window.tandaiDibaca = function (id_notifikasi, link) {
+            if (is_admin_opd) {
+                swal('Akses Ditolak', 'Anda tidak memiliki izin untuk mengakses halaman ini.', 'warning');
+                return false;
+            }
+
             $.ajax({
                 url: base_url + 'dashboard/request/tandai_dibaca',
                 type: 'POST',
@@ -103,7 +121,7 @@
                 dataType: 'json',
                 success: function (response) {
                     if (response === true || response === 1) {
-                        window.location.href = link; // Langsung arahkan
+                        window.location.href = link;
                     } else {
                         swal('Gagal', 'Gagal menandai notifikasi sebagai dibaca.', 'error');
                     }
@@ -112,10 +130,15 @@
                     swal('Error', 'Terjadi kesalahan saat menghubungi server.', 'error');
                 }
             });
-            return false; // Cegah link langsung ke klik
+            return false;
         }
 
         function tandaiSemuaDibaca() {
+            if (is_admin_opd) {
+                swal('Tidak Diizinkan', 'Fitur ini hanya untuk Admin Pusat.', 'info');
+                return;
+            }
+
             $.ajax({
                 url: base_url + 'dashboard/request/tandai_semua_dibaca',
                 type: 'POST',
@@ -132,7 +155,6 @@
                     }
                 },
                 error: function (xhr, status, error) {
-                    console.log('Error marking all notifications as read:', xhr.responseText);
                     swal('Error', 'Gagal menandai semua notifikasi: ' + (xhr.responseJSON ? xhr.responseJSON.error : 'Server error'), 'error');
                 },
                 complete: function () {
@@ -141,7 +163,6 @@
             });
         }
 
-        // Load notifikasi saat halaman dimuat
         loadNotifikasiDashboard();
     });
 </script>

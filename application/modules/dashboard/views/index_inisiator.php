@@ -45,6 +45,7 @@
 </div>
 
 <script>
+    // Inisialisasi DataTable
     let datatableTemplateUsulan = $("#datatableTemplateUsulan").DataTable({
         "bLengthChange": false,
         "bFilter": false,
@@ -52,6 +53,10 @@
     });
 
     $(document).ready(function () {
+        // Cek apakah user Admin OPD (level 5)
+        var is_admin_opd = <?= ($this->session->userdata('level_user_id') == 5) ? 'true' : 'false' ?>;
+
+        // === FUNGSI LOAD NOTIFIKASI ===
         function loadNotifikasiDashboard() {
             $.ajax({
                 url: base_url + 'dashboard/request/get_notifikasi',
@@ -64,16 +69,15 @@
                     var html = '';
                     if (response.error) {
                         html = '<li class="media text-center text-danger">Gagal memuat notifikasi: ' + response.error + '</li>';
-                    } else if (response.notifikasi.length > 0) {
+                    } else if (response.notifikasi && response.notifikasi.length > 0) {
                         $.each(response.notifikasi, function (index, item) {
                             var date = new Date(item.created_at);
                             var formattedDate = date.toLocaleDateString('id-ID', {
                                 weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'
                             });
 
-                            // Tentukan link berdasarkan nomor_register
                             var usulan_id = item.id_usulan_raperbup || '';
-                            var kategori_id = item.kategori_usulan_id || '';
+                            var kategori_id = item.kategori_usulan_idular_id || '';
                             var link = '';
 
                             if (!item.nomor_register || item.nomor_register === '') {
@@ -83,24 +87,36 @@
                             }
 
                             html += `
-                    <li class="media">
-                        <img class="mr-3 rounded-circle" width="50" src="${base_url}assets/img/avatar/avatar-1.png" alt="avatar">
-                        <div class="media-body">
-                            <div class="media-title">${item.nama_pengguna}</div>
-                            <span class="text-small text-muted">${item.pesan}</span>
-                            <div class="text-small text-muted">${formattedDate}</div>
-                            <a href="${link}" 
-                               onclick="return tandaiDibaca(${item.id_notifikasi}, '${link}')" 
-                               class="btn btn-sm btn-primary mt-2">Lihat Detail</a>
-                        </div>
-                    </li>`;
+                                <li class="media">
+                                    <img class="mr-3 rounded-circle" width="50" src="${base_url}assets/img/avatar/avatar-1.png" alt="avatar">
+                                    <div class="media-body">
+                                        <div class="media-title">${item.nama_pengguna}</div>
+                                        <span class="text-small text-muted">${item.pesan}</span>
+                                        <div class="text-small text-muted">${formattedDate}</div>`;
+
+                            if (!is_admin_opd) {
+                                html += `
+                                        <a href="${link}" 
+                                           onclick="return tandaiDibaca(${item.id_notifikasi}, '${link}')" 
+                                           class="btn btn-sm btn-primary mt-2">Lihat Detail</a>`;
+                            } else {
+                                html += `
+                                        <button class="btn btn-sm btn-secondary mt-2" disabled>
+                                            Lihat Detail (Tidak Tersedia)
+                                        </button>
+                                        <small class="text-muted d-block mt-1">Fitur hanya untuk Admin Pusat</small>`;
+                            }
+
+                            html += `
+                                    </div>
+                                </li>`;
                         });
                     } else {
                         html = '<li class="media text-center">Tidak ada pemberitahuan baru</li>';
                     }
                     $('#notificationListDashboard').html(html);
                 },
-                error: function (xhr) {
+                error: function () {
                     $('#notificationListDashboard').html('<li class="media text-center text-danger">Gagal memuat notifikasi.</li>');
                 },
                 complete: function () {
@@ -109,7 +125,13 @@
             });
         }
 
-        function tandaiDibaca(id_notifikasi, link) {
+        // === TANDAI DIBACA ===
+        window.tandaiDibaca = function (id_notifikasi, link) {
+            if (is_admin_opd) {
+                swal('Akses Ditolak', 'Anda tidak memiliki izin untuk mengakses halaman ini.', 'warning');
+                return false;
+            }
+
             $.ajax({
                 url: base_url + 'dashboard/request/tandai_dibaca',
                 type: 'POST',
@@ -117,7 +139,8 @@
                 dataType: 'json',
                 success: function (response) {
                     if (response === true || response === 1) {
-                        window.location.href = link; // Langsung arahkan
+                        loadNotifikasiDashboard(); // Refresh
+                        window.location.href = link;
                     } else {
                         swal('Gagal', 'Gagal menandai notifikasi sebagai dibaca.', 'error');
                     }
@@ -126,10 +149,16 @@
                     swal('Error', 'Terjadi kesalahan saat menghubungi server.', 'error');
                 }
             });
-            return false; // Cegah link langsung ke klik
-        }
+            return false;
+        };
 
+        // === TANDAI SEMUA ===
         function tandaiSemuaDibaca() {
+            if (is_admin_opd) {
+                swal('Tidak Diizinkan', 'Fitur ini hanya untuk Admin Pusat.', 'info');
+                return;
+            }
+
             $.ajax({
                 url: base_url + 'dashboard/request/tandai_semua_dibaca',
                 type: 'POST',
@@ -145,8 +174,7 @@
                         swal('Gagal', response.message, 'error');
                     }
                 },
-                error: function (xhr, status, error) {
-                    console.log('Error marking all notifications as read:', xhr.responseText);
+                error: function (xhr) {
                     swal('Error', 'Gagal menandai semua notifikasi: ' + (xhr.responseJSON ? xhr.responseJSON.error : 'Server error'), 'error');
                 },
                 complete: function () {
@@ -155,6 +183,7 @@
             });
         }
 
+        // === LOAD TEMPLATE USULAN ===
         function get_data_template_usulan() {
             datatableTemplateUsulan.clear().draw();
             $.ajax({
@@ -175,14 +204,13 @@
                 complete: function () {
                     HoldOn.close();
                 },
-                error: function (xhr, status, error) {
-                    console.log('Error loading template usulan:', xhr.responseText);
+                error: function (xhr) {
                     swal('Error', 'Gagal memuat template usulan: ' + (xhr.responseJSON ? xhr.responseJSON.error : 'Server error'), 'error');
                 }
             });
         }
 
-        // Load template usulan dan notifikasi saat halaman dimuat
+        // === JALANKAN SEMUA ===
         get_data_template_usulan();
         loadNotifikasiDashboard();
     });
