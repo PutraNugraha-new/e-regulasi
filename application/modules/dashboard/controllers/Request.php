@@ -376,30 +376,16 @@ class Request extends MY_Controller
 	{
 		$user_id = $this->session->userdata('id_user');
 		if (!$user_id) {
-			log_message('error', 'No user ID in session for tandai_dibaca');
 			$this->output->set_status_header(401)->set_output(json_encode(['error' => 'User not logged in']));
 			return;
 		}
 
-		try {
-			$id_notifikasi = $this->input->post('id_notifikasi');
-			if ($id_notifikasi) {
-				$status = $this->notifikasi_model->edit($id_notifikasi, ['dibaca' => 1]);
-				log_message('debug', 'Notifikasi ID ' . $id_notifikasi . ' marked as read: ' . ($status ? 'success' : 'failed'));
-			} else {
-				$this->db->where('id_user_tujuan', $user_id)->update('notifikasi', ['dibaca' => 1]);
-				$status = $this->db->affected_rows() >= 0;
-				log_message('debug', 'All notifications for user ' . $user_id . ' marked as read: ' . ($status ? 'success' : 'failed'));
-			}
-
-			$this->output
-				->set_content_type('application/json')
-				->set_output(json_encode($status));
-		} catch (Exception $e) {
-			log_message('error', 'Exception in tandai_dibaca: ' . $e->getMessage());
-			$this->output
-				->set_status_header(500)
-				->set_output(json_encode(['error' => 'Internal server error: ' . $e->getMessage()]));
+		$id_notifikasi = $this->input->post('id_notifikasi');
+		if ($id_notifikasi) {
+			$status = $this->notifikasi_model->edit($id_notifikasi, ['dibaca' => 1]);
+			$this->output->set_content_type('application/json')->set_output(json_encode($status));
+		} else {
+			$this->output->set_status_header(400)->set_output(json_encode(false));
 		}
 	}
 

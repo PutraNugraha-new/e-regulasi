@@ -173,37 +173,28 @@
     $("a[href$='#disposisi']").hide();
     $("a[href$='#kirimFileKeProvinsi']").hide();
 
-    var selectedUsulanId = '<?php echo isset($selected_usulan_id) ? $selected_usulan_id : ''; ?>';
-    var selectedKategoriUsulan = '<?php echo isset($selected_kategori_usulan) ? $selected_kategori_usulan : ''; ?>';
-    var selectedSkpdId = '<?php echo isset($selected_skpd_id) ? $selected_skpd_id : ''; ?>';
+    var selectedUsulanId = '<?php echo $this->input->get('usulan_id') ? $this->input->get('usulan_id') : ''; ?>';
+    var selectedKategoriUsulan = '<?php echo $this->input->get('kategori_usulan_id') ? $this->input->get('kategori_usulan_id') : ''; ?>';
 
     $(document).ready(function () {
-        // Set filter SKPD
-        if (selectedSkpdId) {
-            $("select[name='skpd']").val(selectedSkpdId);
+        // HANYA set filter jika ADA parameter dari URL (dari notifikasi)
+        if (selectedUsulanId || selectedKategoriUsulan) {
+            if (selectedKategoriUsulan) {
+                $("input[name='kategori_usulan'][value='" + selectedKategoriUsulan + "']").prop('checked', true);
+            }
+            // JANGAN auto-load data peraturan!
+            // Biarkan user klik filter manual
         }
-        // Set filter kategori usulan
-        if (selectedKategoriUsulan) {
-            $("input[name='kategori_usulan'][value='" + selectedKategoriUsulan + "']").prop('checked', true);
-        }
-        get_data_peraturan();
     });
 
+    // Fungsi ini dipanggil HANYA saat user ubah filter
     function get_data_peraturan() {
-        $("a[href$='#disposisi']").hide();
-        $("a[href$='#kirimFileKeProvinsi']").hide();
-        $(".list-activites").html("");
-        $(".last_file").html("");
-        $(".list-peraturan").html("<li>Belum Ada Peraturan</li>");
         let kategori_usulan = $("input[name='kategori_usulan']:checked").val();
         let skpd = $("select[name='skpd']").val();
 
-        var data = {
-            kategori_usulan: kategori_usulan,
-            skpd: skpd
-        };
+        let data = { kategori_usulan: kategori_usulan, skpd: skpd };
         if (selectedUsulanId) {
-            data.usulan_id = atob(selectedUsulanId); // Decode base64
+            data.usulan_id = selectedUsulanId; // tetap kirim jika ada
         }
 
         $.ajax({
@@ -212,40 +203,59 @@
             type: 'GET',
             beforeSend: function () {
                 HoldOn.open(optionsHoldOn);
+                $(".list-peraturan").html("<li>Memuat data...</li>");
+                $(".list-activites").html("");
+                $(".last_file").html("");
+                $("a[href$='#disposisi']").hide();
+                $("a[href$='#kirimFileKeProvinsi']").hide();
             },
             success: function (response) {
                 let list_peraturan = "";
-                let selectedIdEncrypt = null;
-                if (response.length != 0) {
+                if (response.length > 0) {
                     $.each(response, function (index, value) {
-                        list_peraturan += "<li class='nav-item hr-bottom'><a href='#' class='nav-link list-peraturan-active' onclick=\"show_detail_peraturan('" + value.id_encrypt + "',this)\">" + value.nama_peraturan + "</a></li>";
-                        // Find the id_encrypt for the selected usulan_id
-                        if (selectedUsulanId && value.id_usulan_raperbup == atob(selectedUsulanId)) {
-                            selectedIdEncrypt = value.id_encrypt;
-                        }
+                        let activeClass = (selectedUsulanId && value.id_usulan_raperbup == selectedUsulanId) ? 'active' : '';
+                        list_peraturan += `<li class='nav-item hr-bottom'>
+                            <a href='#' class='nav-link list-peraturan-active ${activeClass}' 
+                               onclick="show_detail_peraturan('${value.id_encrypt}', this)">
+                               ${value.nama_peraturan}
+                            </a>
+                        </li>`;
                     });
+
                     $(".list-peraturan").html(list_peraturan);
-                    // Highlight the selected peraturan
-                    if (selectedIdEncrypt) {
-                        let targetLink = $(".list-peraturan a[onclick*='" + selectedIdEncrypt + "']");
-                        if (targetLink.length > 0) {
-                            $(".list-peraturan-active").removeClass("active");
-                            targetLink.addClass("active");
-                            // Directly call show_detail_peraturan
-                            show_detail_peraturan(selectedIdEncrypt);
+
+                    // Auto-show detail jika dari notifikasi
+                    if (selectedUsulanId) {
+                        let target = $(`.list-peraturan a[onclick*='${response.find(v => v.id_usulan_raperbup == selectedUsulanId)?.id_encrypt}']`);
+                        if (target.length > 0) {
+                            target.click();
                         }
                     }
+                } else {
+                    $(".list-peraturan").html("<li>Tidak ada data peraturan</li>");
                 }
             },
             complete: function () {
                 HoldOn.close();
             },
-            error: function (xhr, status, error) {
-                console.log('Error loading peraturan:', xhr.responseText);
-                swal('Error', 'Gagal mengambil data: ' + (xhr.responseJSON ? xhr.responseJSON.error : 'Server error'), 'error');
+            error: function () {
+                $(".list-peraturan").html("<li class='text-danger'>Gagal memuat data</li>");
+                HoldOn.close();
             }
         });
     }
+
+    // Hanya panggil saat user ubah filter
+    $("select[name='skpd'], input[name='kategori_usulan']").on('change', function () {
+        get_data_peraturan();
+    });
+
+    // Auto-load hanya jika dari notifikasi DAN kategori sudah dipilih
+    $(document).ready(function () {
+        if (selectedUsulanId && selectedKategoriUsulan) {
+            get_data_peraturan();
+        }
+    });
 
     function show_detail_peraturan(id_peraturan, e) {
         if (e != undefined) {

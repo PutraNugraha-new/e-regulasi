@@ -15,13 +15,17 @@
 	<!-- CSS Libraries -->
 	<link rel="stylesheet" href="<?php echo base_url(); ?>assets/node_modules/jqvmap/dist/jqvmap.min.css">
 	<link rel="stylesheet" href="<?php echo base_url(); ?>assets/node_modules/summernote/dist/summernote-bs4.css">
-	<link rel="stylesheet" href="<?php echo base_url(); ?>assets/node_modules/datatables.net-bs4/css/dataTables.bootstrap4.min.css">
+	<link rel="stylesheet"
+		href="<?php echo base_url(); ?>assets/node_modules/datatables.net-bs4/css/dataTables.bootstrap4.min.css">
 	<link rel="stylesheet" href="<?php echo base_url(); ?>assets/node_modules/select2/dist/css/select2.min.css">
-	<link rel="stylesheet" href="<?php echo base_url(); ?>assets/node_modules/datatables.net-select-bs4/css/select.bootstrap4.min.css">
+	<link rel="stylesheet"
+		href="<?php echo base_url(); ?>assets/node_modules/datatables.net-select-bs4/css/select.bootstrap4.min.css">
 	<link rel="stylesheet" href="<?php echo base_url(); ?>assets/node_modules/ionicons201/css/ionicons.min.css">
-	<link rel="stylesheet" href="<?php echo base_url(); ?>assets/node_modules/bootstrap-tagsinput/dist/bootstrap-tagsinput.css">
+	<link rel="stylesheet"
+		href="<?php echo base_url(); ?>assets/node_modules/bootstrap-tagsinput/dist/bootstrap-tagsinput.css">
 	<link rel="stylesheet" href="<?php echo base_url(); ?>assets/css/HoldOn.min.css">
-	<link rel="stylesheet" href="<?php echo base_url(); ?>assets/node_modules/bootstrap-daterangepicker/daterangepicker.css">
+	<link rel="stylesheet"
+		href="<?php echo base_url(); ?>assets/node_modules/bootstrap-daterangepicker/daterangepicker.css">
 
 	<!-- Template CSS -->
 	<link rel="stylesheet" href="<?php echo base_url(); ?>assets/css/style.css">
@@ -46,10 +50,12 @@
 	<script src="<?php echo base_url(); ?>assets/node_modules/summernote/dist/summernote-bs4.js"></script>
 	<script src="<?php echo base_url(); ?>assets/node_modules/chocolat/dist/js/jquery.chocolat.min.js"></script>
 	<script src="<?php echo base_url(); ?>assets/node_modules/datatables/media/js/jquery.dataTables.min.js"></script>
-	<script src="<?php echo base_url(); ?>assets/node_modules/datatables.net-bs4/js/dataTables.bootstrap4.min.js"></script>
+	<script
+		src="<?php echo base_url(); ?>assets/node_modules/datatables.net-bs4/js/dataTables.bootstrap4.min.js"></script>
 	<script src="<?php echo base_url(); ?>assets/node_modules/sweetalert/dist/sweetalert.min.js"></script>
 	<script src="<?php echo base_url(); ?>assets/node_modules/select2/dist/js/select2.full.min.js"></script>
-	<script src="<?php echo base_url(); ?>assets/node_modules/bootstrap-tagsinput/dist/bootstrap-tagsinput.min.js"></script>
+	<script
+		src="<?php echo base_url(); ?>assets/node_modules/bootstrap-tagsinput/dist/bootstrap-tagsinput.min.js"></script>
 	<script src="<?php echo base_url(); ?>assets/node_modules/bootstrap-daterangepicker/daterangepicker.js"></script>
 	<script src="<?php echo base_url(); ?>assets/js/HoldOn.min.js"></script>
 
@@ -64,7 +70,8 @@
 			<div class="navbar-bg"></div>
 			<nav class="navbar navbar-expand-lg main-navbar">
 				<ul class="navbar-nav mr-auto">
-					<li><a href="#" data-toggle="sidebar" class="nav-link nav-link-lg"><i class="fas fa-bars"></i></a></li>
+					<li><a href="#" data-toggle="sidebar" class="nav-link nav-link-lg"><i class="fas fa-bars"></i></a>
+					</li>
 				</ul>
 				<ul class="navbar-nav navbar-right">
 					<li class="dropdown dropdown-list-toggle">
@@ -82,15 +89,19 @@
 								<div class="dropdown-item text-center">Memuat notifikasi...</div>
 							</div>
 							<div class="dropdown-footer text-center">
-								<a href="<?php echo base_url(); ?>dashboard/notifikasi">Lihat Semua <i class="fas fa-chevron-right"></i></a>
+								<a href="<?php echo base_url(); ?>dashboard/notifikasi">Lihat Semua <i
+										class="fas fa-chevron-right"></i></a>
 							</div>
 						</div>
 					</li>
-					<li class="dropdown"><a href="#" data-toggle="dropdown" class="nav-link dropdown-toggle nav-link-lg nav-link-user">
-							<div class="d-sm-none d-lg-inline-block"><?php echo $this->session->userdata("nama_lengkap"); ?></div>
+					<li class="dropdown"><a href="#" data-toggle="dropdown"
+							class="nav-link dropdown-toggle nav-link-lg nav-link-user">
+							<div class="d-sm-none d-lg-inline-block">
+								<?php echo $this->session->userdata("nama_lengkap"); ?></div>
 						</a>
 						<div class="dropdown-menu dropdown-menu-right">
-							<a href="<?php echo base_url(); ?>Login/act_logout" class="dropdown-item has-icon text-danger">
+							<a href="<?php echo base_url(); ?>Login/act_logout"
+								class="dropdown-item has-icon text-danger">
 								<i class="fas fa-sign-out-alt"></i> Logout
 							</a>
 						</div>
@@ -107,85 +118,104 @@
 							dataType: 'json',
 							success: function (response) {
 								if (response.error) {
-									$('#notificationList').html('<div class="dropdown-item text-center text-danger">Gagal memuat notifikasi: ' + response.error + '</div>');
+									$('#notificationList').html('<div class="dropdown-item text-center text-danger">Gagal memuat notifikasi</div>');
 									$('#notificationCount').text('0');
 									return;
 								}
-								$('#notificationCount').text(response.total);
+
+								$('#notificationCount').text(response.total || 0);
 								var html = '';
-								if (response.notifikasi.length > 0) {
+
+								if (response.notifikasi && response.notifikasi.length > 0) {
 									$.each(response.notifikasi, function (index, item) {
 										var date = new Date(item.created_at);
 										var formattedDate = date.toLocaleDateString('id-ID', {
 											weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'
 										});
+
+										// Tentukan link berdasarkan nomor_register
+										var usulan_id = item.id_usulan_raperbup || '';
+										var kategori_id = item.kategori_usulan_id || '';
+										var link = '';
+
+										if (!item.nomor_register || item.nomor_register === '' || item.nomor_register === null) {
+											link = base_url + 'nomor_register/index?usulan_id=' + usulan_id + '&kategori_usulan_id=' + kategori_id;
+										} else {
+											link = base_url + 'monitoring_raperbup/index?usulan_id=' + usulan_id + '&kategori_usulan_id=' + kategori_id;
+										}
+
 										html += `
-											<a href="${item.link}" class="dropdown-item" onclick="tandaiDibaca(${item.id_notifikasi})">
-												<div class="dropdown-item-icon bg-info text-white">
-													<i class="fas fa-bell"></i>
-												</div>
-												<div class="dropdown-item-desc">
-													<b>${item.nama_pengguna}</b><br>
-													<i>${item.pesan}</i>
-													<div class="time">${formattedDate}</div>
-												</div>
-											</a>`;
+								<a href="${link}" class="dropdown-item" onclick="return tandaiDibaca(${item.id_notifikasi}, '${link}')">
+									<div class="dropdown-item-icon bg-info text-white">
+										<i class="fas fa-bell"></i>
+									</div>
+									<div class="dropdown-item-desc">
+										<b>${item.nama_pengguna}</b><br>
+										<i>${item.pesan}</i>
+										<div class="time">${formattedDate}</div>
+									</div>
+								</a>`;
 									});
 								} else {
 									html = '<div class="dropdown-item text-center">Tidak ada pemberitahuan baru</div>';
 								}
+
 								$('#notificationList').html(html);
 							},
-							error: function (xhr, status, error) {
-								console.log('Error loading notifications:', xhr.responseText);
-								$('#notificationList').html('<div class="dropdown-item text-center text-danger">Gagal memuat notifikasi: ' + (xhr.responseJSON ? xhr.responseJSON.error : 'Server error') + '</div>');
+							error: function () {
+								$('#notificationList').html('<div class="dropdown-item text-center text-danger">Gagal memuat notifikasi</div>');
+								$('#notificationCount').text('0');
 							}
 						});
 					}
 
-					function tandaiDibaca(id_notifikasi) {
+					// Fungsi tandai dibaca + redirect
+					window.tandaiDibaca = function (id_notifikasi, link) {
 						$.ajax({
 							url: base_url + 'dashboard/request/tandai_dibaca',
 							type: 'POST',
 							data: { id_notifikasi: id_notifikasi },
 							dataType: 'json',
 							success: function (response) {
-								if (response) {
-									loadNotifikasi(); // Refresh notifikasi
+								if (response === true) {
+									loadNotifikasi(); // Refresh badge
+									window.location.href = link; // Redirect
+								} else {
+									swal('Gagal', 'Gagal menandai notifikasi sebagai dibaca.', 'error');
 								}
 							},
-							error: function (xhr, status, error) {
-								console.log('Error marking notification as read:', xhr.responseText);
-								swal('Gagal', 'Gagal menandai notifikasi sebagai dibaca: ' + (xhr.responseJSON ? xhr.responseJSON.error : 'Server error'), 'error');
+							error: function () {
+								swal('Error', 'Terjadi kesalahan saat menghubungi server.', 'error');
 							}
 						});
-					}
+						return false; // Cegah redirect langsung
+					};
 
-					function tandaiSemuaDibaca() {
+					// Tandai semua dibaca
+					window.tandaiSemuaDibaca = function () {
 						$.ajax({
-							url: base_url + 'dashboard/request/tandai_dibaca',
+							url: base_url + 'dashboard/request/tandai_semua_dibaca',
 							type: 'POST',
 							dataType: 'json',
 							success: function (response) {
-								if (response) {
-									loadNotifikasi(); // Refresh notifikasi
-									swal('Berhasil', 'Semua notifikasi telah ditandai sebagai dibaca', 'success');
+								if (response.status) {
+									loadNotifikasi();
+									swal('Berhasil', response.message, 'success');
+								} else {
+									swal('Gagal', response.message, 'error');
 								}
 							},
-							error: function (xhr, status, error) {
-								console.log('Error marking all notifications as read:', xhr.responseText);
-								swal('Gagal', 'Gagal menandai semua notifikasi: ' + (xhr.responseJSON ? xhr.responseJSON.error : 'Server error'), 'error');
+							error: function () {
+								swal('Error', 'Gagal menandai semua notifikasi.', 'error');
 							}
 						});
-					}
+					};
 
-					// Polling setiap 10 detik
+					// Load pertama kali + polling
 					loadNotifikasi();
-					setInterval(loadNotifikasi, 10000);
-
-					// Expose tandaiSemuaDibaca to global scope
-					window.tandaiSemuaDibaca = tandaiSemuaDibaca;
+					setInterval(loadNotifikasi, 10000); // Tiap 10 detik
 				});
 			</script>
 </body>
+
 </html>
