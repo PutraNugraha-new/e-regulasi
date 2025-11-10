@@ -300,23 +300,37 @@
                 // Distribusikan pasal dari $bab_pasal_data (yang dibuat di controller preview)
                 if (isset($bab_pasal_data) && is_array($bab_pasal_data)) {
                     foreach ($bab_pasal_data as $bab_number => $bab) {
+                        if (!isset($grouped_data[$bab_number])) {
+                            continue;
+                        }
+
+                        // Proses pasal langsung di bab (tanpa bagian)
                         if (isset($bab['pasal']) && is_array($bab['pasal'])) {
                             foreach ($bab['pasal'] as $pasal_number => $pasal) {
-                                $bagian_number = isset($pasal['bagian']) ? $pasal['bagian'] : 0;
+                                $grouped_data[$bab_number]['pasal_tanpa_bagian'][$pasal_number] = [
+                                    'isi' => $pasal['isi']
+                                ];
+                            }
+                        }
 
-                                if (isset($grouped_data[$bab_number])) {
-                                    if ($bagian_number == 0) {
-                                        // Pasal tanpa bagian
-                                        $grouped_data[$bab_number]['pasal_tanpa_bagian'][$pasal_number] = [
+                        // Proses bagian dan pasal di dalam bagian
+                        if (isset($bab['bagian']) && is_array($bab['bagian'])) {
+                            foreach ($bab['bagian'] as $bagian_number => $bagian) {
+                                // Pastikan bagian sudah diinisialisasi dari judul_bagian
+                                if (!isset($grouped_data[$bab_number]['bagian'][$bagian_number])) {
+                                    // Jika belum ada (edge case), inisialisasi dulu
+                                    $grouped_data[$bab_number]['bagian'][$bagian_number] = [
+                                        'judul' => isset($bagian['judul']) ? $bagian['judul'] : '',
+                                        'pasal' => []
+                                    ];
+                                }
+
+                                // Proses pasal dalam bagian
+                                if (isset($bagian['pasal']) && is_array($bagian['pasal'])) {
+                                    foreach ($bagian['pasal'] as $pasal_number => $pasal) {
+                                        $grouped_data[$bab_number]['bagian'][$bagian_number]['pasal'][$pasal_number] = [
                                             'isi' => $pasal['isi']
                                         ];
-                                    } else {
-                                        // Pasal dalam bagian
-                                        if (isset($grouped_data[$bab_number]['bagian'][$bagian_number])) {
-                                            $grouped_data[$bab_number]['bagian'][$bagian_number]['pasal'][$pasal_number] = [
-                                                'isi' => $pasal['isi']
-                                            ];
-                                        }
                                     }
                                 }
                             }
