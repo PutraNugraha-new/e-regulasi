@@ -3,7 +3,7 @@
         margin-bottom: 10px;
     }
 
-    .keputusan-field,
+    /* .keputusan-field,
     .pasal-field,
     .bagian-field {
         border: 1px solid #e9ecef;
@@ -24,6 +24,461 @@
         background: #fff8e1;
         border-left: 4px solid #ffc107;
         margin-left: 20px;
+    } */
+
+    /* BAB Container */
+    .bab-field {
+        border: 2px solid #2c3e50;
+        border-radius: 12px;
+        padding: 25px;
+        margin-bottom: 30px;
+        background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+        position: relative;
+        animation: fadeInSlide 0.5s ease-out;
+    }
+
+    .bab-field::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 8px;
+        height: 100%;
+        /* background: linear-gradient(180deg, #2c3e50 0%, #34495e 100%); */
+        border-radius: 12px 0 0 12px;
+    }
+
+    /* BAGIAN Container */
+    .bagian-field {
+        background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+        border: 2px solid #2196F3;
+        border-radius: 10px;
+        padding: 20px;
+        margin: 20px 0 20px 30px;
+        box-shadow: 0 3px 10px rgba(33, 150, 243, 0.15);
+        position: relative;
+        animation: fadeInSlide 0.4s ease-out;
+    }
+
+    .bagian-field::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 6px;
+        height: 100%;
+        background: linear-gradient(180deg, #2196F3 0%, #1976D2 100%);
+        border-radius: 10px 0 0 10px;
+    }
+
+    /* PASAL Container */
+    .pasal-field {
+        background: linear-gradient(135deg, #fff8e1 0%, #ffecb3 100%);
+        border: 2px solid #FFA726;
+        border-radius: 8px;
+        padding: 18px;
+        margin: 15px 0 15px 20px;
+        box-shadow: 0 2px 8px rgba(255, 167, 38, 0.15);
+        position: relative;
+        transition: all 0.3s ease;
+    }
+
+    .pasal-field:hover {
+        box-shadow: 0 4px 12px rgba(255, 167, 38, 0.25);
+        transform: translateX(5px);
+    }
+
+    .pasal-field::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 5px;
+        height: 100%;
+        background: linear-gradient(180deg, #FFA726 0%, #FB8C00 100%);
+        border-radius: 8px 0 0 8px;
+    }
+
+    /* Header Styling */
+    .field-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 15px;
+        padding-bottom: 12px;
+        border-bottom: 2px solid rgba(0, 0, 0, 0.08);
+    }
+
+    /* Nomor Field dengan Icon */
+    .field-number {
+        font-weight: 700;
+        color: #2c3e50;
+        font-size: 1.3em;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        letter-spacing: 0.5px;
+    }
+
+    .field-number::before {
+        content: '📖';
+        font-size: 1.2em;
+    }
+
+    .bagian-number {
+        font-weight: 700;
+        color: #1565C0;
+        font-size: 1.1em;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        letter-spacing: 0.3px;
+    }
+
+    .bagian-number::before {
+        content: '📑';
+        font-size: 1em;
+    }
+
+    .pasal-number {
+        font-weight: 700;
+        color: #E65100;
+        font-size: 1em;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .pasal-number::before {
+        content: '📄';
+        font-size: 0.9em;
+    }
+
+    /* Button Styling */
+    .btn-add-field {
+        background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+        border: none;
+        color: white;
+        padding: 12px 24px;
+        font-weight: 600;
+        border-radius: 8px;
+        box-shadow: 0 3px 10px rgba(76, 175, 80, 0.3);
+        transition: all 0.3s ease;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .btn-add-field:hover {
+        background: linear-gradient(135deg, #45a049 0%, #388e3c 100%);
+        box-shadow: 0 5px 15px rgba(76, 175, 80, 0.4);
+        transform: translateY(-2px);
+    }
+
+    .btn-add-bagian {
+        background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%);
+        border: none;
+        color: white;
+        padding: 10px 20px;
+        font-weight: 600;
+        border-radius: 8px;
+        box-shadow: 0 3px 10px rgba(33, 150, 243, 0.3);
+        transition: all 0.3s ease;
+    }
+
+    .btn-add-bagian:hover {
+        background: linear-gradient(135deg, #1976D2 0%, #1565C0 100%);
+        box-shadow: 0 5px 15px rgba(33, 150, 243, 0.4);
+        transform: translateY(-2px);
+    }
+
+    .btn-add-pasal {
+        background: linear-gradient(135deg, #FF9800 0%, #F57C00 100%);
+        border: none;
+        color: white;
+        padding: 8px 18px;
+        font-weight: 600;
+        border-radius: 8px;
+        box-shadow: 0 3px 10px rgba(255, 152, 0, 0.3);
+        transition: all 0.3s ease;
+    }
+
+    .btn-add-pasal:hover {
+        background: linear-gradient(135deg, #F57C00 0%, #E65100 100%);
+        box-shadow: 0 5px 15px rgba(255, 152, 0, 0.4);
+        transform: translateY(-2px);
+    }
+
+    .btn-remove-field {
+        background: linear-gradient(135deg, #f44336 0%, #d32f2f 100%);
+        border: none;
+        color: white;
+        padding: 6px 14px;
+        font-weight: 600;
+        border-radius: 6px;
+        box-shadow: 0 2px 8px rgba(244, 67, 54, 0.3);
+        transition: all 0.3s ease;
+        font-size: 0.9em;
+    }
+
+    .btn-remove-field:hover {
+        background: linear-gradient(135deg, #d32f2f 0%, #c62828 100%);
+        box-shadow: 0 4px 12px rgba(244, 67, 54, 0.4);
+        transform: translateY(-1px);
+    }
+
+    /* Container untuk Tombol Tambah */
+    .add-field-container {
+        text-align: center;
+        margin: 25px 0;
+        padding: 25px;
+        border: 3px dashed #4CAF50;
+        border-radius: 12px;
+        background: linear-gradient(135deg, #f1f8e9 0%, #dcedc8 100%);
+        transition: all 0.3s ease;
+    }
+
+    .add-field-container:hover {
+        background: linear-gradient(135deg, #dcedc8 0%, #c5e1a5 100%);
+        border-color: #388e3c;
+    }
+
+    .add-bagian-container {
+        text-align: center;
+        margin: 15px 0;
+        padding: 20px;
+        border: 3px dashed #2196F3;
+        border-radius: 10px;
+        background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+        transition: all 0.3s ease;
+    }
+
+    .add-bagian-container:hover {
+        background: linear-gradient(135deg, #bbdefb 0%, #90caf9 100%);
+        border-color: #1565C0;
+    }
+
+    .add-pasal-container {
+        text-align: center;
+        margin: 12px 0;
+        padding: 18px;
+        border: 3px dashed #FF9800;
+        border-radius: 8px;
+        background: linear-gradient(135deg, #fff8e1 0%, #ffecb3 100%);
+        transition: all 0.3s ease;
+    }
+
+    .add-pasal-container:hover {
+        background: linear-gradient(135deg, #ffecb3 0%, #ffe082 100%);
+        border-color: #E65100;
+    }
+
+    /* Pasal Container dengan Visual Guide */
+    .pasal-container {
+        margin-left: 25px;
+        padding-left: 20px;
+        border-left: 3px solid #FFA726;
+        position: relative;
+    }
+
+    .pasal-container::before {
+        content: '';
+        position: absolute;
+        left: -3px;
+        top: 0;
+        width: 3px;
+        height: 30px;
+        background: linear-gradient(180deg, #FFA726 0%, transparent 100%);
+    }
+
+    /* Bagian Container */
+    .bagian-container {
+        position: relative;
+    }
+
+    /* Text Styling untuk Instructions */
+    .add-field-container small,
+    .add-bagian-container small,
+    .add-pasal-container small {
+        font-size: 0.85em;
+        font-weight: 500;
+        color: #546e7a;
+        display: block;
+        margin-top: 8px;
+        font-style: italic;
+    }
+
+    /* Form Input Styling dalam Field */
+    .bab-field .form-control,
+    .bagian-field .form-control,
+    .pasal-field .form-control {
+        border: 2px solid #e0e0e0;
+        border-radius: 6px;
+        transition: all 0.3s ease;
+        font-size: 0.95em;
+    }
+
+    .bab-field .form-control:focus {
+        border-color: #2c3e50;
+        box-shadow: 0 0 0 0.2rem rgba(44, 62, 80, 0.15);
+    }
+
+    .bagian-field .form-control:focus {
+        border-color: #2196F3;
+        box-shadow: 0 0 0 0.2rem rgba(33, 150, 243, 0.15);
+    }
+
+    .pasal-field .form-control:focus {
+        border-color: #FF9800;
+        box-shadow: 0 0 0 0.2rem rgba(255, 152, 0, 0.15);
+    }
+
+    /* Label Styling */
+    .bab-field label {
+        font-weight: 600;
+        color: #2c3e50;
+        margin-bottom: 8px;
+    }
+
+    .bagian-field label {
+        font-weight: 600;
+        color: #1565C0;
+        margin-bottom: 8px;
+    }
+
+    .pasal-field label {
+        font-weight: 600;
+        color: #E65100;
+        margin-bottom: 8px;
+    }
+
+    /* Highlight untuk field yang baru ditambahkan */
+    .newly-added {
+        animation: highlightPulse 2s ease-in-out;
+    }
+
+    @keyframes highlightPulse {
+
+        0%,
+        100% {
+            box-shadow: 0 0 0 0 rgba(76, 175, 80, 0);
+        }
+
+        50% {
+            box-shadow: 0 0 20px 10px rgba(76, 175, 80, 0.4);
+        }
+    }
+
+    /* Info Badge untuk panduan */
+    .info-badge {
+        display: inline-block;
+        background: #2196F3;
+        color: white;
+        padding: 4px 10px;
+        border-radius: 12px;
+        font-size: 0.75em;
+        font-weight: 600;
+        margin-left: 10px;
+    }
+
+    /* Animation */
+    @keyframes fadeInSlide {
+        from {
+            opacity: 0;
+            transform: translateY(-20px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    /* Responsive Design */
+    @media (max-width: 768px) {
+        .bagian-field {
+            margin-left: 15px;
+            padding: 15px;
+        }
+
+        .pasal-field {
+            margin-left: 10px;
+            padding: 12px;
+        }
+
+        .field-number {
+            font-size: 1.1em;
+        }
+
+        .bagian-number,
+        .pasal-number {
+            font-size: 0.95em;
+        }
+
+        .btn-add-field,
+        .btn-add-bagian,
+        .btn-add-pasal {
+            width: 100%;
+            margin-bottom: 10px;
+        }
+    }
+
+    /* Hierarchy Visual Indicator */
+    .bab-field>.form-main-content {
+        position: relative;
+        padding-left: 5px;
+    }
+
+    /* Keputusan Field (untuk konsistensi) */
+    .keputusan-field {
+        border: 2px solid #9C27B0;
+        border-radius: 8px;
+        padding: 18px;
+        margin-bottom: 20px;
+        /* background: linear-gradient(135deg, #f3e5f5 0%, #e1bee7 100%); */
+        box-shadow: 0 3px 10px rgba(156, 39, 176, 0.15);
+        animation: fadeInSlide 0.4s ease-out;
+        position: relative;
+    }
+
+    .keputusan-field::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 5px;
+        height: 100%;
+        /* background: linear-gradient(180deg, #9C27B0 0%, #7B1FA2 100%); */
+        border-radius: 8px 0 0 8px;
+    }
+
+    /* Icon untuk tombol */
+    .btn-add-field i,
+    .btn-add-bagian i,
+    .btn-add-pasal i,
+    .btn-remove-field i {
+        margin-right: 5px;
+    }
+
+    /* Breadcrumb Visual untuk Struktur */
+    .bagian-field::after {
+        content: '↳';
+        position: absolute;
+        left: -25px;
+        top: 25px;
+        font-size: 1.5em;
+        color: #2196F3;
+        font-weight: bold;
+    }
+
+    .pasal-field::after {
+        content: '→';
+        position: absolute;
+        left: -18px;
+        top: 20px;
+        font-size: 1.2em;
+        color: #FF9800;
+        font-weight: bold;
     }
 
     @keyframes fadeInSlide {
@@ -268,16 +723,13 @@
                                     $bab_data = json_decode($content->bab_pasal_data, true);
                                 }
 
-                                // Jika data kosong atau error parsing, gunakan default
+                                // Jika data kosong atau error parsing, gunakan default tanpa pasal
                                 if (empty($bab_data)) {
                                     $bab_data = [
                                         "1" => [
                                             "judul" => "",
-                                            "pasal" => [
-                                                "1" => [
-                                                    "isi" => ""
-                                                ]
-                                            ]
+                                            "pasal" => [], // Kosongkan default pasal
+                                            "bagian" => [] // Kosongkan default bagian
                                         ]
                                     ];
                                 }
@@ -704,7 +1156,7 @@
     var isEditMode = <?php echo $is_edit_mode ? 'true' : 'false'; ?>;
     var currentUserId = <?php echo $this->session->userdata('id_user') ? $this->session->userdata('id_user') : 0; ?>;
     var currentUserLevel = <?php echo isset($level_user) ? $level_user : 0; ?>;
-    var canManageRevisi = [4, 6, 7, 15].includes(Number(currentUserLevel));
+    var canManageRevisi = [4, 6, 7].includes(Number(currentUserLevel));
     console.log("Current User ID:", currentUserId, "Level:", currentUserLevel, "Can Manage Revisi:", canManageRevisi);
 
     // Fungsi untuk menampilkan revisi
@@ -1202,6 +1654,29 @@
             setFormAccess();
         }, 500);
 
+        $('.bab-field').each(function() {
+            const babNumber = $(this).data('number');
+            updateRemovePasalButtons(babNumber);
+            updateAddPasalButtonVisibility(babNumber); // Tambahkan ini
+        });
+
+        function smoothScrollToElement(element, offset = 100) {
+            $('html, body').animate({
+                scrollTop: $(element).offset().top - offset
+            }, 600, 'swing');
+        }
+
+        // Tambahkan tooltip untuk buttons
+        $('[data-toggle="tooltip"]').tooltip();
+
+        // Highlight effect saat field baru ditambahkan
+        function highlightNewField(element) {
+            $(element).addClass('newly-added');
+            setTimeout(() => {
+                $(element).removeClass('newly-added');
+            }, 2000);
+        }
+
         // Event handler untuk tombol Preview
         $('#preview-btn').on('click', function() {
             for (var instance in CKEDITOR.instances) {
@@ -1291,10 +1766,12 @@
     $(document).on('click', '.remove-pasal', function() {
         const pasalNumber = $(this).data('pasal');
         const pasalField = $(`.pasal-field[data-pasal="${pasalNumber}"]`);
-        const pasalCountInContainer = pasalField.closest('.pasal-container').find('.pasal-field').length;
+        const babNumber = pasalField.data('bab');
+        const babField = $(`.bab-field[data-number="${babNumber}"]`);
+        const totalPasalInBab = babField.find('.pasal-field').length;
 
-        if (pasalCountInContainer === 1) {
-            alert('Setidaknya satu pasal harus tetap ada di setiap bagian atau bab.');
+        if (totalPasalInBab === 1) {
+            alert('Setidaknya satu pasal harus tetap ada di setiap bab.');
             return;
         }
 
@@ -1306,7 +1783,8 @@
         pasalField.fadeOut(300, function() {
             $(this).remove();
             reorganizePasalFields();
-            tampilkanRevisi(); // Perbarui revisi setelah menghapus pasal
+            updateRemovePasalButtons(babNumber); // Tambahkan ini
+            tampilkanRevisi();
         });
     });
 
@@ -1316,11 +1794,11 @@
         bagianCounter++;
         addBagianField(babNumber, bagianCounter);
 
-        // Reorganisasi setelah tambah
         setTimeout(function() {
             reorganizeBagianFields();
             reorganizePasalFields();
-            tampilkanRevisi(); // Perbarui revisi setelah menambah bagian
+            updateAddPasalButtonVisibility(babNumber); // Tambahkan ini
+            tampilkanRevisi();
         }, 300);
     });
 
@@ -1328,6 +1806,7 @@
     $(document).on('click', '.remove-bagian', function() {
         const bagianNumber = $(this).data('bagian');
         const bagianField = $(`.bagian-field[data-bagian="${bagianNumber}"]`);
+        const babNumber = bagianField.data('bab');
 
         bagianField.find('.pasal-field').each(function() {
             const pasalNumber = $(this).data('pasal');
@@ -1341,7 +1820,8 @@
             $(this).remove();
             reorganizeBagianFields();
             reorganizePasalFields();
-            tampilkanRevisi(); // Perbarui revisi setelah menghapus bagian
+            updateAddPasalButtonVisibility(babNumber); // Tambahkan ini
+            tampilkanRevisi();
         });
     });
 
@@ -1393,7 +1873,9 @@
 
         setTimeout(function() {
             initCKEditor(pasalTextareaId);
-            setFormAccess(); // Apply form access untuk field baru
+            updateRemovePasalButtons(babNumber);
+            updateAddPasalButtonVisibility(babNumber); // Tambahkan ini
+            setFormAccess();
         }, 100);
 
         $('html, body').animate({
@@ -1404,6 +1886,7 @@
     // Fungsi untuk menghapus field bagian
     function removeBagianField(bagianNumber) {
         const bagianField = $(`.bagian-field[data-bagian="${bagianNumber}"]`);
+        const babNumber = bagianField.data('bab');
 
         bagianField.find('.pasal-field').each(function() {
             const pasalNumber = $(this).data('pasal');
@@ -1417,6 +1900,7 @@
             $(this).remove();
             reorganizeBagianFields();
             reorganizePasalFields();
+            updateAddPasalButtonVisibility(babNumber); // Tambahkan ini
         });
     }
 
@@ -1450,7 +1934,8 @@
 
         setTimeout(function() {
             initCKEditor(textareaId);
-            setFormAccess(); // Apply form access untuk field baru
+            setFormAccess();
+            updateRemovePasalButtons(babNumber); // Tambahkan ini
         }, 100);
 
         $('html, body').animate({
@@ -1458,13 +1943,30 @@
         }, 500);
     }
 
+    // Fungsi untuk update tombol hapus pasal berdasarkan jumlah total pasal di bab
+    function updateRemovePasalButtons(babNumber) {
+        const babField = $(`.bab-field[data-number="${babNumber}"]`);
+        const allPasalInBab = babField.find('.pasal-field');
+        const totalPasal = allPasalInBab.length;
+
+        if (totalPasal <= 1) {
+            // Jika hanya ada 1 pasal di seluruh bab, sembunyikan tombol hapus
+            allPasalInBab.find('.remove-pasal').hide();
+        } else {
+            // Jika ada lebih dari 1 pasal, tampilkan semua tombol hapus
+            allPasalInBab.find('.remove-pasal').show();
+        }
+    }
+
     // Fungsi untuk menghapus field pasal
     function removePasalField(pasalNumber) {
         const pasalField = $(`.pasal-field[data-pasal="${pasalNumber}"]`);
-        const pasalCountInContainer = pasalField.closest('.pasal-container').find('.pasal-field').length;
+        const babNumber = pasalField.data('bab');
+        const babField = $(`.bab-field[data-number="${babNumber}"]`);
+        const totalPasalInBab = babField.find('.pasal-field').length;
 
-        if (pasalCountInContainer === 1) {
-            alert('Setidaknya satu pasal harus tetap ada di setiap bagian atau bab.');
+        if (totalPasalInBab === 1) {
+            alert('Setidaknya satu pasal harus tetap ada di setiap bab.');
             return;
         }
 
@@ -1476,6 +1978,7 @@
         pasalField.fadeOut(300, function() {
             $(this).remove();
             reorganizePasalFields();
+            updateRemovePasalButtons(babNumber); // Tambahkan ini
         });
     }
 
@@ -1532,12 +2035,13 @@
             const removeBtn = $(field).find('.remove-pasal');
             removeBtn.attr('data-pasal', newPasalCounter);
 
-            const pasalCountInContainer = $(field).closest('.pasal-container').find('.pasal-field').length;
-            if (pasalCountInContainer === 1) {
-                removeBtn.hide();
-            } else {
-                removeBtn.show();
-            }
+            // HAPUS LOGIKA LAMA INI:
+            // const pasalCountInContainer = $(field).closest('.pasal-container').find('.pasal-field').length;
+            // if (pasalCountInContainer === 1) {
+            //     removeBtn.hide();
+            // } else {
+            //     removeBtn.show();
+            // }
 
             setTimeout(function() {
                 initCKEditor(newTextareaId);
@@ -1548,7 +2052,14 @@
         });
 
         globalPasalCounter = newPasalCounter;
-        tampilkanRevisi(); // Perbarui revisi setelah reorganisasi
+
+        // Update tombol hapus untuk setiap bab
+        $('.bab-field').each(function() {
+            const babNumber = $(this).data('number');
+            updateRemovePasalButtons(babNumber);
+        });
+
+        tampilkanRevisi();
     }
 
     // Fungsi untuk reorganisasi penomoran bagian
@@ -1992,6 +2503,21 @@
             $("input[name='file_lampiran']").prop("required", false);
             $("input[name='file_lampiran_sk_tim']").prop("required", false);
             $("input[name='file_lampiran_daftar_hadir']").prop("required", false);
+        }
+    }
+
+    // Fungsi untuk update visibilitas tombol tambah pasal di luar bagian
+    function updateAddPasalButtonVisibility(babNumber) {
+        const babField = $(`.bab-field[data-number="${babNumber}"]`);
+        const bagianCount = babField.find('.bagian-field').length;
+        const addPasalContainerOutsideBagian = babField.find('.pasal-container[data-bagian="0"] > .add-pasal-container');
+
+        if (bagianCount > 0) {
+            // Jika ada bagian, sembunyikan tombol tambah pasal di luar bagian
+            addPasalContainerOutsideBagian.hide();
+        } else {
+            // Jika tidak ada bagian, tampilkan tombol tambah pasal di luar bagian
+            addPasalContainerOutsideBagian.show();
         }
     }
 </script>
