@@ -9,7 +9,7 @@
             font-family: 'Bookman Old Style', serif;
             font-size: 12pt;
             margin: 20mm;
-            line-height: 1.5;
+            line-height: 1.3;
         }
 
         .header {
@@ -63,13 +63,13 @@
         }
 
         .menimbang-content p {
-            line-height: normal;
+            line-height: 1.3;
         }
 
         .menimbang-content ol li {
             margin-bottom: 10px;
             text-align: justify;
-            line-height: 1.5;
+            line-height: 1.3;
         }
     </style>
 
@@ -171,7 +171,7 @@
         ?>
 
         <!-- Tabel untuk tempat, tanggal, dan jabatan -->
-        <div style="margin-top: 40px;">
+        <div style="margin-top: 20px;">
             <table style="width: 100%; border: none;">
                 <tr>
                     <td style="width: 65%; border: none;">&nbsp;</td>
@@ -186,7 +186,7 @@
         </div>
 
         <!-- Tabel terpisah untuk nama -->
-        <div style="margin-top: 80px; margin-bottom: 20px;">
+        <div style="margin-top: 80px;">
             <table style="width: 100%; border: none;">
                 <tr>
                     <td style="width: 55%; border: none;">&nbsp;</td>

@@ -15,7 +15,7 @@ class Mpdf_library
             'orientation' => 'P', // Orientasi Portrait
             'margin_left' => 20, // Margin kiri: 2 cm = 20 mm
             'margin_right' => 25, // Margin kanan: 2,5 cm = 25 mm
-            'margin_top' => 20, // Margin atas: 2 cm = 20 mm
+            'margin_top' => 10, // Margin atas: 2 cm = 20 mm
             'margin_bottom' => 20, // Margin bawah: 2 cm = 20 mm
             'default_font' => 'bookman', // Font default
             'fontDir' => [FCPATH . 'application/third_party/mpdf/ttfonts'], // Direktori font khusus
