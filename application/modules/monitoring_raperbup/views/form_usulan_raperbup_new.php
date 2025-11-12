@@ -1156,7 +1156,7 @@
     var isEditMode = <?php echo $is_edit_mode ? 'true' : 'false'; ?>;
     var currentUserId = <?php echo $this->session->userdata('id_user') ? $this->session->userdata('id_user') : 0; ?>;
     var currentUserLevel = <?php echo isset($level_user) ? $level_user : 0; ?>;
-    var canManageRevisi = [4, 6, 7].includes(Number(currentUserLevel));
+    var canManageRevisi = [4, 6, 7, 15].includes(Number(currentUserLevel));
     console.log("Current User ID:", currentUserId, "Level:", currentUserLevel, "Can Manage Revisi:", canManageRevisi);
 
     // Fungsi untuk menampilkan revisi
