@@ -8,8 +8,8 @@
         body {
             font-family: 'Bookman Old Style', serif;
             font-size: 12pt;
-            margin: 20mm;
-            line-height: 1.5;
+            /* margin: 20mm; */
+            line-height: 1.3;
         }
 
         .header {
@@ -61,13 +61,13 @@
         }
 
         .menimbang-content p {
-            line-height: normal;
+            line-height: 1.3;
         }
 
         .menimbang-content ol li {
             margin-bottom: 10px;
             text-align: justify;
-            line-height: 1.5;
+            line-height: 1.3;
         }
 
         /* Style untuk bagian */
@@ -87,13 +87,13 @@
         }
 
         .bagian-content p {
-            line-height: normal;
+            line-height: 1.3;
         }
 
         .bagian-content ol li {
             margin-bottom: 10px;
             text-align: justify;
-            line-height: normal;
+            line-height: 1.3;
         }
 
         /* Style untuk pasal */
@@ -118,18 +118,17 @@
         }
 
         .pasal-content p {
-            line-height: normal;
+            line-height: 1.3;
         }
 
         .pasal-content ol li {
             margin-bottom: 10px;
             text-align: justify;
-            line-height: normal;
+            line-height: 1.3;
         }
 
         /* Style untuk judul yang rata tengah dari konten menggunakan margin offset */
         .centered-title-container {
-            margin: 20px 0;
             margin-left: 140px;
             /* Offset sebesar lebar label + colon (100px + 40px) */
         }
