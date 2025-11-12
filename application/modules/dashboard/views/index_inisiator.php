@@ -12,10 +12,14 @@
                                     dibaca</a>
                             </div>
                         </div>
-                        <div class="card-body">
-                            <ul class="list-unstyled list-unstyled-border" id="notificationListDashboard">
-                                <li class="media text-center">Memuat notifikasi...</li>
-                            </ul>
+
+                        <!-- Tambah class custom-scroll di sini -->
+                        <div class="card-body p-0">
+                            <div class="notification-scroll">
+                                <ul class="list-unstyled list-unstyled-border" id="notificationListDashboard">
+                                    <li class="media text-center p-4">Memuat notifikasi...</li>
+                                </ul>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -43,6 +47,56 @@
         </div>
     </section>
 </div>
+
+<style>
+    .notification-scroll {
+        max-height: 600px;
+        /* Sesuaikan tinggi maksimal sesuai keinginan */
+        overflow-y: auto;
+        overflow-x: hidden;
+        padding: 0 16px 16px 16px;
+        /* biar ada ruang di kanan supaya scroll bar gak nempel */
+    }
+
+    .notification-scroll::-webkit-scrollbar {
+        width: 8px;
+    }
+
+    .notification-scroll::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        border-radius: 10px;
+    }
+
+    .notification-scroll::-webkit-scrollbar-thumb {
+        background: #c1c1c1;
+        border-radius: 10px;
+    }
+
+    .notification-scroll::-webkit-scrollbar-thumb:hover {
+        background: #a8a8a8;
+    }
+
+    /* Optional: biar pas kosong tetap rapi */
+    #notificationListDashboard .media {
+        padding: 12px 0;
+        border-bottom: 1px solid #f0f0f0;
+    }
+
+    #notificationListDashboard .media:last-child {
+        border-bottom: none;
+    }
+
+    .empty-notification,
+    #notificationListDashboard .media .mx-auto {
+        color: #aab0bc !important;
+    }
+
+    /* Supaya pas kosong, gak ada border bawah */
+    #notificationListDashboard .media.border-0 {
+        border-bottom: none !important;
+        padding: 20px 16px;
+    }
+</style>
 
 <script>
     // Inisialisasi DataTable
@@ -112,7 +166,14 @@
                                 </li>`;
                         });
                     } else {
-                        html = '<li class="media text-center">Tidak ada pemberitahuan baru</li>';
+                        html = `
+        <li class="media border-0 py-5">
+            <div class="mx-auto text-center">
+                <i class="fas fa-bell-slash fa-3x text-muted mb-3 d-block"></i>
+                <div class="text-muted font-weight-bold">Tidak ada pemberitahuan baru</div>
+                <small class="text-muted">Semua sudah dibaca atau belum ada yang baru</small>
+            </div>
+        </li>`;
                     }
                     $('#notificationListDashboard').html(html);
                 },
