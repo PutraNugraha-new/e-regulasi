@@ -435,4 +435,175 @@ class Request extends MY_Controller
                 ->set_output(json_encode(['status' => false, 'message' => 'Internal server error: ' . $e->getMessage()]));
         }
     }
+
+    public function get_data_final()
+    {
+        $tahun = $this->iget('tahun');
+        $wh = ['t.status_tracking' => '5', 't.file_final IS NOT NULL' => null];
+        if ($tahun)
+            $wh['YEAR(u.created_at)'] = $tahun;
+
+        $this->db->select("
+        u.tahun,
+        u.nomor_register,
+        u.nama_peraturan,
+        k.nama_kategori,
+        s.nama AS nama_skpd,
+        t.file_final,
+        CONCAT('assets/file_usulan/', t.file_final) AS file_final_path
+    ")
+            ->from('usulan_raperbup u')
+            ->join('trx_raperbup t', 't.usulan_raperbup_id = u.id_usulan_raperbup AND t.status_tracking = 5 AND t.file_final IS NOT NULL', 'inner')
+            ->join('kategori_usulan k', 'k.id_kategori_usulan = u.kategori_usulan_id', 'left')
+            ->join('user us', 'us.id_user = u.id_user_created', 'left')
+            ->join('master_satker s', 's.id_master_satker = us.master_satker_id', 'left')
+            ->where($wh)
+            ->order_by('u.tahun DESC, u.nomor_register');
+
+        $result = $this->db->get()->result_array();
+
+        // PAKAI FORMAT DATATABLES!
+        $response = [
+            'data' => $result
+        ];
+
+        $this->output
+            ->set_content_type('application/json')
+            ->set_output(json_encode($response));
+    }
+
+    public function export_final_excel()
+    {
+        $tahun = $this->iget('tahun');
+        $wh = ['t.status_tracking' => '5', 't.file_final IS NOT NULL' => null];
+        if ($tahun)
+            $wh['YEAR(u.created_at)'] = $tahun;
+
+        $this->db->select("
+        u.tahun,
+        u.nomor_register,
+        u.nama_peraturan,
+        k.nama_kategori,
+        s.nama AS nama_skpd
+    ", false)
+            ->from('usulan_raperbup u')
+            ->join('trx_raperbup t', 't.usulan_raperbup_id = u.id_usulan_raperbup AND t.status_tracking = 5 AND t.file_final IS NOT NULL', 'inner')
+            ->join('kategori_usulan k', 'k.id_kategori_usulan = u.kategori_usulan_id', 'left')
+            ->join('user us', 'us.id_user = u.id_user_created', 'left')
+            ->join('master_satker s', 's.id_master_satker = us.master_satker_id', 'left')
+            ->where($wh)
+            ->order_by('u.tahun DESC, u.nomor_register');
+
+        $data = $this->db->get()->result_array();
+
+        // Jika kosong, kasih contoh
+        if (empty($data)) {
+            $data = [
+                ['tahun' => '2025', 'nomor_register' => '1/2025', 'nama_peraturan' => 'Contoh Perda RTRW', 'nama_kategori' => 'Perda', 'nama_skpd' => 'Bappeda'],
+                ['tahun' => '2025', 'nomor_register' => '2/2025', 'nama_peraturan' => 'Contoh Perbup Kepegawaian', 'nama_kategori' => 'Perbup', 'nama_skpd' => 'BKPSDM'],
+            ];
+            $is_contoh = true;
+        } else {
+            $is_contoh = false;
+        }
+
+        $this->load->library('excel');
+        $this->excel->export_final_regulasi($data, $tahun, $is_contoh);
+    }
+
+    public function download_template()
+    {
+        $data = [
+            ['tahun' => '2025', 'nomor_register' => '1/2025', 'nama_peraturan' => 'Perda RTRW', 'nama_kategori' => 'Perda', 'nama_skpd' => 'Bappeda'],
+            ['tahun' => '2025', 'nomor_register' => '2/2025', 'nama_peraturan' => 'Perbup Kepegawaian', 'nama_kategori' => 'Perbup', 'nama_skpd' => 'BKPSDM'],
+        ];
+        $this->load->library('excel');
+        $this->excel->export_final_regulasi($data, null, true);
+    }
+
+    public function import_final_excel()
+    {
+        if (!$_FILES['file_excel']['name']) {
+            echo json_encode(['status' => false, 'message' => 'File wajib diupload']);
+            return;
+        }
+
+        $this->load->library('excel');
+        $file = $_FILES['file_excel']['tmp_name'];
+        $obj = PHPExcel_IOFactory::load($file);
+        $sheet = $obj->getActiveSheet();
+        $data = $sheet->toArray(null, true, true, true);
+
+        $headers = $data[1];
+        $rows = array_slice($data, 2);
+        $success = 0;
+        $failed = 0;
+        $errors = [];
+
+        foreach ($rows as $i => $row) {
+            $tahun = $row['A'];
+            $nomor_register = $row['B'];
+            $nama_peraturan = $row['C'];
+            $jenis = $row['D'];
+            $skpd = $row['E'];
+            $file_final = $row['F'];
+
+            if (!$tahun || !$nomor_register || !$nama_peraturan) {
+                $errors[] = "Baris " . ($i + 1) . ": Tahun, Nomor Register, Nama Peraturan wajib diisi";
+                $failed++;
+                continue;
+            }
+
+            // Cek duplikat nomor register per tahun
+            $exist = $this->db->where(['tahun' => $tahun, 'nomor_register' => $nomor_register])->get('usulan_raperbup')->row();
+            if ($exist) {
+                $errors[] = "Baris " . ($i + 1) . ": Nomor register $nomor_register tahun $tahun sudah ada";
+                $failed++;
+                continue;
+            }
+
+            // Cari kategori
+            $kategori = $this->db->like('nama_kategori', $jenis)->get('kategori_usulan')->row();
+            if (!$kategori) {
+                $errors[] = "Baris " . ($i + 1) . ": Jenis '$jenis' tidak ditemukan";
+                $failed++;
+                continue;
+            }
+
+            // Cari SKPD
+            $satker = $this->db->like('nama', $skpd)->get('master_satker')->row();
+            if (!$satker) {
+                $errors[] = "Baris " . ($i + 1) . ": SKPD '$skpd' tidak ditemukan";
+                $failed++;
+                continue;
+            }
+
+            // Simpan usulan
+            $id_usulan = $this->usulan_raperbup_model->save([
+                'nama_peraturan' => $nama_peraturan,
+                'nomor_register' => $nomor_register,
+                'tahun' => $tahun,
+                'kategori_usulan_id' => $kategori->id_kategori_usulan,
+                'id_user_created' => $this->session->userdata('id_user'),
+                'created_at' => $this->datetime()
+            ]);
+
+            // Simpan trx final
+            $this->trx_raperbup_model->save([
+                'usulan_raperbup_id' => $id_usulan,
+                'file_final' => $file_final,
+                'status_tracking' => '5',
+                'id_user_created' => $this->session->userdata('id_user'),
+                'created_at' => $this->datetime()
+            ]);
+
+            $success++;
+        }
+
+        $message = "$success data berhasil diimport. ";
+        if ($failed)
+            $message .= "$failed gagal: " . implode('; ', $errors);
+
+        echo json_encode(['status' => $success > 0, 'message' => $message]);
+    }
 }
