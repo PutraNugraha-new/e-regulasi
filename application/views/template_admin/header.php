@@ -86,24 +86,21 @@
 						<div class="dropdown-menu dropdown-list dropdown-menu-right">
 							<div class="dropdown-header">Pemberitahuan
 								<div class="float-right">
-									<?php if ($this->session->userdata('level_user_id') != 5): ?>
-										<a href="#" onclick="tandaiSemuaDibaca();">Tandai semua telah dibaca</a>
-									<?php else: ?>
-										<span class="text-muted">Tidak dapat diubah</span>
-									<?php endif; ?>
+									<a href="javascript:void(0)" onclick="tandaiSemuaDibaca(); return false;">
+            Tandai semua telah dibaca
+        </a>
 								</div>
 							</div>
 							<div class="dropdown-list-content dropdown-list-icons" id="notificationList">
 								<div class="dropdown-item text-center">Memuat notifikasi...</div>
 							</div>
 							<div class="dropdown-footer text-center">
-								<?php if ($this->session->userdata('level_user_id') != 5): ?>
-									<a href="<?php echo base_url(); ?>dashboard/notifikasi">Lihat Semua <i
-											class="fas fa-chevron-right"></i></a>
-								<?php else: ?>
-									<span class="text-muted">Tidak tersedia</span>
-								<?php endif; ?>
-							</div>
+    <?php if ($this->session->userdata('level_user_id') != 5): ?>
+        <a href="<?php echo base_url(); ?>dashboard/notifikasi">Lihat Semua <i class="fas fa-chevron-right"></i></a>
+    <?php else: ?>
+        <span class="text-muted">Hanya untuk monitoring</span>
+    <?php endif; ?>
+</div>
 						</div>
 					</li>
 					<li class="dropdown"><a href="#" data-toggle="dropdown"
@@ -123,135 +120,115 @@
 			</nav>
 
 			<script>
-				$(document).ready(function () {
-					function loadNotifikasi() {
-						$.ajax({
-							url: base_url + 'dashboard/request/get_notifikasi',
-							type: 'GET',
-							dataType: 'json',
-							success: function (response) {
-								if (response.error) {
-									$('#notificationList').html('<div class="dropdown-item text-center text-danger">Gagal memuat notifikasi</div>');
-									$('#notificationCount').text('0');
-									return;
-								}
+    $(document).ready(function () {
+        function loadNotifikasi() {
+            $.ajax({
+                url: base_url + 'dashboard/request/get_notifikasi',
+                type: 'GET',
+                dataType: 'json',
+                success: function (response) {
+                    if (response.error) {
+                        $('#notificationList').html('<div class="dropdown-item text-center text-danger">Gagal memuat</div>');
+                        $('#notificationCount').text('0');
+                        return;
+                    }
 
-								$('#notificationCount').text(response.total || 0);
-								var html = '';
+                    $('#notificationCount').text(response.total || 0);
+                    var html = '';
 
-								if (response.notifikasi && response.notifikasi.length > 0) {
-									$.each(response.notifikasi, function (index, item) {
-										var date = new Date(item.created_at);
-										var formattedDate = date.toLocaleDateString('id-ID', {
-											weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'
-										});
+                    if (response.notifikasi && response.notifikasi.length > 0) {
+                        $.each(response.notifikasi, function (index, item) {
+                            var date = new Date(item.created_at).toLocaleDateString('id-ID', {
+                                weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'
+                            });
 
-										var usulan_id = item.id_usulan_raperbup || '';
-										var kategori_id = item.kategori_usulan_id || '';
-										var link = '';
+                            if (!is_admin_opd) {
+                                // Admin Pusat & User Biasa → BISA KLIK & BUKA DETAIL
+                                var link = item.nomor_register 
+                                    ? `${base_url}monitoring_raperbup/index?usulan_id=${item.id_usulan_raperbup}&kategori_usulan_id=${item.kategori_usulan_id || ''}`
+                                    : `${base_url}nomor_register/index?usulan_id=${item.id_usulan_raperbup}&kategori_usulan_id=${item.kategori_usulan_id || ''}`;
 
-										if (!item.nomor_register || item.nomor_register === '' || item.nomor_register === null) {
-											link = base_url + 'nomor_register/index?usulan_id=' + usulan_id + '&kategori_usulan_id=' + kategori_id;
-										} else {
-											link = base_url + 'monitoring_raperbup/index?usulan_id=' + usulan_id + '&kategori_usulan_id=' + kategori_id;
-										}
+                                html += `
+                                <a href="${link}" class="dropdown-item" onclick="return tandaiDibaca(${item.id_notifikasi}, '${link}')">
+                                    <div class="dropdown-item-icon bg-info text-white">
+                                        <i class="fas fa-bell"></i>
+                                    </div>
+                                    <div class="dropdown-item-desc">
+                                        <b>${item.nama_pengguna || 'Sistem'}</b><br>
+                                        <i>${item.pesan}</i>
+                                        <div class="time">${date}</div>
+                                    </div>
+                                </a>`;
+                            } else {
+                                // Admin OPD → LIHAT DOANG, GAK BISA KLIK!
+                                html += `
+                                <div class="dropdown-item">
+                                    <div class="dropdown-item-icon bg-secondary text-white">
+                                        <i class="fas fa-bell"></i>
+                                    </div>
+                                    <div class="dropdown-item-desc">
+                                        <b>${item.nama_pengguna || 'Sistem'}</b><br>
+                                        <i>${item.pesan}</i>
+                                        <div class="time">${date}</div>
+                                        <small class="text-muted">Hanya monitoring</small>
+                                    </div>
+                                </div>`;
+                            }
+                        });
+                    } else {
+                        html = '<div class="dropdown-item text-center text-muted">Tidak ada pemberitahuan baru</div>';
+                    }
 
-										if (!is_admin_opd) {
-											// USER BIASA & ADMIN PUSAT → BISA KLIK
-											html += `
-								<a href="${link}" class="dropdown-item" onclick="return tandaiDibaca(${item.id_notifikasi}, '${link}')">
-									<div class="dropdown-item-icon bg-info text-white">
-										<i class="fas fa-bell"></i>
-									</div>
-									<div class="dropdown-item-desc">
-										<b>${item.nama_pengguna}</b><br>
-										<i>${item.pesan}</i>
-										<div class="time">${formattedDate}</div>
-									</div>
-								</a>`;
-										} else {
-											// ADMIN OPD → LIHAT DOANG, GAK BISA KLIK (TAMPILAN SAMA PERSIS)
-											html += `
-								<div class="dropdown-item">
-									<div class="dropdown-item-icon bg-secondary text-white">
-										<i class="fas fa-bell"></i>
-									</div>
-									<div class="dropdown-item-desc">
-										<b>${item.nama_pengguna}</b><br>
-										<i>${item.pesan}</i>
-										<div class="time">${formattedDate}</div>
-										<small class="text-muted">Tidak dapat diakses</small>
-									</div>
-								</div>`;
-										}
-									});
-								} else {
-									html = '<div class="dropdown-item text-center">Tidak ada pemberitahuan baru</div>';
-								}
+                    $('#notificationList').html(html);
+                },
+                error: function () {
+                    $('#notificationList').html('<div class="dropdown-item text-center text-danger">Gagal memuat</div>');
+                    $('#notificationCount').text('0');
+                }
+            });
+        }
 
-								$('#notificationList').html(html);
-							},
-							error: function () {
-								$('#notificationList').html('<div class="dropdown-item text-center text-danger">Gagal memuat notifikasi</div>');
-								$('#notificationCount').text('0');
-							}
-						});
-					}
+        // Admin OPD GAK BISA KLIK DETAIL → LANGSUNG DIBLOKIR
+        window.tandaiDibaca = function (id_notifikasi, link) {
+            if (is_admin_opd) {
+                swal('Akses Ditolak', 'Anda tidak diizinkan membuka detail usulan.', 'warning');
+                return false;
+            }
 
-					window.tandaiDibaca = function (id_notifikasi, link) {
-						if (is_admin_opd) {
-							swal('Akses Ditolak', 'Anda tidak memiliki izin untuk mengakses halaman ini.', 'warning');
-							return false;
-						}
+            $.post(base_url + 'dashboard/request/tandai_dibaca', { id_notifikasi: id_notifikasi }, function(res) {
+                if (res === true || res === 1) {
+                    loadNotifikasi();
+                    window.location.href = link;
+                }
+            }).fail(() => swal('Error', 'Gagal menandai notifikasi', 'error'));
 
-						$.ajax({
-							url: base_url + 'dashboard/request/tandai_dibaca',
-							type: 'POST',
-							data: { id_notifikasi: id_notifikasi },
-							dataType: 'json',
-							success: function (response) {
-								if (response === true) {
-									loadNotifikasi();
-									window.location.href = link;
-								} else {
-									swal('Gagal', 'Gagal menandai notifikasi sebagai dibaca.', 'error');
-								}
-							},
-							error: function () {
-								swal('Error', 'Terjadi kesalahan saat menghubungi server.', 'error');
-							}
-						});
-						return false;
-					};
+            return false;
+        };
 
-					window.tandaiSemuaDibaca = function () {
-						if (is_admin_opd) {
-							swal('Tidak Diizinkan', 'Fitur inichenko hanya untuk Admin Pusat.', 'info');
-							return;
-						}
+        // INI YANG KAMU MAU: ADMIN OPD BOLEH "Tandai Semua Dibaca" DI HEADER!
+        window.tandaiSemuaDibaca = function () {
+            // TIDAK ADA BLOKIR LAGI → SEMUA USER BOLEH!
+            $.ajax({
+                url: base_url + 'dashboard/request/tandai_semua_dibaca',
+                type: 'POST',
+                dataType: 'json',
+                success: function (res) {
+                    if (res.status) {
+                        loadNotifikasi();
+                        swal('Sukses!', res.message || 'Semua notifikasi ditandai dibaca!', 'success');
+                    } else {
+                        swal('Gagal', res.message || 'Gagal menandai semua', 'error');
+                    }
+                },
+                error: () => swal('Error', 'Server error', 'error')
+            });
+        };
 
-						$.ajax({
-							url: base_url + 'dashboard/request/tandai_semua_dibaca',
-							type: 'POST',
-							dataType: 'json',
-							success: function (response) {
-								if (response.status) {
-									loadNotifikasi();
-									swal('Berhasil', response.message, 'success');
-								} else {
-									swal('Gagal', response.message, 'error');
-								}
-							},
-							error: function () {
-								swal('Error', 'Gagal menandai semua notifikasi.', 'error');
-							}
-						});
-					};
-
-					loadNotifikasi();
-					setInterval(loadNotifikasi, 10000);
-				});
-			</script>
+        // Load pertama & auto refresh tiap 10 detik
+        loadNotifikasi();
+        setInterval(loadNotifikasi, 10000);
+    });
+</script>
 </body>
 
 </html>
