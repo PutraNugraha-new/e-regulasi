@@ -476,7 +476,6 @@ class Request extends MY_Controller
         }
     }
 
-<<<<<<< HEAD
     public function get_nomor_terakhir()
     {
         $tahun = $this->input->post('tahun');
@@ -508,7 +507,8 @@ class Request extends MY_Controller
         $ada = $this->db->count_all_results('usulan_raperbup') > 0;
 
         echo json_encode(['ada' => $ada]);
-=======
+    }
+
     public function get_data_final()
     {
         $tahun = $this->iget('tahun');
@@ -678,6 +678,5 @@ class Request extends MY_Controller
             $message .= "$failed gagal: " . implode('; ', $errors);
 
         echo json_encode(['status' => $success > 0, 'message' => $message]);
->>>>>>> 56e8d1f9c8f17f5ff2182ec8f5df168956bcaf93
     }
 }
