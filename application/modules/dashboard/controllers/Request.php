@@ -413,4 +413,34 @@ class Request extends MY_Controller
 				->set_output(json_encode(['error' => 'Internal server error: ' . $e->getMessage()]));
 		}
 	}
+
+	function get_notifikasi_all()
+	{
+		$user_id = $this->session->userdata('id_user');
+		$offset = $this->input->get('offset') ? (int) $this->input->get('offset') : 0;
+		$limit = $this->input->get('limit') ? (int) $this->input->get('limit') : 10;
+
+		if (!$user_id) {
+			$this->output->set_status_header(401)->set_output(json_encode(['error' => 'Unauthorized']));
+			return;
+		}
+
+		$data = $this->notifikasi_model->get([
+			"fields" => "notifikasi.*, user.nama_lengkap as nama_pengguna, usulan_raperbup.nomor_register, usulan_raperbup.kategori_usulan_id",
+			"join" => [
+				"usulan_raperbup" => "notifikasi.id_usulan_raperbup = usulan_raperbup.id_usulan_raperbup AND usulan_raperbup.deleted_at IS NULL",
+				"user" => "notifikasi.id_user_pengirim = user.id_user"
+			],
+			"where" => ["notifikasi.id_user_tujuan" => $user_id],
+			"order_by" => ["notifikasi.created_at" => "DESC"],
+			"limit" => $limit,
+			"offset" => $offset
+		]);
+
+		$total = $this->notifikasi_model->count(["id_user_tujuan" => $user_id]);
+
+		$this->output
+			->set_content_type('application/json')
+			->set_output(json_encode(['notifikasi' => $data, 'total' => $total]));
+	}
 }

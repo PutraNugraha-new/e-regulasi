@@ -169,6 +169,29 @@
     </div>
 </div>
 
+<style>
+    .border-left-warning {
+        border-left: 5px solid #f1c40f !important;
+        background-color: #fff9e6 !important;
+        border-radius: 8px;
+    }
+
+    .alert-icon i {
+        opacity: 0.9;
+    }
+
+    .alert-title {
+        color: #e67e22;
+        font-size: 1.1rem;
+    }
+
+    .alert-detail p {
+        font-size: 0.95rem;
+        color: #5d4037;
+        line-height: 1.6;
+    }
+</style>
+
 <script>
     $("a[href$='#disposisi']").hide();
     $("a[href$='#kirimFileKeProvinsi']").hide();
@@ -282,18 +305,32 @@
                 success: function (response) {
                     let html = "";
                     // Tampilkan processing_status untuk transaksi terbaru (index 0)
+                    // === TAMPILKAN BANNER KHUSUS KALAU SEDANG DIPROSES ===
                     if (response.length > 0 && response[0].processing_status) {
-                        html += "<div class='activity'>" +
-                            "<div class='activity-icon bg-info text-white shadow-dark'>" +
-                            "<i class='fas fa-clock'></i>" +
-                            "</div>" +
-                            "<div class='activity-detail'>" +
-                            "<div class='mb-2'>" +
-                            "<span class='text-job'>" + response[0].processing_date + "</span>" +
-                            "</div>" +
-                            "<p><div class='badge badge-info'>" + response[0].processing_status + "</div></p>" +
-                            "</div>" +
-                            "</div>";
+                        let processor = response[0].processing_by_name || 'Tim Teknis';
+                        let since = response[0].processing_date || 'Tanggal tidak diketahui';
+                        let statusText = response[0].processing_status;
+
+                        html += `
+    <div class="alert alert-warning border-left-warning shadow-sm mb-4">
+        <div class="d-flex align-items-center">
+            <div class="alert-icon">
+                <i class="fas fa-cog fa-spin fa-2x text-warning"></i>
+            </div>
+            <div class="alert-detail ml-3">
+                <h5 class="alert-title mb-1"><strong>${statusText}</strong></h5>
+                <p class="mb-0">
+                    <i class="fas fa-user"></i> <strong>Oleh:</strong> ${processor}<br>
+                    <i class="fas fa-calendar-alt"></i> <strong>Sejak:</strong> ${since}
+                </p>
+            </div>
+            <div class="ml-auto">
+                <span class="badge badge-pill badge-warning shadow-sm px-3 py-2">
+                    <i class="fas fa-hourglass-half"></i> DALAM PROSES
+                </span>
+            </div>
+        </div>
+    </div>`;
                     }
                     // Tampilkan aktivitas lainnya
                     $.each(response, function (index, value) {

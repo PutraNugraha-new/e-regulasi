@@ -110,8 +110,82 @@
                     </div>
                 </div>
             </div>
+            <div class="card mt-3">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-file-excel"></i> Import & Export Data Final
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label>Tahun Final</label>
+                                <select class="form-control select2" id="filter_tahun_final">
+                                    <option value="">-- Semua Tahun --</option>
+                                    <?php foreach ($tahun as $thn) { ?>
+                                        <option value="<?php echo $thn->tahun; ?>"><?php echo $thn->tahun; ?>
+                                        </option>
+                                    <?php } ?>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-8 text-right">
+                            <button class="btn btn-success mt-4" onclick="export_to_excel()">
+                                <i class="fas fa-file-excel"></i> Export ke Excel
+                            </button>
+                            <button class="btn btn-primary mt-4" data-toggle="modal" data-target="#modalImportExcel">
+                                <i class="fas fa-file-upload"></i> Import dari Excel
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="table-responsive mt-3">
+                        <table id="datatableFinal" class="table table-bordered table-striped">
+                            <thead class="thead-dark">
+                                <tr>
+                                    <th width="10%">Tahun</th>
+                                    <th width="15%">Nomor Register</th>
+                                    <th width="30%">Nama Peraturan</th>
+                                    <th width="15%">Jenis</th>
+                                    <th width="15%">SKPD</th>
+                                    <th width="15%">File Final</th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
         </div>
     </section>
+</div>
+
+<!-- Modal Import Excel -->
+<div class="modal fade" id="modalImportExcel" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Import Data Final dari Excel</h5>
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+            </div>
+            <form id="formImportExcel" enctype="multipart/form-data">
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label>File Excel (.xlsx)</label>
+                        <input type="file" name="file_excel" class="form-control" accept=".xlsx" required>
+                        <small class="text-muted">Download template:
+                            <a href="javascript:download_template()" class="text-primary">Template Import Final.xlsx</a>
+                        </small>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-success">Import</button>
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Batal</button>
+                </div>
+            </form>
+        </div>
+    </div>
 </div>
 
 <div id="showFormDetail" class="modal" tabindex="-1" role="dialog">
@@ -208,6 +282,92 @@
         </div>
     </div>
 </div>
+
+<script>
+    // === EXPORT TO EXCEL ===
+    function export_to_excel() {
+        const tahun = $("#filter_tahun_final").val();
+        const url = base_url + 'nomor_register/request/export_final_excel' + (tahun ? '?tahun=' + tahun : '');
+        window.open(url, '_blank');
+    }
+
+    // === DOWNLOAD TEMPLATE ===
+    function download_template() {
+        window.open(base_url + 'nomor_register/request/download_template', '_blank');
+    }
+
+    // === DATATABLES FINAL (SUDAH BENAR) ===
+    let datatableFinal;
+
+    $(document).ready(function () {
+        datatableFinal = $("#datatableFinal").DataTable({
+            "processing": true,
+            "serverSide": false,
+            "ajax": {
+                "url": base_url + 'nomor_register/request/get_data_final',
+                "type": "GET",
+                "data": function (d) {
+                    d.tahun = $("#filter_tahun_final").val();
+                },
+                "dataSrc": "data"
+            },
+            "columns": [
+                { "data": "tahun" },
+                { "data": "nomor_register" },
+                { "data": "nama_peraturan" },
+                { "data": "nama_kategori" },
+                { "data": "nama_skpd" },
+                {
+                    "data": null,
+                    "render": function (data, type, row) {
+                        if (row.file_final) {
+                            return `<a href="${base_url}${row.file_final_path}" target="_blank" class="btn btn-sm btn-info">
+                            <i class="fas fa-download"></i> Download
+                        </a>`;
+                        }
+                        return '-';
+                    }
+                }
+            ],
+            "order": [[0, "desc"]],
+            "pageLength": 25,
+            "language": {
+                "emptyTable": "Tidak ada data final untuk tahun ini",
+                "zeroRecords": "Tidak ditemukan data yang cocok"
+            }
+        });
+
+        // Filter tahun → reload DataTable
+        $("#filter_tahun_final").change(function () {
+            datatableFinal.ajax.reload();
+        });
+    });
+
+    // === IMPORT EXCEL ===
+    $("#formImportExcel").submit(function (e) {
+        e.preventDefault();
+        const formData = new FormData(this);
+
+        $.ajax({
+            url: base_url + 'nomor_register/request/import_final_excel',
+            type: 'POST',
+            data: formData,
+            contentType: false,
+            processData: false,
+            beforeSend: () => HoldOn.open(optionsHoldOn),
+            success: (res) => {
+                if (res.status) {
+                    swal('Sukses', res.message, 'success');
+                    $("#modalImportExcel").modal('hide');
+                    datatableFinal.ajax.reload(); // Reload tanpa refresh halaman
+                } else {
+                    swal('Gagal', res.message, 'error');
+                }
+            },
+            complete: () => HoldOn.close()
+        });
+    });
+</script>
 
 <script>
     const level_user = <?php echo $level_user ? $level_user : 0; ?>;

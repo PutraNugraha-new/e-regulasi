@@ -76,9 +76,10 @@
 				</ul>
 				<ul class="navbar-nav navbar-right">
 					<li class="dropdown dropdown-list-toggle">
-						<a href="#" data-toggle="dropdown" class="nav-link notification-toggle nav-link-lg" <?php if ($this->session->userdata('level_user_id') == 5): ?>
-								style="pointer-events: none; opacity: 0.6;"
-								title="Notifikasi hanya untuk monitoring internal" <?php endif; ?>>
+						<a href="#" data-toggle="dropdown" class="nav-link notification-toggle nav-link-lg"
+							<?php if ($this->session->userdata('level_user_id') == 5): ?>
+								title="Notifikasi hanya untuk monitoring internal"
+							<?php endif; ?>>
 							<i class="far fa-bell"></i>
 							<span class="badge badge-danger" id="notificationCount">0</span>
 						</a>
@@ -156,6 +157,7 @@
 										}
 
 										if (!is_admin_opd) {
+											// USER BIASA & ADMIN PUSAT → BISA KLIK
 											html += `
 								<a href="${link}" class="dropdown-item" onclick="return tandaiDibaca(${item.id_notifikasi}, '${link}')">
 									<div class="dropdown-item-icon bg-info text-white">
@@ -168,6 +170,7 @@
 									</div>
 								</a>`;
 										} else {
+											// ADMIN OPD → LIHAT DOANG, GAK BISA KLIK (TAMPILAN SAMA PERSIS)
 											html += `
 								<div class="dropdown-item">
 									<div class="dropdown-item-icon bg-secondary text-white">
@@ -223,7 +226,7 @@
 
 					window.tandaiSemuaDibaca = function () {
 						if (is_admin_opd) {
-							swal('Tidak Diizinkan', 'Fitur ini hanya untuk Admin Pusat.', 'info');
+							swal('Tidak Diizinkan', 'Fitur inichenko hanya untuk Admin Pusat.', 'info');
 							return;
 						}
 
