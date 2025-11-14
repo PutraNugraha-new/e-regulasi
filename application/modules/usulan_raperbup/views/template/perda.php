@@ -382,8 +382,8 @@
                                         </div>
                                     </div>
                                     <div class="menimbang-section">
-                                        <!-- <div class="pasal-label">Pasal</div> -->
-                                        <!-- <div class="pasal-colon">:</div> -->
+                                        <div class="pasal-label">Pasal</div>
+                                        <div class="pasal-colon">:</div>
                                         <div class="pasal-content">
                                             <?php echo $pasal['isi']; ?>
                                         </div>
@@ -402,8 +402,8 @@
                                 </div>
                             </div>
                             <div class="menimbang-section">
-                                <!-- <div class="pasal-label">Pasal</div> -->
-                                <!-- <div class="pasal-colon">:</div> -->
+                                <div class="pasal-label">Pasal</div>
+                                <div class="pasal-colon">:</div>
                                 <div class="pasal-content">
                                     <?php echo $pasal['isi']; ?>
                                 </div>

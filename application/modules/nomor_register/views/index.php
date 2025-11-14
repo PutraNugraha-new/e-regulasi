@@ -215,10 +215,21 @@
             </div>
             <div class="modal-body">
                 <div class="form-group row">
+                    <label class="col-form-label col-lg-4">Tahun</label>
+                    <div class="col-lg-8">
+                        <input type="hidden" name="tahun" />
+                        <span id="info-tahun" class="text-muted"></span>
+                    </div>
+                </div>
+
+                <div class="form-group row">
                     <label class="col-form-label col-lg-4">Nomor Register</label>
                     <div class="col-lg-8">
                         <input type="hidden" name="id_usulan_raperbup" />
-                        <input type="text" name="nomor_register" class="form-control" />
+                        <input type="number" name="nomor_register" class="form-control" min="1" required
+                            oninput="cekNomorRegister(this.value)" />
+                        <small id="panduan-nomor" class="text-success mt-1"></small>
+                        <small id="error-nomor" class="text-danger mt-1" style="display:none"></small>
                     </div>
                 </div>
                 <div class="form-group row">
@@ -362,26 +373,26 @@
     const level_user = <?php echo $level_user ? $level_user : 0; ?>;
     let datatableUsulanRaperbup = $("#datatableUsulanRaperbup").DataTable({
         "columns": [{
-            "width": "20%"
-        },
-        {
-            "width": "10%"
-        },
-        {
-            "width": "35%"
-        },
-        {
-            "width": "10%"
-        },
-        {
-            "width": "10%"
-        },
-        {
-            "width": "15%"
-        },
-        {
-            "width": "5%"
-        },
+                "width": "20%"
+            },
+            {
+                "width": "10%"
+            },
+            {
+                "width": "35%"
+            },
+            {
+                "width": "10%"
+            },
+            {
+                "width": "10%"
+            },
+            {
+                "width": "15%"
+            },
+            {
+                "width": "5%"
+            },
         ],
         "order": [
             [1, 'desc']
@@ -402,15 +413,15 @@
                 tipe: $("select[name='tipe']").val()
             },
             type: 'GET',
-            beforeSend: function () {
+            beforeSend: function() {
                 HoldOn.open(optionsHoldOn);
             },
-            success: function (response) {
+            success: function(response) {
                 console.log('Response:', response); // Debug response
                 if (response.length === 0) {
                     swal('Info', 'Tidak ada data yang sesuai dengan filter', 'info');
                 }
-                $.each(response, function (index, value) {
+                $.each(response, function(index, value) {
                     let actions = "<a class='btn btn-danger btn-icon' onClick=\"show_panel_nomor_register('" + value.id_encrypt + "')\" href='#'>Teruskan</a>";
                     if (level_user !== 6) {
                         actions += "<a class='btn btn-info btn-icon my-2' href='" + base_url + "Nomor_register/edit_usulan_raperbup/" + value.id_encrypt + "'>Revisi</a>";
@@ -429,11 +440,11 @@
                     ]).draw(false);
                 });
             },
-            error: function (xhr, status, error) {
+            error: function(xhr, status, error) {
                 console.log('AJAX Error:', xhr.responseText); // Debug error
                 swal('Error', 'Gagal mengambil data: ' + error, 'error');
             },
-            complete: function () {
+            complete: function() {
                 HoldOn.close();
             }
         });
@@ -442,26 +453,80 @@
     function show_panel_nomor_register(id_usulan_raperbup) {
         $("#showPanelNomorRegister").modal("show");
         $("input[name='id_usulan_raperbup']").val(id_usulan_raperbup);
+
         $.ajax({
             url: base_url + 'nomor_register/request/get_data_usulan_raperbup_by_id',
             data: {
                 id_usulan_raperbup: id_usulan_raperbup
             },
             type: 'GET',
-            beforeSend: function () {
+            beforeSend: function() {
                 HoldOn.open(optionsHoldOn);
             },
-            success: function (response) {
-                $("input[name='nomor_register']").val(response.usulan_raperbup.nomor_register);
-                if (response.trx_raperbup) {
-                    $("textarea[name='catatan']").val(response.trx_raperbup.catatan_ditolak);
-                }
-                get_data_kasubbag(response.usulan_raperbup.id_user_kasubbag);
+            success: function(response) {
+                const usulan = response.usulan_raperbup;
+
+                // Isi tahun (dari DB atau tahun sekarang)
+                const tahun = usulan.tahun || new Date().getFullYear();
+                $("input[name='tahun']").val(tahun);
+                $("#info-tahun").text(`Tahun: ${tahun}`);
+
+                // Isi nomor register jika sudah ada
+                const nomorSekarang = usulan.nomor_register || '';
+                $("input[name='nomor_register']").val(nomorSekarang);
+
+                // Isi catatan
+                $("textarea[name='catatan']").val(response.trx_raperbup?.catatan_ditolak || '');
+
+                // Load kasubbag
+                get_data_kasubbag(usulan.id_user_kasubbag);
+
+                // Tampilkan panduan nomor terakhir
+                tampilkanPanduanNomor(tahun, nomorSekarang);
             },
-            complete: function () {
+            complete: function() {
                 HoldOn.close();
             }
         });
+    }
+
+    function tampilkanPanduanNomor(tahun, nomorSekarang) {
+        $.post(base_url + 'nomor_register/request/get_nomor_terakhir', {
+            tahun: tahun
+        }, function(res) {
+            if (res.status) {
+                const next = res.nomor + 1;
+                $("#panduan-nomor").text(`Nomor terakhir: ${res.nomor}. Saran: ${next}`);
+
+                // Jika user sudah punya nomor, jangan saran
+                if (nomorSekarang) {
+                    $("#panduan-nomor").text(`Nomor saat ini: ${nomorSekarang}`);
+                }
+            } else {
+                $("#panduan-nomor").text('Belum ada nomor register di tahun ini.');
+            }
+        }, 'json');
+    }
+
+    function cekNomorRegister(nomor) {
+        const tahun = $("input[name='tahun']").val();
+        const id_usulan = $("input[name='id_usulan_raperbup']").val();
+
+        if (!nomor || !tahun) return;
+
+        $.post(base_url + 'nomor_register/request/cek_nomor_ada', {
+            nomor_register: nomor,
+            tahun: tahun,
+            id_usulan: id_usulan
+        }, function(res) {
+            if (res.ada) {
+                $("#error-nomor").text('Nomor register ini sudah digunakan!').show();
+                $("button[onclick='save_nomor_register()']").prop('disabled', true);
+            } else {
+                $("#error-nomor").hide();
+                $("button[onclick='save_nomor_register()']").prop('disabled', false);
+            }
+        }, 'json');
     }
 
     function show_panel_cancel_usulan(id_usulan_raperbup) {
@@ -486,10 +551,10 @@
                 catatan_pembatalan: catatan_pembatalan
             },
             type: 'POST',
-            beforeSend: function () {
+            beforeSend: function() {
                 HoldOn.open(optionsHoldOn);
             },
-            success: function (response) {
+            success: function(response) {
                 $("#showPanelCancelUsulan").modal("toggle");
                 get_data_usulan_raperbup();
                 if (response.status) {
@@ -498,10 +563,10 @@
                     swal('Gagal', response.message, 'error');
                 }
             },
-            error: function (xhr, status, error) {
+            error: function(xhr, status, error) {
                 swal('Error', 'Gagal membatalkan usulan: ' + error, 'error');
             },
-            complete: function () {
+            complete: function() {
                 HoldOn.close();
             }
         });
@@ -526,12 +591,13 @@
                     id_usulan_raperbup: $("input[name='id_usulan_raperbup']").val(),
                     catatan_disposisi: catatan_disposisi,
                     id_kasubbag: id_kasubbag,
+                    tahun: $("input[name='tahun']").val()
                 },
                 type: 'POST',
-                beforeSend: function () {
+                beforeSend: function() {
                     HoldOn.open(optionsHoldOn);
                 },
-                success: function (response) {
+                success: function(response) {
                     get_data_usulan_raperbup();
                     $("#showPanelNomorRegister").modal("toggle");
                     $("input[name='id_usulan_raperbup']").val("");
@@ -543,7 +609,7 @@
                         swal('Gagal', 'Data tidak bisa disimpan', 'error');
                     }
                 },
-                complete: function () {
+                complete: function() {
                     HoldOn.close();
                 }
             });
@@ -571,12 +637,12 @@
         $.ajax({
             url: base_url + 'monitoring_raperbup/request/get_data_kasubbag',
             type: 'POST',
-            beforeSend: function () {
+            beforeSend: function() {
                 HoldOn.open(optionsHoldOn);
             },
-            success: function (response) {
+            success: function(response) {
                 let html = "<option value=''>-- Pilih Kasubbag --</option>";
-                $.each(response, function (index, value) {
+                $.each(response, function(index, value) {
                     let selected = "";
                     if (id_selected) {
                         if (id_selected == value.id_user) {
@@ -587,7 +653,7 @@
                 });
                 $("select[name='id_kasubbag']").html(html);
             },
-            complete: function (response) {
+            complete: function(response) {
                 HoldOn.close();
             }
         });

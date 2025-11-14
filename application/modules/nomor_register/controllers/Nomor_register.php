@@ -54,12 +54,29 @@ class Nomor_register extends MY_Controller
             "row"
         );
 
+        // Di save_nomor_register()
+        $nomor = $this->ipost('nomor_register');
+        $tahun = $this->ipost('tahun');
+        $id_usulan = decrypt_data($this->ipost('id_usulan_raperbup'));
+
+        // Cek duplikat (server-side)
+        $duplikat = $this->db->where('nomor_register', $nomor)
+            ->where('tahun', $tahun)
+            ->where('id_usulan_raperbup !=', $id_usulan)
+            ->get('usulan_raperbup')->num_rows();
+
+        if ($duplikat > 0) {
+            $this->output->set_output(json_encode(false));
+            return;
+        }
+
         if ($data_last_trx && $data_last_trx->status_tracking == "3") {
             $status = false;
         } else {
             $nomor_register = array(
                 "nomor_register" => ($this->ipost("nomor_register") ? $this->ipost("nomor_register") : NULL),
                 "id_user_kasubbag" => (decrypt_data($this->ipost("id_kasubbag")) ? decrypt_data($this->ipost("id_kasubbag")) : NULL),
+                "tahun" => $this->ipost("tahun") ?: date('Y'),
                 'updated_at' => $this->datetime(),
                 "id_user_updated" => $this->session->userdata("id_user")
             );
