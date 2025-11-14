@@ -412,18 +412,55 @@ class Request extends MY_Controller
     public function get_data_usulan_raperbup_by_id()
     {
         try {
-            $data['usulan_raperbup'] = $this->usulan_raperbup_model->get_by(decrypt_data($this->iget("id_usulan_raperbup")));
+            $id_enc = $this->iget("id_usulan_raperbup");
+            $id_usulan = decrypt_data($id_enc);
 
+            // 1. Validasi ID
+            if (!$id_enc || !$id_usulan) {
+                $this->output
+                    ->set_status_header(400)
+                    ->set_content_type('application/json')
+                    ->set_output(json_encode([
+                        'status' => false,
+                        'message' => 'ID usulan tidak valid'
+                    ]));
+                return;
+            }
+
+            // 2. Ambil usulan
+            $usulan = $this->usulan_raperbup_model->get_by($id_usulan);
+            if (!$usulan) {
+                $this->output
+                    ->set_status_header(404)
+                    ->set_content_type('application/json')
+                    ->set_output(json_encode([
+                        'status' => false,
+                        'message' => 'Usulan tidak ditemukan'
+                    ]));
+                return;
+            }
+
+            // 3. Perbaiki tahun jika kosong
+            if (!$usulan->tahun || $usulan->tahun == 0) {
+                $usulan->tahun = $usulan->created_at
+                    ? date('Y', strtotime($usulan->created_at))
+                    : date('Y');
+            }
+
+            $data['usulan_raperbup'] = $usulan;
+
+            // 4. Ambil transaksi (opsional)
             $data['trx_raperbup'] = $this->trx_raperbup_model->get(
                 array(
                     "where" => array(
-                        "usulan_raperbup_id" => decrypt_data($this->iget("id_usulan_raperbup")),
+                        "usulan_raperbup_id" => $id_usulan,
                         "status_tracking" => "2",
                     ),
                 ),
                 "row"
             );
 
+            // 5. Sukses
             $this->output
                 ->set_content_type('application/json')
                 ->set_output(json_encode($data));
@@ -432,7 +469,43 @@ class Request extends MY_Controller
             $this->output
                 ->set_status_header(500)
                 ->set_content_type('application/json')
-                ->set_output(json_encode(['status' => false, 'message' => 'Internal server error: ' . $e->getMessage()]));
+                ->set_output(json_encode([
+                    'status' => false,
+                    'message' => 'Terjadi kesalahan sistem'
+                ]));
         }
+    }
+
+    public function get_nomor_terakhir()
+    {
+        $tahun = $this->input->post('tahun');
+        if (!$tahun || !is_numeric($tahun)) {
+            echo json_encode(['status' => false]);
+            return;
+        }
+
+        $this->db->select_max('nomor_register');
+        $this->db->where('tahun', $tahun);
+        $this->db->where('nomor_register IS NOT NULL', null, false);
+        $query = $this->db->get('usulan_raperbup');
+        $row = $query->row();
+
+        $nomor = $row->nomor_register ?? 0;
+
+        echo json_encode(['status' => true, 'nomor' => (int)$nomor]);
+    }
+
+    public function cek_nomor_ada()
+    {
+        $nomor = $this->input->post('nomor_register');
+        $tahun = $this->input->post('tahun');
+        $id_usulan = $this->input->post('id_usulan') ?: 0;
+
+        $this->db->where('nomor_register', $nomor);
+        $this->db->where('tahun', $tahun);
+        $this->db->where('id_usulan_raperbup !=', $id_usulan);
+        $ada = $this->db->count_all_results('usulan_raperbup') > 0;
+
+        echo json_encode(['ada' => $ada]);
     }
 }
