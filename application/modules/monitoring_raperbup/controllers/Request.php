@@ -572,21 +572,17 @@ class Request extends MY_Controller
 
                 // KASUBBAG (level 7)
                 if ($level_user_id == '7') {
-                    if (
-                        $data_terakhir->kasubbag_agree_disagree == '' ||
-                        $data_terakhir->status_tracking == "2" ||
-                        $data_terakhir->status_tracking == "5"
-                    ) {
+                    // ✅ PERBAIKAN: Cukup cek apakah Kasubbag sudah memutuskan
+                    // Tidak peduli status tracking atau keputusan level di atasnya
+                    if ($data_terakhir->kasubbag_agree_disagree == '') {
                         continue;
                     }
                 }
-                // ← TAMBAH: JFT (level 15)
-                elseif ($level_user_id == '15') {
-                    // Skip jika JFT belum memutuskan atau bukan status 3
-                    if (
-                        $data_terakhir->status_tracking != "3" ||
-                        $data_terakhir->jft_agree_disagree == ""
-                    ) {
+                // JFT (level 15)
+               elseif ($level_user_id == '15') {
+                    // ✅ PERBAIKAN: Cukup cek apakah JFT sudah memutuskan
+                    // Tidak peduli status tracking atau keputusan level di atasnya
+                    if ($data_terakhir->jft_agree_disagree == "") {
                         continue;
                     }
                 }

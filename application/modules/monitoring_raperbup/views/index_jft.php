@@ -333,62 +333,41 @@
     });
     
     function get_data_peraturan() {
+        $(".list-activites").html("");
+        $(".list-peraturan").html("<li>Belum Ada Peraturan</li>");
+
+        $("a[href$='#disposisi']").hide();
         $("a[href$='#disetujui']").hide();
         $("a[href$='#tidakDisetujui']").hide();
-        $(".list-activites").html("");
+        $("a[href$='#publish']").hide();
+        $("a[href$='#terimafinal']").hide();
+        $("a[href$='#tolakfinal']").hide();
+
         $(".last_file").html("");
-        $(".list-peraturan").html("<li>Belum Ada Peraturan</li>");
-        let filter = $("input[name='filter']:checked").val();
         let skpd = $("select[name='skpd']").val();
+        let filter = $("input[name='filter']:checked").val();
 
-        var data = {
-            filter: filter,
-            skpd: skpd
-        };
-        if (selectedUsulanId) {
-            data.usulan_id = atob(selectedUsulanId); // Decode base64
-        }
-
-        $.ajax({
-            url: base_url + 'monitoring_raperbup/request/get_data_peraturan',
-            data: data,
-            type: 'GET',
-            beforeSend: function () {
-                HoldOn.open(optionsHoldOn);
-            },
-            success: function (response) {
-                let id_encrypt = "";
-                let list_peraturan = "";
-                let selectedIdEncrypt = null;
-                if (response.length != 0) {
-                    $.each(response, function (index, value) {
-                        list_peraturan += "<li class='nav-item hr-bottom'><a href='#' class='nav-link list-peraturan-active' onclick=\"show_detail_peraturan('" + value.id_encrypt + "',this)\">" + value.nama_peraturan + "</a></li>";
-                        // Find the id_encrypt for the selected usulan_id
-                        if (selectedUsulanId && value.id_usulan_raperbup == atob(selectedUsulanId)) {
-                            selectedIdEncrypt = value.id_encrypt;
-                        }
-                    });
-                    $(".list-peraturan").html(list_peraturan);
-                    // Highlight the selected peraturan
-                    if (selectedIdEncrypt) {
-                        let targetLink = $(".list-peraturan a[onclick*='" + selectedIdEncrypt + "']");
-                        if (targetLink.length > 0) {
-                            $(".list-peraturan-active").removeClass("active");
-                            targetLink.addClass("active");
-                            // Directly call show_detail_peraturan
-                            show_detail_peraturan(selectedIdEncrypt);
-                        }
+        if (skpd) {
+            $.ajax({
+                url: base_url + 'monitoring_raperbup/request/get_data_peraturan',
+                data: { skpd: skpd, filter: filter },
+                type: 'GET',
+                beforeSend: function () { HoldOn.open(optionsHoldOn); },
+                success: function (response) {
+                    let list_peraturan = "";
+                    if (response.length != 0) {
+                        $.each(response, function (index, value) {
+                            list_peraturan += "<li class='nav-item hr-bottom'><a href='#' class='nav-link list-peraturan-active' onclick=\"show_detail_peraturan('" + value.id_encrypt + "',this)\">" + value.nama_peraturan + "</a></li>";
+                        });
+                        $(".list-peraturan").html(list_peraturan);
                     }
-                }
-            },
-            complete: function () {
-                HoldOn.close();
-            },
-            error: function (xhr, status, error) {
-                console.log('Error loading peraturan:', xhr.responseText);
-                swal('Error', 'Gagal mengambil data: ' + (xhr.responseJSON ? xhr.responseJSON.error : 'Server error'), 'error');
-            }
-        });
+                },
+                complete: function () { HoldOn.close(); }
+            });
+        } else {
+            $(".list-peraturan").html("<li>Belum Ada Peraturan</li>");
+            $(".list-activites").html("");
+        }
     }
 
     function change_status(status) {

@@ -195,73 +195,41 @@
     });
 
     function get_data_peraturan() {
+        $(".list-activites").html("");
+        $(".list-peraturan").html("<li>Belum Ada Peraturan</li>");
+
+        $("a[href$='#disposisi']").hide();
+        $("a[href$='#disetujui']").hide();
+        $("a[href$='#tidakDisetujui']").hide();
+        $("a[href$='#publish']").hide();
+        $("a[href$='#terimafinal']").hide();
+        $("a[href$='#tolakfinal']").hide();
+
+        $(".last_file").html("");
         let skpd = $("select[name='skpd']").val();
         let filter = $("input[name='filter']:checked").val();
 
-        if (!skpd) {
-            $(".list-peraturan").html(`
-                <li class="text-center text-muted py-5">
-                    <i class="fas fa-info-circle fa-3x mb-3"></i>
-                    <h6>Pilih SKPD untuk melihat usulan</h6>
-                </li>
-            `);
-            $(".list-activites, .last_file").html("");
-            $("a[href$='#disetujui'], a[href$='#tidakDisetujui']").hide();
-            return;
-        }
-
-        let data = { skpd: skpd, filter: filter };
-        if (selectedUsulanId) data.usulan_id = atob(selectedUsulanId);
-
-        $.ajax({
-            url: base_url + 'monitoring_raperbup/request/get_data_peraturan',
-            data: data,
-            type: 'GET',
-            beforeSend: function () {
-                HoldOn.open(optionsHoldOn);
-                $(".list-peraturan").html("<li class='text-center py-4'><i class='fas fa-spinner fa-spin'></i> Memuat...</li>");
-            },
-            success: function (response) {
-                let list = "";
-                let selectedEncrypt = null;
-
-                if (response.length > 0) {
-                    $.each(response, function (i, v) {
-                        let active = (selectedUsulanId && v.id_usulan_raperbup == atob(selectedUsulanId)) ? 'active' : '';
-                        list += `
-                            <li class='nav-item hr-bottom'>
-                                <a href='#' class='nav-link list-peraturan-active ${active}' 
-                                   onclick="show_detail_peraturan('${v.id_encrypt}', this)">
-                                   ${v.nama_peraturan}
-                                   ${v.processing_status ? '<span class="badge badge-warning ml-2">Sedang Diproses</span>' : ''}
-                                </a>
-                            </li>`;
-
-                        if (selectedUsulanId && v.id_usulan_raperbup == atob(selectedUsulanId)) {
-                            selectedEncrypt = v.id_encrypt;
-                        }
-                    });
-
-                    $(".list-peraturan").html(list);
-
-                    if (selectedEncrypt) {
-                        let el = $(`.list-peraturan a[onclick*='${selectedEncrypt}']`);
-                        if (el.length) {
-                            $(".list-peraturan-active").removeClass("active");
-                            el.addClass("active").get(0).click();
-                        }
+        if (skpd) {
+            $.ajax({
+                url: base_url + 'monitoring_raperbup/request/get_data_peraturan',
+                data: { skpd: skpd, filter: filter },
+                type: 'GET',
+                beforeSend: function () { HoldOn.open(optionsHoldOn); },
+                success: function (response) {
+                    let list_peraturan = "";
+                    if (response.length != 0) {
+                        $.each(response, function (index, value) {
+                            list_peraturan += "<li class='nav-item hr-bottom'><a href='#' class='nav-link list-peraturan-active' onclick=\"show_detail_peraturan('" + value.id_encrypt + "',this)\">" + value.nama_peraturan + "</a></li>";
+                        });
+                        $(".list-peraturan").html(list_peraturan);
                     }
-                } else {
-                    $(".list-peraturan").html(`
-                        <li class="text-center text-muted py-5">
-                            <i class="fas fa-inbox fa-3x mb-3"></i>
-                            <h6>Tidak ada usulan</h6>
-                        </li>
-                    `);
-                }
-            },
-            complete: function () { HoldOn.close(); }
-        });
+                },
+                complete: function () { HoldOn.close(); }
+            });
+        } else {
+            $(".list-peraturan").html("<li>Belum Ada Peraturan</li>");
+            $(".list-activites").html("");
+        }
     }
 
     function show_detail_peraturan(id_peraturan, e) {

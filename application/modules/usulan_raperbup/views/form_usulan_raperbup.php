@@ -357,6 +357,53 @@
         animation: highlightPulse 2s ease-in-out;
     }
 
+    /* custom list dengan style kurung */
+    ol.list-decimal-parenthesis {
+        list-style-type: none;
+        counter-reset: item;
+        padding-left: 0;
+    }
+
+    ol.list-decimal-parenthesis>li {
+        counter-increment: item;
+        margin-bottom: 5px;
+        padding-left: 2em;
+        position: relative;
+    }
+
+    ol.list-decimal-parenthesis>li:before {
+        content: "(" counter(item) ") ";
+        position: absolute;
+        left: 0;
+    }
+
+    /* Nested list level 2 - gunakan lowercase alpha */
+    ol.list-decimal-parenthesis ol {
+        list-style-type: none;
+        counter-reset: subitem;
+    }
+
+    ol.list-decimal-parenthesis ol>li {
+        counter-increment: subitem;
+    }
+
+    ol.list-decimal-parenthesis ol>li:before {
+        content: "(" counter(subitem, lower-alpha) ") ";
+    }
+
+    /* Nested list level 3 - gunakan roman */
+    ol.list-decimal-parenthesis ol ol {
+        counter-reset: subsubitem;
+    }
+
+    ol.list-decimal-parenthesis ol ol>li {
+        counter-increment: subsubitem;
+    }
+
+    ol.list-decimal-parenthesis ol ol>li:before {
+        content: "(" counter(subsubitem, lower-roman) ") ";
+    }
+
     @keyframes highlightPulse {
 
         0%,
@@ -1116,11 +1163,44 @@
             items: ['Bold', 'Italic', 'Underline']
         }, {
             name: 'paragraph',
-            items: ['NumberedList', 'BulletedList', '-', 'JustifyLeft', 'JustifyCenter', 'JustifyRight', 'JustifyBlock', 'Outdent', 'Indent']
+            items: ['NumberedList', 'BulletedList', '-', 'Styles', '-', 'JustifyLeft', 'JustifyCenter', 'JustifyRight', 'JustifyBlock', 'Outdent', 'Indent']
         }, {
             name: 'maximize',
             items: ['Maximize']
-        }]
+        }],
+
+        // Tambahan untuk custom list
+        stylesSet: [{
+            name: 'List (1) (2) (3)',
+            element: 'ol',
+            attributes: {
+                'class': 'list-decimal-parenthesis'
+            }
+        }],
+
+        extraAllowedContent: 'ol(list-decimal-parenthesis);li(*)',
+
+        contentsCss: [
+            CKEDITOR.getUrl('contents.css'),
+            'data:text/css,' + encodeURIComponent(`
+            ol.list-decimal-parenthesis {
+                list-style-type: none;
+                counter-reset: item;
+                padding-left: 0;
+            }
+            ol.list-decimal-parenthesis > li {
+                counter-increment: item;
+                margin-bottom: 5px;
+                padding-left: 2em;
+                position: relative;
+            }
+            ol.list-decimal-parenthesis > li:before {
+                content: "(" counter(item) ") ";
+                position: absolute;
+                left: 0;
+            }
+        `)
+        ]
     };
 
     // Fungsi untuk inisialisasi CKEditor pada textarea tertentu

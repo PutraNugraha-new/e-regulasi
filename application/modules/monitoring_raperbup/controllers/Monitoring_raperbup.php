@@ -582,15 +582,24 @@ class Monitoring_raperbup extends MY_Controller
         $template = ($kategori_usulan_id == 1) ? 'template/perda' : (($kategori_usulan_id == 2) ? 'template/perbup' : 'template/kepbup');
         $html = $this->load->view($template, $data, TRUE);
 
+
         // Konfigurasi mPDF
         $this->mpdf_library->mpdf->SetTitle('Preview Peraturan Bupati Katingan');
-        if ($kategori_usulan_id == 1 || $kategori_usulan_id == 2) {
+
+        if ($kategori_usulan_id == 1 || $kategori_usulan_id == 2) { // Perda & Perbup
             // Atur header dengan nomor halaman
-            $header_html = '- {PAGENO} -';
-            $this->mpdf_library->mpdf->SetHTMLHeader($header_html, 'E', true);
-            $this->mpdf_library->mpdf->SetHTMLHeader($header_html, 'O', true);
-            $this->mpdf_library->mpdf->SetHTMLHeader('', 'first');
+            $header_html = '<div style="text-align: center;">-{PAGENO}-</div>';
+
+            // PENTING: Set header untuk halaman SELAIN halaman pertama
+            $this->mpdf_library->mpdf->SetHTMLHeader('', 'O'); // Kosongkan header halaman pertama (Odd)
+            $this->mpdf_library->mpdf->SetHTMLHeader('', 'E'); // Kosongkan header halaman pertama (Even)
+
+            // Tulis HTML terlebih dahulu
             $this->mpdf_library->mpdf->WriteHTML($html);
+
+            // Kemudian set header untuk halaman berikutnya
+            $this->mpdf_library->mpdf->SetHTMLHeader($header_html, 'O', true); // Odd pages, bukan halaman pertama
+            $this->mpdf_library->mpdf->SetHTMLHeader($header_html, 'E', true); // Even pages, bukan halaman pertama
         } else {
             $this->mpdf_library->mpdf->WriteHTML($html);
         }
@@ -2506,19 +2515,18 @@ class Monitoring_raperbup extends MY_Controller
             return;
         }
 
-        // Gunakan file perbaikan jika ada
-        $file_usulan = $data_last_trx->file_usulan_raperbup;
-        // if ($data_last_trx->file_perbaikan) {
-        //     $file_usulan = $data_last_trx->file_perbaikan;
-        // }
+        // Gunakan file_perbaikan jika ada, jika tidak gunakan file_usulan_raperbup
+        $file_usulan = !empty($data_last_trx->file_perbaikan)
+            ? $data_last_trx->file_perbaikan
+            : $data_last_trx->file_usulan_raperbup;
 
         // Simpan transaksi baru dengan status FINAL (status_tracking = 5)
         $data_trx = array(
             "usulan_raperbup_id" => $id_usulan_raperbup,
-            "file_usulan_raperbup" => $file_usulan,
+            "file_usulan_raperbup" => $data_last_trx->file_usulan_raperbup,
             "file_perbaikan" => $data_last_trx->file_perbaikan,
             "file_catatan_perbaikan" => $data_last_trx->file_catatan_perbaikan,
-            "file_final" => $data_last_trx->file_perbaikan,
+            "file_final" => $file_usulan, // ← Menggunakan file yang sudah dipilih
             "catatan_ditolak" => $catatan ?: $data_last_trx->catatan_ditolak,
             "level_user_id_status" => $this->session->userdata("level_user_id"),
             "status_tracking" => '5', // ← STATUS FINAL (PUBLISH)
@@ -2531,15 +2539,19 @@ class Monitoring_raperbup extends MY_Controller
 
         $status = $this->trx_raperbup_model->save($data_trx);
 
-        $source_path = FCPATH . 'assets/file_usulan/' . $data_last_trx->file_perbaikan;
-        $destination_path = FCPATH . 'assets/file_final/' . $data_last_trx->file_perbaikan;
+        // Tentukan source path berdasarkan file yang digunakan
+        $source_folder = !empty($data_last_trx->file_perbaikan) ? 'file_usulan' : 'file_usulan';
+        $source_path = FCPATH . 'assets/' . $source_folder . '/' . $file_usulan;
+        $destination_path = FCPATH . 'assets/file_final/' . $file_usulan;
 
         if (!is_dir(dirname($destination_path))) {
             mkdir(dirname($destination_path), 0755, true);
         }
 
-        copy($source_path, $destination_path);
-
+        // Cek apakah source file ada sebelum copy
+        if (file_exists($source_path)) {
+            copy($source_path, $destination_path);
+        }
 
         if ($status) {
             $nama_peraturan = $this->usulan_raperbup_model->get_by($id_usulan_raperbup)->nama_peraturan ?: 'Usulan Tanpa Nama';
