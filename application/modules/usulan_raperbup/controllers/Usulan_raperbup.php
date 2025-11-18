@@ -339,9 +339,9 @@ class Usulan_raperbup extends MY_Controller
                 'judul_bab' => $judul_bab,
                 'judul_bagian' => $judul_bagian,
                 'penjelasan' => $penjelasan,
-                'nomor' => '123', // Nomor sementara untuk preview
+                'nomor' => '123',
                 'tanggal' => date('d F Y', strtotime($this->datetime())),
-                'lampiran' => '' // Kosong karena hanya preview
+                'lampiran' => ''
             );
         } else {
             // Proses keputusan sebagai array untuk Keputusan Bupati
@@ -355,12 +355,11 @@ class Usulan_raperbup extends MY_Controller
                 'menetapkan' => $menetapkan,
                 'memutuskan' => $keputusan_data,
                 'tembusan' => $tembusan,
-                'nomor' => '123', // Nomor sementara untuk preview
+                'nomor' => '123',
                 'tanggal' => date('d F Y', strtotime($this->datetime())),
-                'lampiran' => '' // Kosong karena hanya preview
+                'lampiran' => ''
             );
         }
-
 
         // Pilih template berdasarkan kategori usulan
         $template = ($kategori_usulan_id == 1) ? 'template/perda' : (($kategori_usulan_id == 2) ? 'template/perbup' : 'template/kepbup');
@@ -368,17 +367,21 @@ class Usulan_raperbup extends MY_Controller
 
         // Konfigurasi mPDF
         $this->mpdf_library->mpdf->SetTitle('Preview Peraturan Bupati Katingan');
-        if ($kategori_usulan_id == 1 || $kategori_usulan_id == 2) {
-            // Atur header dengan nomor halaman untuk halaman genap dan ganjil
-            $header_html = '- {PAGENO} -';
-            $this->mpdf_library->mpdf->SetHTMLHeader($header_html, 'E', true);
-            $this->mpdf_library->mpdf->SetHTMLHeader($header_html, 'O', true);
 
-            // Paksa header di halaman pertama menjadi kosong
-            $this->mpdf_library->mpdf->SetHTMLHeader('', 'first');
+        if ($kategori_usulan_id == 1 || $kategori_usulan_id == 2) { // Perda & Perbup
+            // Atur header dengan nomor halaman
+            $header_html = '<div style="text-align: center;">- {PAGENO} -</div>';
 
-            // Tambahkan konten utama
+            // Set header untuk halaman SELAIN halaman pertama
+            $this->mpdf_library->mpdf->SetHTMLHeader('', 'O');
+            $this->mpdf_library->mpdf->SetHTMLHeader('', 'E');
+
+            // Tulis HTML terlebih dahulu
             $this->mpdf_library->mpdf->WriteHTML($html);
+
+            // Kemudian set header untuk halaman berikutnya
+            $this->mpdf_library->mpdf->SetHTMLHeader($header_html, 'O', true);
+            $this->mpdf_library->mpdf->SetHTMLHeader($header_html, 'E', true);
         } else {
             $this->mpdf_library->mpdf->WriteHTML($html);
         }
@@ -395,7 +398,7 @@ class Usulan_raperbup extends MY_Controller
         header('Content-Transfer-Encoding: binary');
         header('Accept-Ranges: bytes');
         $this->mpdf_library->mpdf->Output($pdf_file_name, 'I');
-        exit; // Pastikan tidak ada kode lain yang dieksekusi setelah ini
+        exit;
     }
 
     public function generate_pdf_raperbup($id_usulan_raperbup, $trx_id, $output_mode = 'F', $is_perbaikan = false)
@@ -460,14 +463,23 @@ class Usulan_raperbup extends MY_Controller
         // Konfigurasi mPDF untuk dokumen utama
         $this->mpdf_library->mpdf->SetTitle('Keputusan Bupati Katingan');
 
-        if ($data_usulan->kategori_usulan_id == 1 || $data_usulan->kategori_usulan_id == 2) {
-            $header_html = '- {PAGENO} -';
-            $this->mpdf_library->mpdf->SetHTMLHeader($header_html, 'E', true);
-            $this->mpdf_library->mpdf->SetHTMLHeader($header_html, 'O', true);
-            $this->mpdf_library->mpdf->SetHTMLHeader('', 'first');
-        }
+        if ($data_usulan->kategori_usulan_id == 1 || $data_usulan->kategori_usulan_id == 2) { // Perda & Perbup
+            // Atur header dengan nomor halaman
+            $header_html = '<div style="font-family: \'Bookman Old Style\', serif; font-size: 12pt;"><div style="text-align: center;">- {PAGENO} -</div></div>';
 
-        $this->mpdf_library->mpdf->WriteHTML($html);
+            // PENTING: Set header kosong untuk halaman pertama
+            $this->mpdf_library->mpdf->SetHTMLHeader('', 'O'); // Kosongkan header halaman pertama (Odd)
+            $this->mpdf_library->mpdf->SetHTMLHeader('', 'E'); // Kosongkan header halaman pertama (Even)
+
+            // Tulis HTML terlebih dahulu
+            $this->mpdf_library->mpdf->WriteHTML($html);
+
+            // Kemudian set header untuk halaman berikutnya
+            $this->mpdf_library->mpdf->SetHTMLHeader($header_html, 'O', true); // Odd pages, bukan halaman pertama
+            $this->mpdf_library->mpdf->SetHTMLHeader($header_html, 'E', true); // Even pages, bukan halaman pertama
+        } else {
+            $this->mpdf_library->mpdf->WriteHTML($html);
+        }
 
         $pdf_file_name = str_replace(' ', '_', $data_usulan->nama_peraturan) . '_' . time() . '.pdf';
         $pdf_path = FCPATH . 'assets/file_usulan/' . $pdf_file_name;

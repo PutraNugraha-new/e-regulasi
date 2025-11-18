@@ -1163,7 +1163,7 @@
             items: ['Bold', 'Italic', 'Underline']
         }, {
             name: 'paragraph',
-            items: ['NumberedList', 'BulletedList', '-', 'Styles', '-', 'JustifyLeft', 'JustifyCenter', 'JustifyRight', 'JustifyBlock', 'Outdent', 'Indent']
+            items: ['NumberedList', 'BulletedList', '-', 'JustifyLeft', 'JustifyCenter', 'JustifyRight', 'JustifyBlock', 'Outdent', 'Indent']
         }, {
             name: 'maximize',
             items: ['Maximize']

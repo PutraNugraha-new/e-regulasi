@@ -12,25 +12,20 @@
             line-height: 1.3;
         }
 
-        /* Tambahkan CSS untuk header dengan nomor halaman */
+        /* Atur margin untuk header */
         @page {
-            margin-header: 10mm;
-            margin-top: 25mm;
+            margin-top: 30mm;
             margin-bottom: 20mm;
-            /* margin-left: 140px; */
+            margin-left: 20mm;
+            margin-right: 20mm;
+
+            header: html_myheader;
         }
 
+        /* Halaman pertama tanpa header */
         @page :first {
-            margin-header: 0mm;
             margin-top: 20mm;
-            /* Header tidak ada di halaman pertama */
-        }
-
-        /* Style untuk header nomor halaman */
-        .page-header {
-            text-align: center;
-            font-size: 12pt;
-            font-family: 'Bookman Old Style', serif;
+            header: html_myheaderfirst;
         }
 
         .header {
@@ -161,11 +156,16 @@
 </head>
 
 <body>
-
-    <htmlpageheader name="myheader">
-        <div class="page-header">-{PAGENO}-</div>
+    <!-- Header kosong untuk halaman pertama -->
+    <htmlpageheader name="myheaderfirst">
     </htmlpageheader>
-    <sethtmlpageheader name="myheader" value="on" show-this-page="0" />
+
+    <!-- Header dengan nomor halaman untuk halaman 2 dst -->
+    <htmlpageheader name="myheader">
+        <div style="margin-left: 140px; font-family: 'Bookman Old Style', serif; font-size: 12pt;">
+            <div style="text-align: center;">- {PAGENO} -</div>
+        </div>
+    </htmlpageheader>
 
     <div class="header">
         <!-- Jika ada logo, gunakan path absolut -->

@@ -12,6 +12,22 @@
             line-height: 1.3;
         }
 
+        /* Atur margin untuk header */
+        @page {
+            margin-top: 30mm;
+            margin-bottom: 20mm;
+            margin-left: 20mm;
+            margin-right: 20mm;
+
+            header: html_myheader;
+        }
+
+        /* Halaman pertama tanpa header */
+        @page :first {
+            margin-top: 20mm;
+            header: html_myheaderfirst;
+        }
+
         .header {
             text-align: center;
             margin-bottom: 20px;
@@ -140,6 +156,17 @@
 </head>
 
 <body>
+    <!-- Header kosong untuk halaman pertama -->
+    <htmlpageheader name="myheaderfirst">
+    </htmlpageheader>
+
+    <!-- Header dengan nomor halaman untuk halaman 2 dst -->
+    <htmlpageheader name="myheader">
+        <div style="margin-left: 140px; font-family: 'Bookman Old Style', serif; font-size: 12pt;">
+            <div style="text-align: center;">- {PAGENO} -</div>
+        </div>
+    </htmlpageheader>
+
     <div class="header">
         <!-- Jika ada logo, gunakan path absolut -->
         <img src="<?php echo FCPATH; ?>assets/garuda.jpg" width="80" alt="Logo Kabupaten Katingan">

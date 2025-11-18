@@ -588,7 +588,7 @@ class Monitoring_raperbup extends MY_Controller
 
         if ($kategori_usulan_id == 1 || $kategori_usulan_id == 2) { // Perda & Perbup
             // Atur header dengan nomor halaman
-            $header_html = '<div style="text-align: center;">-{PAGENO}-</div>';
+            $header_html = '<div style="text-align: center;">- {PAGENO} -</div>';
 
             // PENTING: Set header untuk halaman SELAIN halaman pertama
             $this->mpdf_library->mpdf->SetHTMLHeader('', 'O'); // Kosongkan header halaman pertama (Odd)
@@ -681,14 +681,23 @@ class Monitoring_raperbup extends MY_Controller
         // Konfigurasi mPDF untuk dokumen utama
         $this->mpdf_library->mpdf->SetTitle('Keputusan Bupati Katingan');
 
-        if ($data_usulan->kategori_usulan_id == 1 || $data_usulan->kategori_usulan_id == 2) {
-            $header_html = '- {PAGENO} -';
-            $this->mpdf_library->mpdf->SetHTMLHeader($header_html, 'E', true);
-            $this->mpdf_library->mpdf->SetHTMLHeader($header_html, 'O', true);
-            $this->mpdf_library->mpdf->SetHTMLHeader('', 'first');
-        }
+        if ($data_usulan->kategori_usulan_id == 1 || $data_usulan->kategori_usulan_id == 2) { // Perda & Perbup
+            // Atur header dengan nomor halaman
+            $header_html = '<div style="margin-left: 140px; font-family: \'Bookman Old Style\', serif; font-size: 12pt;"><div style="text-align: center;">-{PAGENO}-</div></div>';
 
-        $this->mpdf_library->mpdf->WriteHTML($html);
+            // PENTING: Set header kosong untuk halaman pertama
+            $this->mpdf_library->mpdf->SetHTMLHeader('', 'O'); // Kosongkan header halaman pertama (Odd)
+            $this->mpdf_library->mpdf->SetHTMLHeader('', 'E'); // Kosongkan header halaman pertama (Even)
+
+            // Tulis HTML terlebih dahulu
+            $this->mpdf_library->mpdf->WriteHTML($html);
+
+            // Kemudian set header untuk halaman berikutnya
+            $this->mpdf_library->mpdf->SetHTMLHeader($header_html, 'O', true); // Odd pages, bukan halaman pertama
+            $this->mpdf_library->mpdf->SetHTMLHeader($header_html, 'E', true); // Even pages, bukan halaman pertama
+        } else {
+            $this->mpdf_library->mpdf->WriteHTML($html);
+        }
 
         $pdf_file_name = 'Keputusan_Bupati_' . str_replace(' ', '_', $data_usulan->nama_peraturan) . '_' . time() . '.pdf';
         $pdf_path = FCPATH . 'assets/file_usulan/' . $pdf_file_name;
