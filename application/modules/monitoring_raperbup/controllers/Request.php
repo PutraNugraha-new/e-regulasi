@@ -522,10 +522,14 @@ class Request extends MY_Controller
 
                 // KASUBBAG (level 7)
                 if ($level_user_id == '7') {
+                    // Skip data yang sudah diperiksa, KECUALI JFT menolak
                     if (
-                        ($data_terakhir->status_tracking == "3" &&
-                            in_array($data_terakhir->kasubbag_agree_disagree, array("1", "2"))) ||
-                        $data_terakhir->status_tracking == "5"
+                        $data_terakhir->jft_agree_disagree != "2" &&  // ← TAMBAHAN: Kecuali JFT menolak
+                        (
+                            ($data_terakhir->status_tracking == "3" &&
+                                in_array($data_terakhir->kasubbag_agree_disagree, array("1", "2"))) ||
+                            $data_terakhir->status_tracking == "5"
+                        )
                     ) {
                         continue;
                     }
@@ -536,10 +540,12 @@ class Request extends MY_Controller
                     // - Bukan status 3
                     // - Atau Kasubbag belum setuju
                     // - Atau JFT sudah memutuskan
+                    // - ATAU Kabag sudah setuju (data lama yang sudah selesai) ← TAMBAHAN BARU
                     if (
                         $data_terakhir->status_tracking != "3" ||
                         $data_terakhir->kasubbag_agree_disagree != "1" ||
-                        $data_terakhir->jft_agree_disagree != ""
+                        $data_terakhir->jft_agree_disagree != "" ||
+                        $data_terakhir->kabag_agree_disagree == "1"  // ← TAMBAHAN BARU
                     ) {
                         continue;
                     }
@@ -572,14 +578,16 @@ class Request extends MY_Controller
 
                 // KASUBBAG (level 7)
                 if ($level_user_id == '7') {
-                    // ✅ PERBAIKAN: Cukup cek apakah Kasubbag sudah memutuskan
-                    // Tidak peduli status tracking atau keputusan level di atasnya
-                    if ($data_terakhir->kasubbag_agree_disagree == '') {
+                    // ✅ PERBAIKAN: Cek apakah Kasubbag sudah memutuskan DAN JFT BUKAN menolak
+                    if (
+                        $data_terakhir->kasubbag_agree_disagree == '' ||
+                        $data_terakhir->jft_agree_disagree == "2"
+                    ) {  // ← TAMBAHAN BARU
                         continue;
                     }
                 }
                 // JFT (level 15)
-               elseif ($level_user_id == '15') {
+                elseif ($level_user_id == '15') {
                     // ✅ PERBAIKAN: Cukup cek apakah JFT sudah memutuskan
                     // Tidak peduli status tracking atau keputusan level di atasnya
                     if ($data_terakhir->jft_agree_disagree == "") {

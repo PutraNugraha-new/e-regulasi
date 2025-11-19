@@ -332,7 +332,7 @@
 
                     // INI DIA BANNER "SEDANG DIPROSES" — VERSI KABAG SUPER GANAS!
                     if (response.length > 0 && response[0].processing_status) {
-                        let processor = response[0].processing_by_name || 'Kasubbag / JFT';
+                        let processor = response[0].processing_by_name || 'Kabag';
                         let since = response[0].processing_date || 'Tanggal tidak diketahui';
 
                         html += `

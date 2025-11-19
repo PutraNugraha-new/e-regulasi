@@ -257,7 +257,7 @@
 
                 // BANNER SEDANG DIPROSES — VERSI KASUBBAG (KUNING MENYALA + GLOW!)
                 if (response.length > 0 && response[0].processing_status) {
-                    let oleh = response[0].processing_by_name || 'JFT';
+                    let oleh = response[0].processing_by_name || 'KOREKTOR';
                     let sejak = response[0].processing_date || 'Tanggal tidak diketahui';
 
                     html += `

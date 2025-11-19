@@ -221,7 +221,7 @@
 
                     // === BANNER SEDANG DIPROSES - VERSI JFT (PALING GANTENG) ===
                     if (response.length > 0 && response[0].processing_status) {
-                        let processor = response[0].processing_by_name || 'Kasubbag / Tim Teknis';
+                        let processor = response[0].processing_by_name || 'JFT';
                         let since = response[0].processing_date || 'Tanggal tidak diketahui';
                         let statusText = response[0].processing_status || 'Sedang Diproses';
 
